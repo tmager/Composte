@@ -1,0 +1,64 @@
+1. What is your team name? (Keep it relatively short, clean, and free of
+    embedded spaces. — we'll use this internally for grading.)
+
+Export-By-Email
+
+2.Who's in the group?
+
+Tom Magerlein
+Robert Goodfellow
+Wesley Wei
+
+3. What's the project?
+
+Concurrent music composition - Google Docs for Music
+
+4. What's the minimum/maximum deliverable?
+
+Minimum Deliverable:
+    * Supports Multiple Users
+    * Landing page with all shared projects
+    * Note editing (Allow note update data races)
+    * MIDI Playback (Lock the clientside file on playback)
+    * Updatable Metadata - Lyricist, Composer, Title, Subtitle,
+        Everything is creative commons license
+    * Set/Change time signature
+    * Set/Change key signature
+    * Accidentals
+    * Automatic Treble Clef
+    * Set Tempo
+    * Triplets
+    * Protocol over websockets
+    * Per server serverside user registry (Hash/Salt)
+
+Stretch goal:
+    * Cosmetic Line Breaks
+    * Undo/Redo
+    * Repeats
+    * Export to playable filetypes (WAV/AIFF)
+    * Swing Beats
+    * Bass Clef
+    * Chords
+    * Chord symbols
+    * Fret Diagrams
+    * Multiple parts/soundfonts -> Fixed selection from the server
+    * Dynamics
+    * Ties/slurs
+    * Lyrics
+    * Score Text
+    * Accents
+    * Segno/Coda
+    * Actual Authentication
+
+5. What's your first step?
+
+Registration/Authentication with usernames and passwords
+
+6. What's the biggest problem you foresee or question you need to answer to get
+    started?
+
+UI -> How are we even going to do this?
+Protocol -> How do we get the client+server to do things, and what does the
+    protocol need to be able to describe?
+Data structures and storage format
+
