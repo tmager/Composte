@@ -16,8 +16,10 @@ Concurrent music composition - Google Docs for Music
 4. What's the minimum/maximum deliverable?
 
 Minimum Deliverable:
-    * Supports Multiple Users
-    * Landing page with all shared projects
+    * Not a web application
+    * Probably a Python application
+    * Supports multiple concurrent users
+    * Landing screen with all shared projects
     * Note editing (Allow note update data races)
     * MIDI Playback (Lock the clientside file on playback)
     * Updatable Metadata - Lyricist, Composer, Title, Subtitle,
@@ -58,7 +60,9 @@ Registration/Authentication with usernames and passwords
     started?
 
 UI -> How are we even going to do this?
+
 Protocol -> How do we get the client+server to do things, and what does the
     protocol need to be able to describe?
+
 Data structures and storage format
 
