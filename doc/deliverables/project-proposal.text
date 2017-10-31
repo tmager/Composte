@@ -31,7 +31,7 @@ Minimum Deliverable:
     * Set Tempo
     * Triplets
     * Protocol over websockets
-    * Per server serverside user registry (Hash/Salt)
+    * Per server serverside user registry (Username -> Hash/Salt)
 
 Stretch goal:
     * Cosmetic Line Breaks
