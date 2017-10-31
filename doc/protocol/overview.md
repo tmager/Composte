@@ -2,6 +2,10 @@
 
 [Up](../index.md)
 
+This document does _not_ describe the particulars of what messages in the
+Composte protocol look like. Instead, it describes the semantic meanings of
+messages exchanged betwene clients and servers.
+
 The Composte protocol must support all possible communications between clients
 and servers. To help us all get a feel for what capabilities are needed, some
 example message types are listed below.
