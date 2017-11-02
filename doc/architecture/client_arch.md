@@ -9,7 +9,7 @@ with a Composte Server and using the services provided. Composte clients act
 primarily as a collaborative sheet music editor in the same sense that Google
 Docs serve as collaborative document editors.
 
-
+The provided Composte client uses PyQt for its GUI.
 
 ## Core features
 

@@ -22,6 +22,8 @@ The message initiator is listed first.
 
 ## Client -> Server
 
+* `Share`
+* `Register`
 * `Login`
 * `Create Project`
 * `Begin Editing`/`Select Project`
