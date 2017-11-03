@@ -1,12 +1,25 @@
 1. Here is a problem that we want to address
 
-
+How do we get a GUI that can seamlessly respond to updates originating from
+both the user and from a remote server?
 
 2. Here are two or three ways we considered addressing it
 
-
+* Wrapping existing graphical music editors
+* Hacking  existing graphical music editors
+* Building our own impoverished graphical music editor
 
 3. Here is the one we chose (at least provisionally) and why
 
+We determined that wrapping existing graphical music editors that were built
+to operator in single-user mode would force us to choose between offering a
+tolerable user experience and making the application fulfill its intended
+purpose.
 
+We determined that hacking an existing graphical music editor to add the
+functionality that Composte requires would be too time intensive for the time
+constraints of this project.
+
+We will be building our own impoverished graphical music editor using PyQt5
+and our tears.
 
