@@ -18,26 +18,26 @@ The message initiator is listed first.
 
 ## Server -> Client
 
-* `Authoritative Update`
+* `SPOT Update`
 
 ## Client -> Server
 
-* `Share`
 * `Register`
 * `Login`
-* `Create Project`
-* `Begin Editing`/`Select Project`
-* `Propose Update`
-* `Done Editing`/`Close Project`
+* `Create`
+* `Share`
+* `Subscribe`
+* `Update`
+* `Unbscribe`
 
 ## Details
 
-### `Authoritative Update`
+### `SPOT Update`
 
 This is a __server initiated__ message
 
-The server periodically broadcasts an authoritative update to all clients
-currently editing projects.
+The server (a Single Point Of Truth, or SPOT) periodically broadcasts an 
+authoritative update to all clients currently editing projects.
 
 __Sent:__
 
@@ -50,13 +50,14 @@ None
 
 __Errors:__
 
-I hope not.
+There should be none but those induced by network conditions.
 
-### `Login`
+### `Register`
 
 This is a __client initiated__ message
 
-Clients must authenticate in order to gain access to projects.
+Clients must register with a _unique_ username and a 
+password in order to gain access to projects. 
 
 __Sent:__
 
@@ -64,24 +65,43 @@ Login credentials: Username, password
 
 __Expected Response:__
 
-Success, Project listings and associated metadata
+Success, a session cookie, and a list of shared Projects
+
+__Errors:__
+
+Naught but the network
+
+### `Login`
+
+This is a __client initiated__ message
+
+Clients must authenticate in order to gain access to projects. 
+
+__Sent:__
+
+Login credentials: Username, password
+
+__Expected Response:__
+
+Success, a session cookie, and a list of shared projects
 
 __Errors:__
 
 Authentication Failure
 
-### `Create Project`
+### `Create`
 
 This is a __client initiated__ message
 
 Users must be able to create projects.
 
 TODO - It is not clear at this time what partial descriptions of projects are
-required for project creation.
+required for project creation, but a unique project ID will be necessary
+at the very least.
 
 __Sent:__
 
-Project name, Owner, Optional partial metadata
+Project name, owner and shared editors, extra metadata (?)
 
 __Expected Response:__
 
@@ -91,11 +111,12 @@ __Errors:__
 
 Invalid/Unknown User
 
-### `Begin Editing`/`Select Project`
+### `Subscribe`
 
 This is a __client initiated__ message
 
-Users must be able to select projects to edit.
+Users must be able to subscribe to projects in order to get
+a live feed of edits from the server.
 
 __Sent:__
 
@@ -103,7 +124,7 @@ UserID, ProjectID
 
 __Expected Response:__
 
-Success, project data
+Success, project state
 
 __Errors:__
 
@@ -111,7 +132,7 @@ __Errors:__
 * Unknown user
 * User does not have permission to edit project
 
-### `Propose Update`
+### `Update`
 
 This is a __client initiated__ message
 
@@ -124,8 +145,7 @@ rejected either in part or in whole.
 
 __Sent:__
 
-A diff capturing the edits that the user has made since the last authoritative
-server update
+A diff capturing the edits that the user has made since the last SPOT update
 
 __Expected Response:__
 
@@ -135,11 +155,12 @@ __Errors:__
 
 Race detected, changes dropped
 
-### `Done Editing`/`Close Project`
+### `Unsubscribe`
 
 This is a __client initiated__ message
 
-Users must be able to stop editing a project.
+Users must be able to unsubscribe from server
+updates when finished with editing a project.
 
 __Sent:__
 
