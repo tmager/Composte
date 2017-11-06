@@ -90,7 +90,7 @@ Sending messages is annoying and potentially racy.
 
 Things this module will have to do:
 
-* Procide a monitor pattern protecting the action of sending broadcasts
+* Provide a monitor pattern protecting the action of sending broadcasts
 
 __Diff Producer/Processor__
 
