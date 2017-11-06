@@ -110,10 +110,11 @@ Things this module will have to do:
 
 * Music things
 
-__Websocket Server__
+__Network__
 
-Since the server probably communicates over websockets, it had best have a
-websocket server to communicate with.
+Since the server probably communicates over a network, it had best have the
+capability to communicate over a network. A message queue such as ØMQ may
+suffice.
 
 Things this module will have to do:
 

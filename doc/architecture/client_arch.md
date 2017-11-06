@@ -37,37 +37,47 @@ contribute greatly to a good user experience.
 
 Note that some modules are shared between the client and server.
 
-Login/Landing Page GUI
-    The Composte client uses a GUI to manage server login and opening projects.
+__Login/Landing Page GUI__
 
-Sheet Music Editor GUI
-    The Composte client is a Python program and uses a GUI to drive
-    interaction with the user.
+The Composte client uses a GUI to manage server login and opening projects.
 
-Diff Producer/Processor
-    Updates are exchanged via diffs, which are hard. Therefore it is probably
-    a good idea to abstract those away.
+__Sheet Music Editor GUI__
 
-Websocket Client
-    Since the client probably communicates with the server over websockets, it
-    had best have a websocket client to communicate with.
+The Composte client is a Python program and uses a GUI to drive
+interaction with the user.
 
-Music Things
-    If this is Google Docs for Music, it had best be ablt to do some music
-    things.
+__Diff Producer/Processor__
 
-Host Interactions (Playback, export, etc.)
-    At the very least, we would like to provide playback capabilities and the
-    ability to export the created sheet music to a file. It may turn out that
-    `music21` has these features (or appropriate delegation strategies)
-    built-in, but we'll plan for the worst.
+Updates are exchanged via diffs, which are hard. Therefore it is probably
+a good idea to abstract those away.
 
-Cache (Soundfonts, etc.)
-    If ever the client needs to cache things like soundfonts, it would be best
-    to have a simple caching delegate to make use of.
+__Network__
 
-Serializer/Deserializer
-    Because this isn't Erlang, communication is done using textual/binary
-    messages, and there is no built-in serialization for arbitrary Python
-    objects. Thus a project-standard serialization/deserialzation suite is
-    necessary.
+Since the client probably communicates with the server over a network, the
+client had best have the capability to communicate over a network. A
+message queue such as ØMQ may suffice.
+
+__Music Things__
+
+If this is Google Docs for Music, it had best be ablt to do some music
+things.
+
+__Host Interactions (Playback, export, etc.)__
+
+At the very least, we would like to provide playback capabilities and the
+ability to export the created sheet music to a file. It may turn out that
+`music21` has these features (or appropriate delegation strategies)
+built-in, but we'll plan for the worst.
+
+__Cache (Soundfonts, etc.)__
+
+If ever the client needs to cache things like soundfonts, it would be best
+to have a simple caching delegate to make use of.
+
+__Serializer/Deserializer__
+
+Because this isn't Erlang, communication is done using textual/binary
+messages, and there is no built-in serialization for arbitrary Python
+objects. Thus a project-standard serialization/deserialzation suite is
+necessary.
+
