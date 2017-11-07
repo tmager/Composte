@@ -69,7 +69,6 @@ Things to make happen, probably mostly in order:
 Things that have happened, in no particular order:
 
 * Terrible Puns
-* Whiteboards
 * An echo server using ØMQ
 * Fake encryption v1
 * Realizing a love of dependency injection as a design pattern
@@ -90,7 +89,7 @@ Realistically, we haven't planned far enough ahead to know what we're going to
 do first. However, we are likely to start with a client GUI making a
 connection to a remote server.
 
-An un-insightful timeline:
+A very un-insightful timeline:
 
 Before 6 December 2017:
 
