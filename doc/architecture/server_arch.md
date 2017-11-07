@@ -119,6 +119,8 @@ suffice.
 Things this module will have to do:
 
 * Manage connections and handles
+* Fake key exchange and encryption
+* Do key exchange (Piggyback off of https?) and encryption (AES128)
 
 __Serializers/Deserializer__
 

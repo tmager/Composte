@@ -12,7 +12,7 @@ both the user and from a remote server?
 3. Here is the one we chose (at least provisionally) and why
 
 We determined that wrapping existing graphical music editors that were built
-to operator in single-user mode would force us to choose between offering a
+to operate in single-user mode would force us to choose between offering a
 tolerable user experience and making the application fulfill its intended
 purpose.
 
