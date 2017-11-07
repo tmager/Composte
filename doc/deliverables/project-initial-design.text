@@ -1,3 +1,14 @@
+Concurrency Project Initial Design
+
+Supplementary images are located in our git repository, the link to which
+would look better if this were a markdown document, but this isn't one, so
+it's not.
+
+https://github.com/tmager/Composte/tree/skeletal_docs/doc/images/Bad_Diagrams
+
+Feel free to peruse the rest of the scatterbrained documentation if you so
+wish.
+
 1. Here is a problem that we want to address
 
 How do we get a GUI that can seamlessly respond to updates originating from
