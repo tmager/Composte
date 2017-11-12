@@ -7,3 +7,5 @@ secure websockets. More details are provided below.
 
 [Overview](overview.md)
 
+[Over-the-wire format](format.md)
+
