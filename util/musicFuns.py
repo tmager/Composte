@@ -183,8 +183,13 @@ def sendWholeStream(stream):
     # Broadcast to client
     stream.offsetMap()
 
+def sendObjectsAtStreamOffset(offset, stream): 
+    """ Send all objects at a given stream offset to a client. """
+    # Broadcast objs to client
+    objs = filter(lambda x: x.offset == offset, stream) 
+
 def addLyric(offset, stream, lyric): 
-""" Add lyrics to a given note in the score. """
+    """ Add lyrics to a given note in the score. """
     notes = stream.notes
     for note in notes: 
         if note.offset == offset: 
