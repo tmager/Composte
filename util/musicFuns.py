@@ -28,7 +28,7 @@ import music21
 
 class Project: 
     def __init__(self):
-        self.stream = music21.stream.Stream()
+        self.parts = [music21.stream.Stream()]
         self.metadata = {}
     
 def changeKeySig(offset, stream, newKeySig): 
