@@ -6,7 +6,7 @@ import music21
 # the beginning of the piece (in quarterLengths, or "qLs")
 # must always be given as the first argument to all
 # update functions. Also, the server must know WHICH 
-# stream to apply the update in, hence the need to
+# part to apply the update in, hence the need to
 # pass it as the second argument in all cases.
 
 # Since rests are simply portions of the music where
@@ -31,42 +31,42 @@ class Project:
         self.parts = [music21.stream.Stream()]
         self.metadata = {}
     
-def changeKeySig(offset, stream, newKeySig): 
-    """ Changes the Key Signature at a given offset inside a stream """
-    oldKeySigs = stream.getKeySignatures()
+def changeKeySig(offset, part, newKeySig): 
+    """ Changes the Key Signature at a given offset inside a part """
+    oldKeySigs = part.getKeySignatures()
     for i in range(len(oldKeySigs)): 
         if oldKeySigs[i].offset == offset: 
-            stream.replace(oldKeySigs[i], newKeySig)
+            part.replace(oldKeySigs[i], newKeySig)
             if i + 1 == len(oldKeySigs): 
-                renameNotes(offset, stream, newKeySig)
+                renameNotes(offset, part, newKeySig)
             else: 
-                renameNotes(offset, stream, newKeySig, oldKeySigs[i + 1].offset)
+                renameNotes(offset, part, newKeySig, oldKeySigs[i + 1].offset)
             # Broadcast the whole file 
             return
-    stream.insert(offset, newKeySig)
+    part.insert(offset, newKeySig)
     for oldKeySig in oldKeySigs: 
         if offset < oldKeySig.offset: 
-            renameNotes(offset, stream, newKeySig, oldKeySig.offset) 
+            renameNotes(offset, part, newKeySig, oldKeySig.offset) 
             # Broadcast the whole file 
             return
-    renameNotes(offset, stream, newKeySig)
+    renameNotes(offset, part, newKeySig)
     # Broadcast the whole file
   
-def renameNotes(startOffset, stream, keySig, endOffset=None):
+def renameNotes(startOffset, part, keySig, endOffset=None):
     """ Rename all notes affected by a key signature change
         intelligently so as to not have sharp accidentals
         in a flat key signature. Diffs need to accumulate 
         while the renaming is in process. """
-    notes = stream.notes
+    notes = part.notes
     hasSharps = 0 < keySig.sharps 
     for note in notes: 
         offset = note.offset
         if endOffset is None: 
             if startOffset <= offset: 
-                stream.replace(note, renameNote(note, hasSharps))
+                part.replace(note, renameNote(note, hasSharps))
         else: 
             if startOffset <= offset and offset <= endOffset:
-                stream.replace(note, renameNote(note, hasSharps))
+                part.replace(note, renameNote(note, hasSharps))
 
 def renameNote(note, hasSharps):       
     """ Rename a note intelligently within a key. """
@@ -91,36 +91,40 @@ def renameNote(note, hasSharps):
             note.name = newName
     return note
                 
-def changeTimeSig(offset, stream, newTimeSig): 
-    """ Changes the Time Signature at a given offset inside a stream """
-    oldTimeSigs = stream.getTimeSignatures()
+def changeTimeSig(offset, part, newTimeSig): 
+    """ Changes the Time Signature at a given offset inside a part """
+    oldTimeSigs = part.getTimeSignatures()
     for oldTimeSig in timeSigs: 
         if oldTimeSig.offset == offset: 
-            stream.replace(oldTimeSig, newTimeSig)
+            part.replace(oldTimeSig, newTimeSig)
             # Broadcast
-    stream.insert(offset, newTimeSig)
+    part.insert(offset, newTimeSig)
     # Broadcast
 
-def insertMetronomeMark(offset, stream, mark): 
-    """ Insert a metronome marking in a stream at a given offset. """
-    markings = stream.metronomeMarkBoundaries()
-    for marking in markings: 
-        # Marking already exists at that location, so update it
-        if marking[0] == offset: 
-            marking[2] = mark
-            # Broadcast 
-    stream.insert(offset, mark)
-    # Broadcast
+def insertMetronomeMark(offset, parts, mark): 
+    """ Insert a metronome marking in a list of
+        parts at a given offset. """
+    for part in parts: 
+        markings = part.metronomeMarkBoundaries()
+        for marking in markings: 
+            # Marking already exists at that location, so update it
+            if marking[0] == offset: 
+                marking[2] = mark
+                # Broadcast 
+        part.insert(offset, mark)
+        # Broadcast
 
-def removeMetronomeMark(offset, stream, mark): 
-    """ Remove a metronome marking in a stream at a given offset. """
-    markings = stream.metronomeMarkBoundaries()
-    for marking in markings: 
-        if marking[0] == offset: 
-            stream.remove(mark)
-            # Broadcast success
-            return
-    # Broadcast failure
+def removeMetronomeMark(offset, parts, mark): 
+    """ Remove a metronome marking from each part in
+        a list of parts at a given offset. """
+    for part in parts: 
+        markings = part.metronomeMarkBoundaries()
+        for marking in markings: 
+            if marking[0] == offset: 
+                part.remove(mark)
+                # Broadcast success
+                return
+        # Broadcast failure
 
 def makeMetronomeMark(text, bpm, pulseQLduration, marksMade): 
     """ Make a metronome marking that can be uniquely identified as 
@@ -130,24 +134,24 @@ def makeMetronomeMark(text, bpm, pulseQLduration, marksMade):
     marksMade[0] += 1
     return mark
 
-def insertNote(offset, stream, newNote): 
-    """ Add a note at a given offset to a stream. """
-    notes = stream.notes
+def insertNote(offset, part, newNote): 
+    """ Add a note at a given offset to a part. """
+    notes = part.notes
     for note in notes: 
         if note.offset == offset: 
             note.add(newNote)
             # Broadcast
-    stream.insert(offset, newNote) 
+    part.insert(offset, newNote) 
     # Broadcast
 
-def appendNote(stream, newNote): 
-    """ Add a note at the end of a stream. """
-    stream.append(newNote)
+def appendNote(part, newNote): 
+    """ Add a note at the end of a part. """
+    part.append(newNote)
     # Broadcast
 
-def removeNote(offset, stream, removedNoteName): 
-    """ Remove a note at a given offset into a stream. """
-    notes = stream.notes
+def removeNote(offset, part, removedNoteName): 
+    """ Remove a note at a given offset into a part. """
+    notes = part.notes
     for note in notes: 
         if note.offset == offset: 
             try: 
@@ -159,38 +163,44 @@ def removeNote(offset, stream, removedNoteName):
 
 def createNote(pitchName, durationInQLs): 
     """ Creates a Note from the name of a pitch 
-        and a duration in quarter lengths. 
-        Transparently converts all notes to chords
-        for ease of manipulation at later times. """
+        and a duration in quarter lengths. """
     note = music21.note.Note(pitchName)
     note.duration = durationInQLs
     return note
 
-def transpose(stream, semitones): 
-    """ Transposes the whole stream up or down 
+def transpose(part, semitones): 
+    """ Transposes the whole part up or down 
         by a number of semitones. """
-    stream.transpose(semitones)
+    part.transpose(semitones)
     # Broadcast whole file
 
-def insertMeasures(insertionOffset, stream, insertedQLs): 
-    """ Insert measures in a stream by moving the offsets of 
+def insertMeasures(insertionOffset, part, insertedQLs): 
+    """ Insert measures in a part by moving the offsets of 
         portions of the score by a given number of QLs. """
-    stream.shiftElements(insertedQLs, insertionOffset)
+    part.shiftElements(insertedQLs, insertionOffset)
     # Broadcast whole file
 
-def sendWholeStream(stream): 
-    """ Send a whole stream of music21 data to a client. """
-    # Broadcast to client
-    stream.offsetMap()
+def sendAllParts(project): 
+    """ Send all parts of music21 data 
+        in a project to a client. """
+    parts = project.parts
+    for part in parts: 
+        sendPart(part)
 
-def sendObjectsAtStreamOffset(offset, stream): 
-    """ Send all objects at a given stream offset to a client. """
+def sendPart(part): 
+    """ Send a single part of music21 data 
+        in a project to a client. """
+    stream = part.offsetMap()
+    # Broadcast stream to client
+
+def sendObjectsAtPartOffset(offset, part): 
+    """ Send all objects at a given part offset to a client. """
     # Broadcast objs to client
-    objs = filter(lambda x: x.offset == offset, stream) 
+    objs = filter(lambda x: x.offset == offset, part) 
 
-def addLyric(offset, stream, lyric): 
+def addLyric(offset, part, lyric): 
     """ Add lyrics to a given note in the score. """
-    notes = stream.notes
+    notes = part.notes
     for note in notes: 
         if note.offset == offset: 
             note.addLyric(lyric)
