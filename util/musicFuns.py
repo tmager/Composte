@@ -26,6 +26,11 @@ import music21
 # expressions, and different clefs besides treble remain 
 # unimplemented. 
 
+class Project: 
+    def __init__(self):
+        self.stream = music21.stream.Stream()
+        self.metadata = {}
+    
 def changeKeySig(offset, stream, newKeySig): 
     """ Changes the Key Signature at a given offset inside a stream """
     oldKeySigs = stream.getKeySignatures()
@@ -159,8 +164,7 @@ def createNote(pitchName, durationInQLs):
         for ease of manipulation at later times. """
     note = music21.note.Note(pitchName)
     note.duration = durationInQLs
-    chord = music21.chord.Chord(note)
-    return chord
+    return note
 
 def transpose(stream, semitones): 
     """ Transposes the whole stream up or down 
