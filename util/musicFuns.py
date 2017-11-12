@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import music21
 
 # The server always needs to know WHERE to make 
