@@ -15,12 +15,14 @@ Messages semantically have the following structure, borrowing python's splat
 operator:
 
 ```python
-encrypted key/cookie function_name *args
+encrypted_cookie function_name *args
 ```
 
 ## Exceptions
 
-__Authentication Handshake__
+__Key Exchange__
+
+
 
 ## The Specifics
 
