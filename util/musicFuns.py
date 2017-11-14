@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 import music21
 
 # The server always needs to know WHERE to make 
@@ -169,6 +167,54 @@ def createNote(pitchName, durationInQLs):
     note = music21.note.Note(pitchName)
     note.duration = durationInQLs
     return note
+
+def updateTieStatus(offset, part, noteName): 
+    """ Updates the tie status of a note with the name noteName
+        at a given offset into a given part. The offset given to
+        this function MUST be the same as the offset of the 
+        FIRST note in a legally tie-able pair of notes (the notes
+        must be the same pitch, and there must be no rests between them)."""
+    notes = part.notes
+    for note in notes: 
+        pitchStr = note.pitch.nameWithOctave
+        if note.offset == offset and pitchStr == noteName: 
+            qL = note.duration.quarterLength
+            tieCantidates = part.getElementsByOffset(note.offset + qL)
+            for cantidate in tieCantidates: 
+                if cantidate.pitch.nameWithOctave == noteName: 
+                    makeTieUpdate([note, cantidate])
+                else: 
+                    pass
+            return # Saves some processor cycles by exiting the loop early
+    
+def makeTieUpdate(notes): 
+    """ If the pair of notes passed to this function is untied, 
+        this function ties them together. If ther pair of notes
+        passed to this function is tied, the tie is severed. """
+    [firstNote, secondNote] = notes
+    # Add Ties
+    if firstNote.tie is None and secondNote.tie is None: 
+        firstNote.tie = music21.tie.Tie("start")
+        secondNote.tie = music21.tie.Tie("stop")
+    elif firstNote.tie.type == "stop" and secondNote.tie is None: 
+        firstNote.tie.type = "continue" 
+        secondNote.tie = music21.tie.Tie("stop")
+    elif firstNote.tie is None and secondNote.tie.type == "start": 
+        firstNote.tie = music21.tie.Tie("start")
+        secondNote.tie.type = "continue"
+    # Remove Ties
+    if firstNote.tie.type == "start" and secondNote.tie.type == "stop": 
+        firstNote.tie = None
+        secondNote.tie = None
+    elif firstNote.tie.type == "continue" and secondNote.tie.type == "stop": 
+        firstNote.tie.type = "stop" 
+        secondNote.tie = None
+    elif firstNote.tie.type == "continue" and secondNote.tie.type == "continue": 
+        firstNote.tie.type = "stop"
+        secondNote.tie.type = "start"
+    # For Completeness
+    else: 
+        pass 
 
 def transpose(part, semitones): 
     """ Transposes the whole part up or down 
