@@ -265,11 +265,49 @@ def transpose(part, semitones):
     part.transpose(semitones, inPlace=True)
     # Broadcast whole file
 
+def insertClef(offset, part, clefStr): 
+    """ Inserts a new clef at a given offset in a given part. 
+        The types of clefs supported ON THE BACKEND are: 
+        'treble', 'treble8va', 'treble8vb, 'bass', 'bass8va', 
+        'bass8vb', 'frenchviolin', 'alto', 'tenor', 'cbaritone', 
+        'fbaritone', 'gsoprano', 'mezzosoprano', 'soprano',
+        'percussion', and 'tab'. """
+    newClef = music21.clef.clefFromString(clefStr)
+    elems = getElementsByOffset(offset) 
+    # Only clef objects have an octaveChange field
+    for elem in elems: 
+        if elem.octaveChange is not None:
+            part.replace(elem, newClef)
+            return
+    part.insert(offset, newClef)
+
+def removeClef(offset, part): 
+    """ Remove a clef from a given offset in a given part. """
+    elems = getElementsByOffset(offset)
+    for elem in elems: 
+        # Only clef objects have an octaveChange field
+        if elem.octaveChange is not None: 
+            part.remove(elem)
+
 def insertMeasures(insertionOffset, part, insertedQLs): 
     """ Insert measures in a part by moving the offsets of 
         portions of the score by a given number of QLs. """
     part.shiftElements(insertedQLs, insertionOffset)
     # Broadcast whole file
+
+def assignInstrument(part, instrumentStr): 
+    """ Given an instrument name, assigns that instrument 
+        to a part in the score. Each part can only have one
+        instrument, so providing an offset isn't necessary. 
+        The number of instruments supported on the backend
+        are much to numerous to name."""
+    instrument = music21.instrument.fromString(instrumentStr)
+    elems = getElementsByOffset(0.0)
+    for elem in elems: 
+        if elem.instrumentName is not None: 
+            part.replace(elem, instrument)
+            return
+    part.insert(0.0, instrument)
 
 def sendAllParts(project): 
     """ Send all parts of music21 data 
