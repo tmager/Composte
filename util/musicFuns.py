@@ -43,7 +43,7 @@ class Project:
         """ Swaps two parts in a project. This is purely cosmetic: all
             it will affect is the order in which parts are presented on 
             the GUI. firstPart and secondPart are both 0-indexed integers
-            representing the index of the parts to swap. """
+            representing the indicies of the parts to swap. """
         tmp = self.parts[firstPart]
         self.parts[firstPart] = self.parts[secondPart]
         self.parts[secondPart] = tmp
@@ -103,16 +103,20 @@ def renameNotes(startOffset, part, keySig, endOffset=None):
 
 def renameNote(note, hasSharps):       
     """ Rename a note intelligently within a key. """
+    # Have to create a NEW Note object to use replace. Reasons unclear.
     name = note.name
+    octave = note.octave
+    duration = note.duration
     if hasSharps:
         if name[1] == '-': 
             noteName = name[0]
-            if noteName == 'A': 
+            if noteName == 'A':
                 newName = 'G'
             else: 
                 newName = chr(ord(noteName) - 1)
             newName += '#'
-            note.name = newName
+        else: 
+            newName = name
     else: 
         if name[1] == '#': 
             noteName = name[0]
@@ -121,8 +125,9 @@ def renameNote(note, hasSharps):
             else: 
                 newName = chr(ord(noteName) + 1) 
             newName += '-'
-            note.name = newName
-    return note
+        else: 
+            newName = name
+    return createNote(newName + str(octave), duration.quarterLength)
                 
 def changeTimeSignature(offset, part, newSigStr): 
     """ Changes the Time Signature at a given offset inside a part. 
@@ -137,9 +142,15 @@ def changeTimeSignature(offset, part, newSigStr):
     part.insert(offset, newTimeSig)
     # Broadcast
 
-def insertMetronomeMark(offset, parts, mark): 
+def insertMetronomeMark(offset, parts, markData): 
     """ Insert a metronome marking in a list of
-        parts at a given offset. """
+        parts at a given offset. markData is a tuple of 
+        staff text as a string (for almost all purposes, this will 
+        be the empty string), pulses per minute as an integer, and 
+        the duration in quarterLengths of a single pulse as a
+        float. When duration is 1.0, the second argument is 
+        exactly equivalent to BPM (beats per minute). """
+    mark = makeMetronomeMark(markData)
     for part in parts: 
         markings = part.metronomeMarkBoundaries()
         for marking in markings: 
@@ -150,22 +161,21 @@ def insertMetronomeMark(offset, parts, mark):
         part.insert(offset, mark)
         # Broadcast
 
-def removeMetronomeMark(offset, parts, mark): 
+def removeMetronomeMark(offset, parts): 
     """ Remove a metronome marking from each part in
         a list of parts at a given offset. """
     for part in parts: 
         markings = part.metronomeMarkBoundaries()
         for marking in markings: 
             if marking[0] == offset: 
-                part.remove(mark)
+                part.remove(marking)
     # Broadcasts
 
-def makeMetronomeMark(text, bpm, pulseQLduration, marksMade): 
+def makeMetronomeMark(markData): 
     """ Make a metronome marking that can be uniquely identified as 
         an object during removal if removal is necessary."""
+    (text, bpm, pulseQLduration) = markData
     mark = music21.tempo.MetronomeMark(text, bpm, pulseQLduration)
-    mark.id = marksMade[0]
-    marksMade[0] += 1
     return mark
 
 def insertNote(offset, part, newNote): 
@@ -192,6 +202,7 @@ def createNote(pitchName, durationInQLs):
         and a duration in quarter lengths. """
     note = music21.note.Note(pitchName)
     note.duration = music21.duration.Duration(durationInQLs)
+    note.pitch.spellingIsInferred = False
     return note
 
 def updateTieStatus(offset, part, noteName): 
