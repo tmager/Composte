@@ -27,12 +27,45 @@ import music21
 # unimplemented. 
 
 class Project: 
-    def __init__(self):
+    def __init__(self, owner, metadata):
+        """ Initializes the Project with an empty stream, 
+            a list of subscribers consisting solely of the owner, 
+            and a dictionary of metadata about the score. """
         self.parts = [music21.stream.Stream()]
-        self.metadata = {}
+        self.subscribers = [owner]
+        self.metadata = metadata
     
-def changeKeySig(offset, part, newKeySig): 
-    """ Changes the Key Signature at a given offset inside a part """
+    def addPart(self): 
+        """ Adds a new part to a project. """
+        self.parts.append(music21.stream.Stream())
+
+    def swapParts(self, firstPart, secondPart): 
+        """ Swaps two parts in a project. This is purely cosmetic: all
+            it will affect is the order in which parts are presented on 
+            the GUI. firstPart and secondPart are both 0-indexed integers
+            representing the index of the parts to swap. """
+        tmp = self.parts[firstPart]
+        self.parts[firstPart] = self.parts[secondPart]
+        self.parts[secondPart] = tmp
+
+    def removePart(self, partToRemove): 
+        """ Remove a part from a project. partToRemove is a 0-indexed
+            integer representing the index of the part to remove. """
+        del self.parts[partToRemove]
+
+    def addSubscriber(self, user): 
+        """ Adds a new subscriber to the project. """
+        self.subscribers.append(user)
+
+    def removeSubscriber(self, user): 
+        """ Removes a subscriber from a project. """
+        self.subscribers.remove(user)
+
+def changeKeySig(offset, part, newSigSharps): 
+    """ Changes the Key Signature at a given offset inside a part. 
+        Must provide the correct number of sharps in the key signature
+        as an integer. Negative numbers correspond to the number of flats. """
+    newKeySig = music21.key.KeySignature(newSigSharps)
     oldKeySigs = part.getKeySignatures()
     for i in range(len(oldKeySigs)): 
         if oldKeySigs[i].offset == offset: 
@@ -91,10 +124,13 @@ def renameNote(note, hasSharps):
             note.name = newName
     return note
                 
-def changeTimeSig(offset, part, newTimeSig): 
-    """ Changes the Time Signature at a given offset inside a part """
+def changeTimeSignature(offset, part, newSigStr): 
+    """ Changes the Time Signature at a given offset inside a part. 
+        newTimeSig must be a string representing the new time signature, 
+        such as '4/4' or '6/8'. """
+    newTimeSig = music21.meter.TimeSignature(newSigStr)
     oldTimeSigs = part.getTimeSignatures()
-    for oldTimeSig in timeSigs: 
+    for oldTimeSig in oldTimeSigs: 
         if oldTimeSig.offset == offset: 
             part.replace(oldTimeSig, newTimeSig)
             # Broadcast
@@ -122,9 +158,7 @@ def removeMetronomeMark(offset, parts, mark):
         for marking in markings: 
             if marking[0] == offset: 
                 part.remove(mark)
-                # Broadcast success
-                return
-        # Broadcast failure
+    # Broadcasts
 
 def makeMetronomeMark(text, bpm, pulseQLduration, marksMade): 
     """ Make a metronome marking that can be uniquely identified as 
@@ -136,11 +170,6 @@ def makeMetronomeMark(text, bpm, pulseQLduration, marksMade):
 
 def insertNote(offset, part, newNote): 
     """ Add a note at a given offset to a part. """
-    notes = part.notes
-    for note in notes: 
-        if note.offset == offset: 
-            note.add(newNote)
-            # Broadcast
     part.insert(offset, newNote) 
     # Broadcast
 
@@ -153,19 +182,16 @@ def removeNote(offset, part, removedNoteName):
     """ Remove a note at a given offset into a part. """
     notes = part.notes
     for note in notes: 
-        if note.offset == offset: 
-            try: 
-                note.remove(removedNoteName) 
-            except ValueError: 
-                # The note was already removed, don't remove it again 
-                pass
+        noteName = note.pitch.nameWithOctave
+        if note.offset == offset and noteName == removedNoteName: 
+            part.remove(note)
     # Broadcast
 
 def createNote(pitchName, durationInQLs): 
     """ Creates a Note from the name of a pitch 
         and a duration in quarter lengths. """
     note = music21.note.Note(pitchName)
-    note.duration = durationInQLs
+    note.duration = music21.duration.Duration(durationInQLs)
     return note
 
 def updateTieStatus(offset, part, noteName): 
@@ -202,24 +228,30 @@ def makeTieUpdate(notes):
     elif firstNote.tie is None and secondNote.tie.type == "start": 
         firstNote.tie = music21.tie.Tie("start")
         secondNote.tie.type = "continue"
+    elif firstNote.tie.type == "stop" and secondNote.tie.type == "start": 
+        firstNote.tie.type = "continue"
+        secondNote.tie.type = "continue"
     # Remove Ties
-    if firstNote.tie.type == "start" and secondNote.tie.type == "stop": 
+    elif firstNote.tie.type == "start" and secondNote.tie.type == "stop": 
         firstNote.tie = None
         secondNote.tie = None
-    elif firstNote.tie.type == "continue" and secondNote.tie.type == "stop": 
-        firstNote.tie.type = "stop" 
-        secondNote.tie = None
+    elif firstNote.tie.type == "start" and secondNote.tie.type == "continue": 
+        firstNote.tie = None
+        secondNote.tie.type = "start"
     elif firstNote.tie.type == "continue" and secondNote.tie.type == "continue": 
         firstNote.tie.type = "stop"
         secondNote.tie.type = "start"
-    # For Completeness
+    elif firstNote.tie.type == "continue" and secondNote.tie.type == "stop": 
+        firstNote.tie.type = "stop" 
+        secondNote.tie = None
+    # For completeness and defense against race conditions
     else: 
         pass 
 
 def transpose(part, semitones): 
     """ Transposes the whole part up or down 
-        by a number of semitones. """
-    part.transpose(semitones)
+        by an integer number of semitones. """
+    part.transpose(semitones, inPlace=True)
     # Broadcast whole file
 
 def insertMeasures(insertionOffset, part, insertedQLs): 
