@@ -11,55 +11,15 @@ import music21
 
 # Since rests are simply portions of the music where
 # no sound is made, they do not need to be explicitly 
-# notated in the backend representation. Also, 
-# since ties across barlines only depend on a note's 
-# duration, the GUI can figure out where to put 
-# rests and where to put ties without having to 
-# explicitly define them on the backend.
+# notated in the backend representation. 
 
 # Though music21 allows explicit definitions of which 
 # 8th/16th notes (and below) should be beamed together
 # into a single unit, this is wildly unnecessary for 
 # our application. Correct beaming would be the job of
 # the GUI, and our GUI may not even address beaming whatsoever.
-# Likewise, for this initial implemenation, articulations
-# expressions, and different clefs besides treble remain 
-# unimplemented. 
-
-class Project: 
-    def __init__(self, owner, metadata):
-        """ Initializes the Project with an empty stream, 
-            a list of subscribers consisting solely of the owner, 
-            and a dictionary of metadata about the score. """
-        self.parts = [music21.stream.Stream()]
-        self.subscribers = [owner]
-        self.metadata = metadata
-    
-    def addPart(self): 
-        """ Adds a new part to a project. """
-        self.parts.append(music21.stream.Stream())
-
-    def swapParts(self, firstPart, secondPart): 
-        """ Swaps two parts in a project. This is purely cosmetic: all
-            it will affect is the order in which parts are presented on 
-            the GUI. firstPart and secondPart are both 0-indexed integers
-            representing the indicies of the parts to swap. """
-        tmp = self.parts[firstPart]
-        self.parts[firstPart] = self.parts[secondPart]
-        self.parts[secondPart] = tmp
-
-    def removePart(self, partToRemove): 
-        """ Remove a part from a project. partToRemove is a 0-indexed
-            integer representing the index of the part to remove. """
-        del self.parts[partToRemove]
-
-    def addSubscriber(self, user): 
-        """ Adds a new subscriber to the project. """
-        self.subscribers.append(user)
-
-    def removeSubscriber(self, user): 
-        """ Removes a subscriber from a project. """
-        self.subscribers.remove(user)
+# Likewise, for this initial implemenation, articulations,
+# expressions, and repeats remain unimplemented. 
 
 def changeKeySig(offset, part, newSigSharps): 
     """ Changes the Key Signature at a given offset inside a part. 
@@ -288,6 +248,7 @@ def removeClef(offset, part):
         # Only clef objects have an octaveChange field
         if elem.octaveChange is not None: 
             part.remove(elem)
+            return
 
 def insertMeasures(insertionOffset, part, insertedQLs): 
     """ Insert measures in a part by moving the offsets of 
@@ -309,23 +270,25 @@ def assignInstrument(part, instrumentStr):
             return
     part.insert(0.0, instrument)
 
-def sendAllParts(project): 
-    """ Send all parts of music21 data 
-        in a project to a client. """
-    parts = project.parts
-    for part in parts: 
-        sendPart(part)
+def addDynamic(offset, part, dynamicStr): 
+    """ Adds a dynamic marking to a part at a given offset.
+        Acceptable values of dynamicStr are 'ppp', 'pp', 'p',
+        'mp', 'mf', 'f', 'ff', and 'fff'. """
+    dyanmic = music21.dynamics.Dynamic(dynamicStr)
+    elems = getElementsByOffset(offset) 
+    for elem in elems: 
+        if elem.volumeScalar is not None: 
+            part.replace(elem, dynamic)
+            return
+    part.insert(offset, dynamic) 
 
-def sendPart(part): 
-    """ Send a single part of music21 data 
-        in a project to a client. """
-    stream = part.offsetMap()
-    # Broadcast stream to client
-
-def sendObjectsAtPartOffset(offset, part): 
-    """ Send all objects at a given part offset to a client. """
-    # Broadcast objs to client
-    objs = filter(lambda x: x.offset == offset, part) 
+def removeDynamic(offset, part): 
+    """ Removes a dynamic marking from a part at a given offset. """
+    elems = getElementsByOffset(offset) 
+    for elem in elems: 
+        if elem.volumeScalar is not None: 
+            part.remove(elem)
+            return
 
 def addLyric(offset, part, lyric): 
     """ Add lyrics to a given note in the score. """
