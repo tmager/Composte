@@ -138,13 +138,16 @@ def echo(server, message):
 def id(elem):
     return elem
 
-def handle_sigint(sig, frame, server):
+def stop_server(sig, frame, server):
     server.stop()
 
 if __name__ == "__main__":
 
     if not DEBUG:
-        signal.signal(signal.SIGINT, lambda sig, f: handle_sigint(sig, f, s))
+        signal.signal(signal.SIGINT, lambda sig, f: stop_server(sig, f, s))
+        signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
+        signal.signal(signal.SIGTERM, lambda sig, f: stop_server(sig, f, s))
+        signal.signal(signal.SIGSTOP, lambda sig, f: stop_server(sig, f, s))
 
     # Set up the server
     s = Server("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
