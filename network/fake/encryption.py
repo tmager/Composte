@@ -14,7 +14,8 @@ class Log:
         self.__sink = sink
 
     def log(self, message):
-        self.__sink.write(str(message))
+        self.__sink.write("Logging: " + str(message) + "\n")
+        self.__sink.flush()
         return message
 
     def encrypt(self, message):
