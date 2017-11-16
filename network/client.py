@@ -12,7 +12,9 @@ import sys
 class Subscribe:
     def __init__(self, remote_address, zmq_context):
         """
-        Subscribe to a publishing endpoint
+        Subscribe.__init__(self, remote_address, zmq_context)
+        Subscribe to a publishing endpoint at remote_address
+        Requires a zmq context
         """
 
         self.__context = zmq_context
@@ -29,6 +31,7 @@ class Subscribe:
 
     def recv(self):
         """
+        Subscribe.recv(self)
         Retrieve a message, failing after a timeout.
         Returns string on success, None on failure
         """
@@ -52,6 +55,7 @@ class Subscribe:
 
     def stop(self):
         """
+        Subscribe.stop(self)
         Stop listening for broadcasts
         """
         with self.__lock:
@@ -65,6 +69,8 @@ class Client:
     def __init__(self, remote_address, broadcast_address,
             encryption_scheme = Encryption()):
         """
+        Client.__init__(self, remote_address, broadcast_address,
+            encryption_scheme)
         Network client for Composte. Opens an interactive connection and a
         subscription to the server.
         encryption_scheme must provide encrypt and decrypt methods
@@ -85,8 +91,10 @@ class Client:
 
     def send(self, message, preprocess = lambda x: x):
         """
-        Send a message down the interactive socket.
-        Blocks until receiving a reply
+        Client.send(self, message, preprocess = lambda msg: msg)
+        Send a message down the interactive socket, blocking until a reply is
+        received.
+        The reply is fed through preprocess before being returned
         """
         with self.__lock:
             try:
@@ -107,8 +115,10 @@ class Client:
 
     def __listen_almost_forever(self, handler, preprocess = lambda x: x):
         """
+        Client.__listen_almost_forever(self, handler,
+            preprocess = lambda msg: msg)
         Listen for messages until the client is stopped.
-        Messages are handed off to a user-provided handler/callback
+        Messages are pipelined through preprocess and then handler.
         """
         while True:
             # print("Listening for broadcasts")
@@ -141,7 +151,9 @@ class Client:
 
     def start_background(self, handler, preprocess = lambda x: x):
         """
-        Start thread listening for braodcasts from the remote Composte server
+        Client.start_background(self, handler, preprocess = lambda msg: msg)
+        Hands off to Clinet.__listen_almost_forever
+        Start thread listening for broadcasts from the remote Composte server
         Does nothing if the thread has already been started
         """
         with self.__lock:
@@ -156,6 +168,7 @@ class Client:
 
     def stop(self):
         """
+        Client.stop(self)
         Stop all network activity for this Composte client
         """
         with self.__lock:

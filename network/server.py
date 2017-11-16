@@ -10,6 +10,9 @@ from threading import Lock
 from fake.encryption import Encryption, Log
 from fake.exceptions import DecryptError, EncryptError, GenericError
 
+from conf import logging as log
+import logging
+
 # Need signal handlers to properly run as daemon
 import signal
 import sys
@@ -23,6 +26,8 @@ class Server:
     def __init__(self, interactive_address, broadcast_address,
             encryption_scheme = Encryption()):
         """
+        Server.__init__(self, interactive_address, broadcast_address,
+            encryption_scheme)
         The network server for Composte.
         interactive_address and broadcast_address must be available for this
         application to bind to.
@@ -48,13 +53,15 @@ class Server:
 
     def broadcast(self, message):
         """
-        Send a broadcast to all subscribed clients
+        Server.broadcast(self, message)
+        Broadcast a message to all subscribed clients
         """
         with self.__block:
             self.__bsocket.send_string(message)
 
     def fail(self, message, reason):
         """
+        Server.fail(self, message, reason)
         Send a failure message to a client
         """
         with self.__ilock:
@@ -65,6 +72,8 @@ class Server:
     def listen_almost_forever(self, handler = lambda x: x,
             preprocess = lambda x: x):
         """
+        Server.listen_almost_forever(self, handler = lambda msg: msg,
+            preprocess = lambda msg: msg)
         Listen for messages on the interactive socket until the server is
         stopped.
         Messages are handed off first to a user-provided preprocessor, the
@@ -119,6 +128,7 @@ class Server:
 
     def stop(self):
         """
+        Server.stop(self)
         Stop the server
         """
         with self.__ilock:
@@ -148,6 +158,10 @@ if __name__ == "__main__":
         signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
         signal.signal(signal.SIGTERM, lambda sig, f: stop_server(sig, f, s))
         signal.signal(signal.SIGSTOP, lambda sig, f: stop_server(sig, f, s))
+
+    log.setup()
+
+    logging.getLogger("main").info("Hello yes this is a test")
 
     # Set up the server
     s = Server("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
