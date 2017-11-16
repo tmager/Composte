@@ -88,43 +88,39 @@ class Server:
                     if nmsg == 0:
                         continue
                     message =  self.__isocket.recv_string()
+                    # Unconditionally catch and ignore _all_ unexpected
+                    # exceptions during the invocations of client-provided
+                    # functions
                     try:
-                        message = self.__translator.decrypt(message)
-                    except DecryptError as e:
-                        self.fail(message, "Decrypt failure")
-                        continue
-                    except:
-                        continue
+                        try:
+                            message = self.__translator.decrypt(message)
+                        except DecryptError as e:
+                            self.fail(message, "Decrypt failure")
+                            continue
 
-                    try:
-                        message = preprocess(message)
-                    except GenericError as e:
-                        self.fail(message, "Internal server error")
-                        continue
-                    except:
-                        continue
+                        try:
+                            message = preprocess(message)
+                        except GenericError as e:
+                            self.fail(message, "Internal server error")
+                            continue
 
-                    try:
-                        reply = handler(self, message)
-                    except GenericError as e:
-                        self.fail(message, "Internal server error")
-                        continue
-                    except:
-                        continue
+                        try:
+                            reply = handler(self, message)
+                        except GenericError as e:
+                            self.fail(message, "Internal server error")
+                            continue
 
-                    try:
-                        reply = postprocess(reply)
-                    except GenericError as e:
-                        self.fail(message, "Internal server error")
-                        continue
-                    except:
-                        continue
+                        try:
+                            reply = postprocess(reply)
+                        except GenericError as e:
+                            self.fail(message, "Internal server error")
+                            continue
 
-                    try:
-                        reply = self.__translator.encrypt(reply)
-                    except EncryptError as e:
-                        self.fail(message, "encrypt failure")
-                        continue
+                        try:
+                            reply = self.__translator.encrypt(reply)
+                        except EncryptError as e:
+                            self.fail(message, "encrypt failure")
+                            continue
                     except:
                         continue
 
