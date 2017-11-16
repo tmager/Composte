@@ -70,15 +70,14 @@ class Server:
                 message))
 
     def listen_almost_forever(self, handler = lambda x: x,
-            preprocess = lambda x: x):
+            preprocess = lambda x: x, postprocess = lambda msg: msg):
         """
         Server.listen_almost_forever(self, handler = lambda msg: msg,
             preprocess = lambda msg: msg)
         Listen for messages on the interactive socket until the server is
         stopped.
-        Messages are handed off first to a user-provided preprocessor, the
-        result of that is handed to the user-provided handler, and the result
-        of that is sent back as a reply
+        Messages are pushed through the pipeline preprocess -> handler ->
+        postprocess, and the result is sent back to as a client
         """
         try:
             while True:
@@ -114,7 +113,15 @@ class Server:
                         continue
 
                     try:
-                        reply = self.__translator.encrypt(message)
+                        reply = postprocess(reply)
+                    except GenericError as e:
+                        self.fail(message, "Internal server error")
+                        continue
+                    except:
+                        continue
+
+                    try:
+                        reply = self.__translator.encrypt(reply)
                     except EncryptError as e:
                         self.fail(message, "encrypt failure")
                         continue
@@ -145,9 +152,6 @@ def echo(server, message):
     server.broadcast(message)
     return message
 
-def id(elem):
-    return elem
-
 def stop_server(sig, frame, server):
     server.stop()
 
@@ -161,12 +165,12 @@ if __name__ == "__main__":
 
     log.setup()
 
-    logging.getLogger("main").info("Hello yes this is a test")
+    logging.getLogger(__name__).info("Hello yes this is a test")
 
     # Set up the server
     s = Server("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
             Log(sys.stderr))
 
     # Start listening
-    s.listen_almost_forever(echo, id)
+    s.listen_almost_forever(echo)
 
