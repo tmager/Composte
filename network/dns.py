@@ -20,6 +20,6 @@ if __name__ == "__main__":
             print(ahh)
         print("=================")
 
-    print(ip("composte.me"))
-    print(ip("google.com"))
+    print("composte.me ==> " + ip("composte.me"))
+    print("google.com  ==> " + ip("google.com"))
 
