@@ -48,11 +48,11 @@ class AdHoc:
         self.__name = "{}/".format(name) if name else ""
 
         self.__prefixes = {
-                "info": "[{}INFO]: ".format(self.__name),.
-                "debug": "[{}DEBUG]: ".format(self.__name),.
-                "warning": "[{}WARNING]: ".format(self.__name),.
-                "error": "[{}ERROR]: ".format(self.__name),.
-                "critical": "[{}CRITICAL]: ".format(self.__name),.
+                "info": "[{}INFO]: ".format(self.__name),
+                "debug": "[{}DEBUG]: ".format(self.__name),
+                "warning": "[{}WARNING]: ".format(self.__name),
+                "error": "[{}ERROR]: ".format(self.__name),
+                "critical": "[{}CRITICAL]: ".format(self.__name),
         }
         self.__prefixes.update(kwargs)
 
