@@ -4,18 +4,21 @@ import zmq
 from threading import Thread, Lock
 from queue import Queue
 
-from fake.encryption import Encryption, Log
-from fake.exceptions import EncryptError, DecryptError, GenericError
+from fake.security import Encryption, Log
+from base.exceptions import EncryptError, DecryptError, GenericError
+
+from base.loggable import Loggable, DevNull
 
 import sys
 
-class Subscribe:
-    def __init__(self, remote_address, zmq_context):
+class Subscribe(Loggable):
+    def __init__(self, remote_address, zmq_context, logger):
         """
         Subscribe.__init__(self, remote_address, zmq_context)
         Subscribe to a publishing endpoint at remote_address
         Requires a zmq context
         """
+        super(Subscribe, self).__init__(logger)
 
         self.__context = zmq_context
 
@@ -29,10 +32,10 @@ class Subscribe:
         self.__backlog = Queue(1024)
         self.__lock = Lock()
 
-    def recv(self):
+    def recv(self, poll_timeout = 500):
         """
-        Subscribe.recv(self)
-        Retrieve a message, failing after a timeout.
+        Subscribe.recv(self, poll_timeout = 500)
+        Retrieve a message, failing after poll_timeout milliseconds.
         Returns string on success, None on failure
         """
         # If we have a backlog, deal with that first, in order
@@ -43,7 +46,7 @@ class Subscribe:
                 msg = self.__backlog.get()
             else:
                 # Wait up to 500 ms
-                nmsg = self.__socket.poll(500)
+                nmsg = self.__socket.poll(poll_timeout)
                 if nmsg == 0:
                     msg = None
                     return msg
@@ -64,17 +67,19 @@ class Subscribe:
 
 # Broadcast handler is separate: Subscribe. Should probably stick it in a
 # thread off to the side.
-class Client:
+class Client(Loggable):
     __context = zmq.Context()
     def __init__(self, remote_address, broadcast_address,
-            encryption_scheme = Encryption()):
+            logger, encryption_scheme = Encryption()):
         """
         Client.__init__(self, remote_address, broadcast_address,
-            encryption_scheme)
+            logger, encryption_scheme = Encryption())
         Network client for Composte. Opens an interactive connection and a
         subscription to the server.
         encryption_scheme must provide encrypt and decrypt methods
+        logger must support at least the methods of base.loggable.Loggable
         """
+        super(Client, self).__init__(logger)
         self.__translator = encryption_scheme
 
         # Interact with remote server
@@ -85,7 +90,7 @@ class Client:
         # Receive broadcasts
         self.__done = False
         self.__background = None
-        self.__listener = Subscribe(broadcast_address, self.__context)
+        self.__listener = Subscribe(broadcast_address, self.__context, logger)
 
         self.__lock = Lock()
 
@@ -113,11 +118,12 @@ class Client:
                 raise e
             return msg
 
-    def __listen_almost_forever(self, handler, preprocess = lambda x: x):
+    def __listen_almost_forever(self, handler, preprocess = lambda x: x,
+            poll_timeout = 500):
         """
         Client.__listen_almost_forever(self, handler,
-            preprocess = lambda msg: msg)
-        Listen for messages until the client is stopped.
+            preprocess = lambda msg: msg, poll_timeout = 500)
+        Poll for messages until the client is stopped
         Messages are pipelined through preprocess and then handler.
         """
         while True:
@@ -125,7 +131,7 @@ class Client:
             with self.__lock:
                 if self.__done: break
 
-            msg = self.__listener.recv()
+            msg = self.__listener.recv(poll_timeout)
             if msg == None:
                 continue
 
@@ -149,9 +155,11 @@ class Client:
 
         self.__listener.stop()
 
-    def start_background(self, handler, preprocess = lambda x: x):
+    def start_background(self, handler, preprocess = lambda x: x,
+            poll_timeout = 500):
         """
-        Client.start_background(self, handler, preprocess = lambda msg: msg)
+        Client.start_background(self, handler, preprocess = lambda msg: msg,
+            poll_timeout = 500)
         Hands off to Clinet.__listen_almost_forever
         Start thread listening for broadcasts from the remote Composte server
         Does nothing if the thread has already been started
@@ -162,7 +170,7 @@ class Client:
 
             self.__background = \
             Thread(target = self.__listen_almost_forever,
-                    args = (handler, preprocess))
+                    args = (handler, preprocess, poll_timeout))
 
             self.__background.start()
 
@@ -188,14 +196,14 @@ def id(pre, elem):
 
 if __name__ == "__main__":
     # Set up the servers
-    s1 = Client("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
+    s1 = Client("ipc:///tmp/interactive", "ipc:///tmp/broadcast", DevNull,
             Encryption())
-    s2 = Client("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
+    s2 = Client("ipc:///tmp/interactive", "ipc:///tmp/broadcast", DevNull,
             Encryption())
 
     # Start broadcast handlers
-    s1.start_background(echo, lambda m: id("1: ", m))
-    s2.start_background(echo, lambda m: id("2: ", m))
+    s1.start_background(echo, lambda m: id("1: ", m), 500)
+    s2.start_background(echo, lambda m: id("2: ", m), 500)
 
     # Poke the server
     for i in range(10):

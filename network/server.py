@@ -7,8 +7,10 @@ import zmq
 
 from threading import Lock
 
-from fake.encryption import Encryption, Log
-from fake.exceptions import DecryptError, EncryptError, GenericError
+from fake.security import Encryption, Log
+from base.exceptions import DecryptError, EncryptError, GenericError
+
+from base.loggable import Loggable
 
 from conf import logging as log
 import logging
@@ -21,18 +23,20 @@ DEBUG = True
 
 # Broadcast socket   -> Publish/Subscribe
 # Interactive socket -> Request/Reply
-class Server:
+class Server(Loggable):
     __context = zmq.Context()
     def __init__(self, interactive_address, broadcast_address,
-            encryption_scheme = Encryption()):
+            logger, encryption_scheme = Encryption()):
         """
         Server.__init__(self, interactive_address, broadcast_address,
-            encryption_scheme)
+            logger, encryption_scheme = Encryption(), logger = None)
         The network server for Composte.
         interactive_address and broadcast_address must be available for this
         application to bind to.
         encryption_scheme must provide encrypt and decrypt methods
+        logger must support at least the methods of base.loggable.Loggable
         """
+        super(Server, self).__init__(logger)
 
         self.__translator = encryption_scheme
 
@@ -56,6 +60,7 @@ class Server:
         Server.broadcast(self, message)
         Broadcast a message to all subscribed clients
         """
+        self.info("Broadcasting {}".format(message))
         with self.__block:
             self.__bsocket.send_string(message)
 
@@ -70,12 +75,14 @@ class Server:
                 message))
 
     def listen_almost_forever(self, handler = lambda x: x,
-            preprocess = lambda x: x, postprocess = lambda msg: msg):
+            preprocess = lambda x: x, postprocess = lambda msg: msg,
+            poll_timeout = 2000):
         """
         Server.listen_almost_forever(self, handler = lambda msg: msg,
-            preprocess = lambda msg: msg)
-        Listen for messages on the interactive socket until the server is
-        stopped.
+            preprocess = lambda msg: msg, poll_timeout = 2000)
+        Polls for messages on the interactive socket until the server is
+        stopped. poll_timeout controls how long a poll operation will wait
+        before failing.
         Messages are pushed through the pipeline preprocess -> handler ->
         postprocess, and the result is sent back to as a client
         """
@@ -84,7 +91,7 @@ class Server:
                 with self.__ilock:
                     if self.__done: break
 
-                    nmsg = self.__isocket.poll(2000)
+                    nmsg = self.__isocket.poll(poll_timeout)
                     if nmsg == 0:
                         continue
                     message =  self.__isocket.recv_string()
@@ -145,6 +152,7 @@ def echo(server, message):
     """
     Echo the message back to the client
     """
+    server.info("Echoing {}".format(message))
     server.broadcast(message)
     return message
 
@@ -154,7 +162,7 @@ def stop_server(sig, frame, server):
 if __name__ == "__main__":
 
     if not DEBUG:
-        signal.signal(signal.SIGINT, lambda sig, f: stop_server(sig, f, s))
+        signal.signal(signal.SIGINT , lambda sig, f: stop_server(sig, f, s))
         signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
         signal.signal(signal.SIGTERM, lambda sig, f: stop_server(sig, f, s))
         signal.signal(signal.SIGSTOP, lambda sig, f: stop_server(sig, f, s))
@@ -165,7 +173,7 @@ if __name__ == "__main__":
 
     # Set up the server
     s = Server("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
-            Log(sys.stderr))
+            logging.getLogger("server"), Log(sys.stderr))
 
     # Start listening
     s.listen_almost_forever(echo)
