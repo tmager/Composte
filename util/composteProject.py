@@ -1,6 +1,7 @@
 import music21
+import uuid
 
-class Project: 
+class ComposteProject: 
     def __init__(self, owner, metadata):
         """ Initializes the Project with an empty stream, 
             a list of subscribers consisting solely of the owner, 
@@ -8,6 +9,7 @@ class Project:
         self.parts = [music21.stream.Stream()]
         self.subscribers = [owner]
         self.metadata = metadata
+        self.projectID = uuid.uuid4()
     
     def addPart(self): 
         """ Adds a new part to a project. """
@@ -27,6 +29,24 @@ class Project:
             integer representing the index of the part to remove. """
         del self.parts[partToRemove]
 
+    def updatePart(self, unpickledPart, partIndex): 
+        """ Updates an entire part as identified by a part index. """
+        self.parts[partIndex] = unpickledPart
+
+    def updatePartAtOffset(self, unpickledStream, partIndex, streamOffset):
+        """ Updates a part at a given stream offset. """
+        part = self.parts[partIndex]
+        elems = part.getElementsByOffset(streamOffset) 
+        for elem in elems: 
+            part.remove(streamOffset, elem)
+        for member in unpickledStream: 
+            part.insert(streamOffset, member) 
+
+    def updateParts(self, unpickledParts): 
+        """ Updates all parts with new part state. """
+        for i in range(0, len(unpickledParts)): 
+            self.parts[i] = unpickledParts[i]
+
     def addSubscriber(self, user): 
         """ Adds a new subscriber to the project. """
         self.subscribers.append(user)
@@ -35,22 +55,17 @@ class Project:
         """ Removes a subscriber from a project. """
         self.subscribers.remove(user)
 
-    def sendAllParts(self): 
-        """ Send all parts of music21 data 
-            in a project to a client. """
-        def sendPart(part): 
-            """ Send a single part of music21 data 
-                in a project to a client. """
-            stream = music21.converter.freezeStr(part)
-            # Broadcast stream to client
-        parts = project.parts
-        for part in parts: 
-            sendPart(part)
-    
-    def sendObjectsAtPartOffset(offset, part): 
-        """ Send all objects at a given part offset to a client. """
-        # Broadcast objs to client
-        objs = part.getElementsByOffset(offset) 
-        frozen = music21.converter.freezeStr(objs)
-        thawed = music21.converter.thawStr(frozen)
-        print(thawed) 
+    def pickleIndividualPart(self, partIndex): 
+        """ Pickle a single part of music21 data in a project. """
+        return music21.converter.freezeStr(self.parts[partIndex])
+
+    def pickleAllParts(self): 
+        """ Pickle all parts of music21 data in a project. """
+        return music21.converter.freezeStr(self.parts) 
+
+    def pickleObjectsAtPartOffset(self, offset, partIndex): 
+        """ Pickle all objects at a given part offset to a client. """
+        objs = parts[partIndex].getElementsByOffset(offset) 
+        return music21.converter.freezeStr(objs)
+
+
