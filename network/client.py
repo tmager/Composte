@@ -11,30 +11,30 @@ from base.loggable import Loggable, DevNull
 
 import sys
 
-class Subscribe(Loggable):
+class Subscription(Loggable):
     def __init__(self, remote_address, zmq_context, logger):
         """
-        Subscribe.__init__(self, remote_address, zmq_context)
-        Subscribe to a publishing endpoint at remote_address
+        Subscription.__init__(self, remote_address, zmq_context)
+        Subscription to a publishing endpoint at remote_address
         Requires a zmq context
         """
-        super(Subscribe, self).__init__(logger)
+        super(Subscription, self).__init__(logger)
 
         self.__context = zmq_context
 
-        # Subscribe to remote broadcasts
+        # Subscription to remote broadcasts
         self.__addr = remote_address
         self.__socket = self.__context.socket(zmq.SUB)
         self.__socket.setsockopt_string(zmq.SUBSCRIBE, "")
         self.__socket.connect(self.__addr)
-        # print("Subscribed to {}".format(self.__addr))
+        # print("Subscription to {}".format(self.__addr))
 
         self.__backlog = Queue(1024)
         self.__lock = Lock()
 
     def recv(self, poll_timeout = 500):
         """
-        Subscribe.recv(self, poll_timeout = 500)
+        Subscription.recv(self, poll_timeout = 500)
         Retrieve a message, failing after poll_timeout milliseconds.
         Returns string on success, None on failure
         """
@@ -52,21 +52,20 @@ class Subscribe(Loggable):
                     return msg
                 for i in range(nmsg):
                     self.__backlog.put(self.__socket.recv_string())
-                    msg = self.__backlog.get()
+                msg = self.__backlog.get()
 
         return msg
 
     def stop(self):
         """
-        Subscribe.stop(self)
+        Subscription.stop(self)
         Stop listening for broadcasts
         """
         with self.__lock:
             self.__socket.disconnect(self.__addr)
             self.__socket.close()
 
-# Broadcast handler is separate: Subscribe. Should probably stick it in a
-# thread off to the side.
+# Broadcast handler is separate: Subscription.
 class Client(Loggable):
     __context = zmq.Context()
     def __init__(self, remote_address, broadcast_address,
@@ -90,7 +89,7 @@ class Client(Loggable):
         # Receive broadcasts
         self.__done = False
         self.__background = None
-        self.__listener = Subscribe(broadcast_address, self.__context, logger)
+        self.__listener = Subscription(broadcast_address, self.__context, logger)
 
         self.__lock = Lock()
 
@@ -105,7 +104,7 @@ class Client(Loggable):
             try:
                 message = self.__translator.encrypt(message)
             except EncryptError as e:
-                # log?
+                self.error("Failed to encrypt message {}".format(message))
                 raise e
 
             self.__isocket.send_string(message)
@@ -114,7 +113,7 @@ class Client(Loggable):
             try:
                 msg = preprocess(msg)
             except GenericError as e:
-                # log?
+                self.error("Failed to preprocess message {}".format(message))
                 raise e
             return msg
 
@@ -138,19 +137,19 @@ class Client(Loggable):
             try:
                 msg = self.__translator.decrypt(msg)
             except DecryptError as e:
-                #log?
+                self.error("Failed to decrypt {}".format(msg))
                 continue
 
             try:
                 msg = preprocess(msg)
             except GenericError as e:
-                # log?
+                self.error("Failed to preprocess {}".format(msg))
                 continue
 
             try:
                 handler(self, msg)
             except GenericError as e:
-                # log?
+                self.error("Failure when handling {}".format(msg))
                 continue
 
         self.__listener.stop()
@@ -160,7 +159,7 @@ class Client(Loggable):
         """
         Client.start_background(self, handler, preprocess = lambda msg: msg,
             poll_timeout = 500)
-        Hands off to Clinet.__listen_almost_forever
+        Hands off to Client.__listen_almost_forever
         Start thread listening for broadcasts from the remote Composte server
         Does nothing if the thread has already been started
         """
@@ -189,6 +188,7 @@ class Client(Loggable):
         self.__background = None
 
 def echo(server, message):
+    self.info("Stopping client")
     return message
 
 def id(pre, elem):

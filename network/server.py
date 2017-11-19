@@ -18,6 +18,7 @@ import logging
 # Need signal handlers to properly run as daemon
 import signal
 import sys
+import traceback
 
 DEBUG = True
 
@@ -71,6 +72,7 @@ class Server(Loggable):
         """
         with self.__ilock:
             # Probably need a better generic failure message format, but eh
+            self.error("Failure ({}): {}".format(message, reason))
             self.__isocket.send_string("Failure ({}): {}".format(reason,
                 message))
 
@@ -129,6 +131,8 @@ class Server(Loggable):
                             self.fail(message, "encrypt failure")
                             continue
                     except:
+                        self.error("Uncaught exception: {}"
+                                .format(traceback.format_exec()))
                         continue
 
                     self.__isocket.send_string(reply)
@@ -141,6 +145,7 @@ class Server(Loggable):
         Server.stop(self)
         Stop the server
         """
+        self.info("Shutting down server")
         with self.__ilock:
             self.__done = True
             self.__isocket.unbind(self.__iaddr)
