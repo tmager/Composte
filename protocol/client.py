@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import json
 import music21
 
@@ -16,4 +18,6 @@ def deserialize(msg):
     if type(pythonObject) != dict:
         raise DeserializationFailure("Received malformed data: {}".format(msg))
     return pythonObject
+
+# =================================================================================
 
