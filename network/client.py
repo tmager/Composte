@@ -178,6 +178,7 @@ class Client(Loggable):
         Client.stop(self)
         Stop all network activity for this Composte client
         """
+        self.info("Stopping client")
         with self.__lock:
             self.__isocket.disconnect(self.__raddr)
             self.__isocket.close()
@@ -188,7 +189,6 @@ class Client(Loggable):
         self.__background = None
 
 def echo(server, message):
-    self.info("Stopping client")
     return message
 
 def id(pre, elem):
