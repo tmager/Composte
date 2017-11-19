@@ -38,7 +38,7 @@ The message initiator is listed first.
 
 This is a __server initiated__ message
 
-The server (a Single Point Of Truth, or SPOT) periodically broadcasts an 
+The server (a Single Point Of Truth, or SPOT) periodically broadcasts an
 authoritative update to all clients currently editing projects.
 
 __Sent:__
@@ -58,8 +58,8 @@ There should be none but those induced by network conditions.
 
 This is a __client initiated__ message
 
-Clients must register with a _unique_ username and a 
-password in order to gain access to projects. 
+Clients must register with a _unique_ username and a
+password in order to gain access to projects.
 
 __Sent:__
 
@@ -77,7 +77,7 @@ Naught but the network
 
 This is a __client initiated__ message
 
-Clients must authenticate in order to gain access to projects. 
+Clients must authenticate in order to gain access to projects.
 
 __Sent:__
 
