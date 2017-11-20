@@ -6,3 +6,5 @@
 
 [Initial Design](project-initial-design.text)
 
+[Design](project-design.text)
+
