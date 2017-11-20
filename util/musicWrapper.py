@@ -1,32 +1,32 @@
 # Wrapper for musicFuns.py
-# All json data is assumed to be deserialized by 
+# All json data is assumed to be deserialized by
 # the time these utility functions are invoked.
-# Furthermore, the project on which to perform 
-# the desired function must have been determined 
+# Furthermore, the project on which to perform
+# the desired function must have been determined
 # before these functions are called.
 
 import musicFuns
 import composteProject
 import music21
 
-def performMusicFun(projectID, fname, args, partIndex=None, offset=None): 
-    """ Wrapper for all music functions, where the 
+def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
+    """ Wrapper for all music functions, where the
         name of the function to be called (as a string)
         is the first argument, and the arguments to the
         function (as a list) is the second. """
-    def unpickleMusicData(inputStr): 
+    def unpickleMusicData(inputStr):
         """ Unpickles music21 data into a music21 stream """
         return music21.converter.thawStr(inputStr)
-    def unpackFun(fname, args): 
-        """ Determines which function to call and 
-            casts all arguments to the correct types. """ 
-        if fname == 'changeKeySignature': 
+    def unpackFun(fname, args):
+        """ Determines which function to call and
+            casts all arguments to the correct types. """
+        if fname == 'changeKeySignature':
             return (musicFuns.changeKeySignature, [float(args[0]),
                     unpickleMusicData(args[1]), int(args[2])])
         elif fname == 'changeTimeSignature':
             return (musicFuns.changeTimeSignature, [float(args[0]),
                     unpickleMusicData(args[1]), args[2]])
-        elif fname == 'insertNote':  
+        elif fname == 'insertNote':
             return (musicFuns.insertNote, [float(args[0]),
                     unpickleMusicData(args[1]), args[2],
                     float(args[3])])
@@ -38,27 +38,27 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
                     unpickleMusicData(args[1]), args[2]])
         elif fname == 'insertMetronomeMark':
             return (musicFuns.insertMetronomeMark, [float(args[0]),
-                    unpickleMusicData(args[1]), args[2], 
+                    unpickleMusicData(args[1]), args[2],
                     int(args[3]), float(args[4])])
         elif fname == 'removeMetronomeMark':
             return (musicFuns.removeMetronomeMark, [float(args[0]),
                     unpickleMusicData(args[1])])
         elif fname == 'transpose':
-            return (musicFuns.transpose, [unpickleMusicData(args[0]), 
-                    int(args[1])]) 
-        elif fname == 'insertClef': 
+            return (musicFuns.transpose, [unpickleMusicData(args[0]),
+                    int(args[1])])
+        elif fname == 'insertClef':
             return (musicFuns.insertClef, [float(args[0]),
                     unpickleMusicData(args[1]), args[2]])
         elif fname == 'removeClef':
             return (musicFuns.removeClef, [float(args[0]),
                     unpickleMusicData(args[1])])
         elif fname == 'insertMeasures':
-            return (musicFuns.insertMeasures, [float(args[0]), 
+            return (musicFuns.insertMeasures, [float(args[0]),
                     unpickleMusicData(args[1]), float(args[2])])
         elif fname == 'addInstrument':
-            return (musicFuns.addInstrument, [float(args[0]), 
+            return (musicFuns.addInstrument, [float(args[0]),
                     unpickleMusicData(args[1]), args[2]])
-        elif fname == 'removeInstrument': 
+        elif fname == 'removeInstrument':
             return (musicFuns.removeInstrument, [float(args[0]),
                     unpickleMusicData(args[1])])
         elif fname == 'addDynamic':
@@ -67,19 +67,19 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
         elif fname == 'removeDynamic':
             return (musicFuns.removeDynamic, [float(args[0]),
                     unpickleMusicData(args[1])])
-        elif fname == 'addLyric': 
+        elif fname == 'addLyric':
             return (musicFuns.addLyric, [float(args[0]),
                     unpickleMusicData(args[1]), args[2]])
-        else: 
+        else:
             return None
 
     (function, arguments) = unpackFun(fname, args)
     alteredScore = function(arguments)
     # TODO: Uncomment next line when database lookup is acuatlly implemented
     # project = findProject(projectID)
-    if partIndex is not None and offset is not None: 
-        project.updatePartAtOffset(alteredScore, partIndex, offset) 
-    elif partIndex is not None: 
+    if partIndex is not None and offset is not None:
+        project.updatePartAtOffset(alteredScore, partIndex, offset)
+    elif partIndex is not None:
         project.updatePart(alteredScore, partIndex)
-    else: 
-        project.updateParts(alteredScore) 
+    else:
+        project.updateParts(alteredScore)

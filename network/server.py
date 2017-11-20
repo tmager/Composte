@@ -131,6 +131,7 @@ class Server(Loggable):
                             self.fail(message, "encrypt failure")
                             continue
                     except:
+                        self.fail(message, "Malformed message")
                         self.error("Uncaught exception: {}"
                                 .format(traceback.format_exec()))
                         continue

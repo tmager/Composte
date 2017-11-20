@@ -6,11 +6,11 @@ import music21
 from base.exceptions import DeserializationFailure
 
 def serialize(username, projectID, function_name, *args):
-    """ username =:= type(str) 
-        projectID =:= type(ComposteProject.projectID) 
-        function_name =:= type(str) 
+    """ username =:= type(str)
+        projectID =:= type(ComposteProject.projectID)
+        function_name =:= type(str)
         args =:= type(list of str)
-        """ 
+        """
     rpc = {
         "username": username
         "projectID": projectID
