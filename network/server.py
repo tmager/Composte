@@ -5,12 +5,12 @@ import zmq
 # that we can't really get away with worker threads here, as
 # REQ/Processing/REP must be serialized as a cohesive unit.
 
-from threading import Lock
+from threading import Lock, Thread
 
 from fake.security import Encryption, Log
 from base.exceptions import DecryptError, EncryptError, GenericError
 
-from base.loggable import Loggable
+from base.loggable import Loggable, StdErr
 
 from conf import logging as log
 import logging
@@ -20,7 +20,7 @@ import signal
 import sys
 import traceback
 
-DEBUG = True
+DEBUG = False
 
 # Broadcast socket   -> Publish/Subscribe
 # Interactive socket -> Request/Reply
@@ -49,10 +49,13 @@ class Server(Loggable):
         self.__bsocket = self.__context.socket(zmq.PUB)
         self.__bsocket.bind(self.__baddr)
 
+        self.__dlock = Lock()
         self.__done = False
 
         self.__ilock = Lock()
         self.__block = Lock();
+
+        self.__listen_thread = None
 
         # print("Bound to {} and {}".format(self.__iaddr, self.__baddr))
 
@@ -70,17 +73,30 @@ class Server(Loggable):
         Server.fail(self, message, reason)
         Send a failure message to a client
         """
-        with self.__ilock:
-            # Probably need a better generic failure message format, but eh
-            self.error("Failure ({}): {}".format(message, reason))
-            self.__isocket.send_string("Failure ({}): {}".format(reason,
-                message))
+        # Probably need a better generic failure message format, but eh
+        self.error("Failure ({}): {}".format(message, reason))
+        self.__isocket.send_string("Failure ({}): {}".format(reason,
+            message))
 
-    def listen_almost_forever(self, handler = lambda x: x,
+    def start_background(self, handler = lambda x: x,
             preprocess = lambda x: x, postprocess = lambda msg: msg,
             poll_timeout = 2000):
         """
-        Server.listen_almost_forever(self, handler = lambda msg: msg,
+        Server.start_background
+        Starts Server.__listen_almost_forever in a background thread,
+        forwarding arguments. For further details, see
+        Server.__listen_almost_forever
+        """
+        if self.__listen_thread != None: return
+        self.__listen_thread = Thread(target = self.__listen_almost_forever,
+                args = (handler, preprocess, postprocess, poll_timeout))
+        self.__listen_thread.start()
+
+    def __listen_almost_forever(self, handler = lambda x: x,
+            preprocess = lambda x: x, postprocess = lambda msg: msg,
+            poll_timeout = 2000):
+        """
+        Server.__listen_almost_forever(self, handler = lambda msg: msg,
             preprocess = lambda msg: msg, poll_timeout = 2000)
         Polls for messages on the interactive socket until the server is
         stopped. poll_timeout controls how long a poll operation will wait
@@ -90,9 +106,14 @@ class Server(Loggable):
         """
         try:
             while True:
-                with self.__ilock:
-                    if self.__done: break
+                self.info("Polling...")
+                with self.__dlock:
+                    if self.__done:
+                        self.info("Done listening")
+                        break
 
+                with self.__ilock:
+                    self.info("Poll timeout is {}".format(poll_timeout))
                     nmsg = self.__isocket.poll(poll_timeout)
                     if nmsg == 0:
                         continue
@@ -137,6 +158,7 @@ class Server(Loggable):
                         continue
 
                     self.__isocket.send_string(reply)
+            self.info("Exiting listen loop")
         except KeyboardInterrupt as e:
             self.stop()
             print()
@@ -147,12 +169,20 @@ class Server(Loggable):
         Stop the server
         """
         self.info("Shutting down server")
-        with self.__ilock:
+        with self.__dlock:
+            self.info("Stopping polling")
             self.__done = True
+
+        with self.__ilock:
+            self.info("Unbinding interactive socket")
             self.__isocket.unbind(self.__iaddr)
 
+
         with self.__block:
+            self.info("Unbinding broadcast socket")
             self.__bsocket.unbind(self.__baddr)
+
+        self.__listen_thread.join()
 
 def echo(server, message):
     """
@@ -167,20 +197,21 @@ def stop_server(sig, frame, server):
 
 if __name__ == "__main__":
 
-    if not DEBUG:
-        signal.signal(signal.SIGINT , lambda sig, f: stop_server(sig, f, s))
-        signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
-        signal.signal(signal.SIGTERM, lambda sig, f: stop_server(sig, f, s))
-        signal.signal(signal.SIGSTOP, lambda sig, f: stop_server(sig, f, s))
-
     log.setup()
 
     logging.getLogger(__name__).info("Hello yes this is a test")
 
     # Set up the server
-    s = Server("ipc:///tmp/interactive", "ipc:///tmp/broadcast",
-            logging.getLogger("server"), Log(sys.stderr))
+    s = Server("tcp://127.0.0.1:6666", "tcp://127.0.0.1:6667",
+            logging.getLogger("server"),
+            Log(sys.stderr))
+
+    if not DEBUG:
+        signal.signal(signal.SIGINT , lambda sig, f: stop_server(sig, f, s))
+        signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
+        signal.signal(signal.SIGTERM, lambda sig, f: stop_server(sig, f, s))
+
 
     # Start listening
-    s.listen_almost_forever(echo)
+    s.start_background(echo)
 

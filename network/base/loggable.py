@@ -75,6 +75,9 @@ class AdHoc:
     def critical(self, message):
         self.__log(self.__prefixes["critical"] + message, logging.CRITICAL)
 
+import sys
+StdErr = AdHoc(sys.stderr, logging.INFO, "stderr")
+
 # Combine loggers
 class Combined:
     def __init__(self, loggers):
