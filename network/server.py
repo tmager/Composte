@@ -7,12 +7,12 @@ import zmq
 
 from threading import Lock, Thread
 
-from fake.security import Encryption, Log
-from base.exceptions import DecryptError, EncryptError, GenericError
+from network.fake.security import Encryption, Log
+from network.base.exceptions import DecryptError, EncryptError, GenericError
 
-from base.loggable import Loggable, StdErr
+from network.base.loggable import Loggable, StdErr
 
-from conf import logging as log
+from network.conf import logging as log
 import logging
 
 # Need signal handlers to properly run as daemon
@@ -106,14 +106,10 @@ class Server(Loggable):
         """
         try:
             while True:
-                self.info("Polling...")
                 with self.__dlock:
-                    if self.__done:
-                        self.info("Done listening")
-                        break
+                    if self.__done: break
 
                 with self.__ilock:
-                    self.info("Poll timeout is {}".format(poll_timeout))
                     nmsg = self.__isocket.poll(poll_timeout)
                     if nmsg == 0:
                         continue
@@ -158,7 +154,6 @@ class Server(Loggable):
                         continue
 
                     self.__isocket.send_string(reply)
-            self.info("Exiting listen loop")
         except KeyboardInterrupt as e:
             self.stop()
             print()
