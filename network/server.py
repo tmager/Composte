@@ -169,13 +169,15 @@ class Server(Loggable):
             self.__done = True
 
         with self.__ilock:
-            self.info("Unbinding interactive socket")
-            self.__isocket.unbind(self.__iaddr)
+            iaddr = self.__isocket.last_endpoint
+            self.info("Unbinding interactive socket from {}".format(iaddr))
+            self.__isocket.unbind(iaddr)
 
 
         with self.__block:
-            self.info("Unbinding broadcast socket")
-            self.__bsocket.unbind(self.__baddr)
+            baddr = self.__bsocket.last_endpoint
+            self.info("Unbinding broadcast socket from {}".format(baddr))
+            self.__bsocket.unbind(baddr)
 
         self.__listen_thread.join()
 

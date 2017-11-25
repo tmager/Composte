@@ -4,10 +4,10 @@ import zmq
 from threading import Thread, Lock
 from queue import Queue
 
-from fake.security import Encryption, Log
-from base.exceptions import EncryptError, DecryptError, GenericError
+from network.fake.security import Encryption, Log
+from network.base.exceptions import EncryptError, DecryptError, GenericError
 
-from base.loggable import Loggable, DevNull
+from network.base.loggable import Loggable, DevNull
 
 import sys
 
