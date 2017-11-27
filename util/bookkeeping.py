@@ -10,7 +10,7 @@ class Pool:
     def __init__(self):
         pass
 
-    def get(self, tag, contructor):
+    def put(self, tag, contructor):
         have = Pool.__objects.get(tag, None)
 
         if have is None:
@@ -21,7 +21,7 @@ class Pool:
 
         return Pool.__objects[tag]
 
-    def put(self, tag):
+    def remove(self, tag):
         have = Pool.__objects.get(tag, None)
 
         if have is None:
@@ -34,5 +34,52 @@ class Pool:
         elif count == 1:
             del Pool.__objects[tag]
 
-        return count
+        return count - 1
+
+class ProjectPool:
+    """
+    Pool Composte projects in memory
+    uuid -> (project, count)
+    """
+
+    __objects = {}
+
+    def __init__(self):
+        pass
+
+    def put(self, uuid, constructor = None):
+        (proj, count) = ProjectPool.__objects.get(uuid, (None, 0))
+
+        if have is None:
+            if constructor is None:
+                # We don't have it and the client is going to go get it
+                return None
+            else:
+                # We don't have it but the client told us how to get it
+                proj = constructor()
+
+        ProjectPool.__objects[uuid] = (proj, count + 1)
+        return proj
+
+    def remove(self, uuid, on_removal = lambda x: x):
+        """
+        Un-use a project, running on_removal with the project as the only
+        argumargument when the reference is removed
+        """
+        (proj, have) = ProjectPool.__objects.get(uuid, (None, 0))
+
+        if have is None:
+            return
+
+        if count > 1:
+            ProjectPool.__objects[uuid] = (proj, count - 1)
+        elif count == 1:
+            on_removal(proj)
+            del ProjectPool.__objects[uuid]
+
+        return count - 1
+
+    def map(self, mapfun):
+        for proj, count in ProjectPool.__objects:
+            mapfun(proj, count)
 

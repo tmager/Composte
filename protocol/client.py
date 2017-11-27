@@ -5,15 +5,13 @@ import music21
 
 from protocol.base.exceptions import DeserializationFailure
 
-def serialize(username, projectID, function_name, *args):
-    """ username =:= type(str)
-        projectID =:= type(ComposteProject.projectID)
-        function_name =:= type(str)
-        args =:= type(list of str)
-        """
+def serialize(function_name, *args):
+    """
+    function_name =:= type(str)
+    args =:= type(list of str)
+    """
+
     rpc = {
-        "username": username,
-        "projectID": projectID,
         "fName": function_name,
         "args": [str(arg) for arg in args],
     }

@@ -32,12 +32,12 @@ class ComposteClient:
         print("Broadcast received: " + str(broadcast))
 
     def __version_handshake(self):
-        msg = client.serialize(None, None, "handshake", get_version())
+        msg = client.serialize("handshake", get_version())
         reply = self.__client.send(msg)
         print(reply)
 
     def register(self, uname, pword, email):
-        msg = client.serialize(uname, None, "register", pword, email)
+        msg = client.serialize("register", uname, pword, email)
         reply = self.__client.send(msg)
         print(reply)
         # (status, reason) = self.__client.send(msg)
@@ -48,18 +48,18 @@ class ComposteClient:
     # shouldn't be able to. This isn't an issue for the minimum deliverable
     # for the course, but it is an issue in the long run
     def login(self, uname, pword):
-        msg = client.serialize(uname, None, "login", pword)
+        msg = client.serialize("login", uname, pword)
         reply = self.__client.send(msg)
         # status, reason = reply
         print(reply)
 
     def create_project(self, uname, pname):
-        msg = client.serialize(uname, None, "create_project", pname)
+        msg = client.serialize("create_project", uname, pname)
         reply = self.__client.send(msg)
         print(reply)
 
     def retrieve_project_listings_for(self, uname):
-        msg = client.serialize(uname, None, "list_projects")
+        msg = client.serialize("list_projects", uname)
         reply = self.__client.send(msg)
         reply = server.deserialize(reply)
         if reply[0] == "ok":
@@ -67,14 +67,14 @@ class ComposteClient:
         else: return None
 
     def get_project(self, pid):
-        msg = client.serialize(None, pid, "get_project")
+        msg = client.serialize("get_project", pid)
         reply = self.__client.send(msg)
         print(reply)
 
     # Realistically, we send a login cookie and the server determines the user
     # from that, but we don't have that yet
     def subscribe(self, uname, pid):
-        msg = client.serialize(uname, pid, "subscribe")
+        msg = client.serialize("subscribe", uname, pid)
         reply = self.__client.send(msg)
         # print(reply)
         j = json.loads(reply)
@@ -82,13 +82,14 @@ class ComposteClient:
         return j[1][0]
 
     def unsubscribe(self, cookie):
-        msg = client.serialize(None, None, "unsubscribe", cookie)
+        msg = client.serialize("unsubscribe", cookie)
         reply = self.__client.send(msg)
         print(reply)
 
+    # There's nothing here yet b/c we don't know what anything look like
     def update(self, *args):
         print("Update with args: {}".format(str(args)))
-        msg = client.serialize(None, None, "update")
+        msg = client.serialize("update")
         reply = self.__client.send(msg)
         print(reply)
 
