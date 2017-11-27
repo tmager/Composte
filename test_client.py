@@ -99,7 +99,16 @@ class ComposteClient:
 if __name__ == "__main__":
     import sys
 
-    c = ComposteClient("tcp://127.0.0.1:6666", "tcp://127.0.0.1:6667",
+    from network import dns
+
+    endpoint_addr = "127.0.0.1"
+
+    if len(sys.argv) == 2:
+        ip = dns.ip(sys.argv[1])
+        endpoint_addr = ip
+
+    c = ComposteClient("tcp://{}:6666".format(endpoint_addr),
+            "tcp://{}:6667".format(endpoint_addr),
             StdErr, Encryption())
 
     c.register("msheldon", "A", "!!!")
