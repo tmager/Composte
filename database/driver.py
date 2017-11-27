@@ -1,35 +1,40 @@
 #!/usr/bin/env python3
 
 import sqlite3
+import json
 from threading import Lock
 
 # We are inspired by Django, but we're not that good at
 # introspection/reflection
 
-# There's a potential concurrency issue here, but we'll ignore it for now:
-# Multiple writes in flight at once can corrupt the databsae. I'm not sure if
-# using a single sqlite connection is enough to serialize writes/updates
-class SingletonsAreWeird:
-    __instances = {}
-
-    # Ugh
-    def __new__(class_, db, init):
-        if db not in SingletonsAreWeird.__instances:
-            SingletonsAreWeird.__instances[db] = sqlite3.connect(db)
-            init(SingletonsAreWeird.__instances[db])
-        return SingletonsAreWeird.__instances[db]
-
-def enforce_foreign_key(conn):
+# ._.
+def get_connection(dbname):
+    conn = sqlite3.connect(dbname)
     conn.execute("PRAGMA foreign_keys = \"1\"")
     conn.commit()
+    return conn
+
+class User:
+    def __init__(self, uname = None, hash_ = None, email = None):
+        self.uname = uname
+        self.hash = hash_
+        self.email = email
+
+    def __str__(self):
+        obj = {
+                "type": "User",
+                "id": self.id,
+                "hash": self.hash,
+                "email": self.email,
+                }
+        return json.dumps(obj)
 
 class Auth:
     # We're so bad at CRUD that we only bother to do half of it
     __blueprint = ("username", "hash", "email")
 
-    def __init__(self):
-        self.__conn = SingletonsAreWeird("composte.db", enforce_foreign_key)
-        print(id(self.__conn))
+    def __init__(self, dbname):
+        self.__conn = get_connection(dbname)
         self.__cursor = self.__conn.cursor()
 
         self.__cursor.execute(""" CREATE TABLE IF NOT EXISTS auth
@@ -41,28 +46,45 @@ class Auth:
 
     # Create
     def put(self, username, hash_, email = "null"):
-        self.__cursor.execute("""
-                INSERT INTO auth (username, hash, email)
-                VALUES (?, ?, ?)
-                """, (username, hash_, email))
-        self.__conn.commit()
+        with self.__lock:
+            self.__cursor.execute("""
+                    INSERT INTO auth (username, hash, email)
+                    VALUES (?, ?, ?)
+                    """, (username, hash_, email))
+            self.__conn.commit()
 
     # Retrieve
     def get(self, username):
-        with self.__lock:
-            self.__cursor.execute("""
-                    SELECT * FROM auth WHERE username=?
-                    """, (username,))
-            return self.__cursor.fetchone()
+        self.__cursor.execute("""
+                SELECT * FROM auth WHERE username=?
+                """, (username,))
+        tup = self.__cursor.fetchone()
+        if tup is None:
+            return User(None, None, None)
+        return User(*tup)
+
+class Project:
+    def __init__(self, id_ = None, name = None, owner = None):
+        self.id = id_
+        self.name = name
+        self.owner = owner
+
+    def __str__(self):
+        obj = {
+                "type": "Project",
+                "id": self.id,
+                "name": self.name,
+                "owner": self.owner,
+                }
+        return json.dumps(obj)
 
 # Project storage path is always
 #   //owner/id.{meta,proj}
 class Projects:
     __blueprint = ("id", "name", "owner")
 
-    def __init__(self):
-        self.__conn = SingletonsAreWeird("composte.db", enforce_foreign_key)
-        print(id(self.__conn))
+    def __init__(self, dbname):
+        self.__conn = get_connection(dbname)
         self.__cursor = self.__conn.cursor()
 
         self.__cursor.execute("""
@@ -76,23 +98,25 @@ class Projects:
         self.__lock = Lock()
 
     def put(self, id_, name, owner):
-        self.__cursor.execute("""
-                INSERT INTO projects (id, name, owner)
-                VALUES (?, ?, ?)
-                """, (id_, name, owner))
-        self.__conn.commit()
-
-    def get(self, id_):
         with self.__lock:
             self.__cursor.execute("""
-                    SELECT * FROM projects WHERE id=?
-                    """, (id_,))
-            return self.__conn.fetchone()
+                    INSERT INTO projects (id, name, owner)
+                    VALUES (?, ?, ?)
+                    """, (id_, name, owner))
+            self.__conn.commit()
+
+    def get(self, id_):
+        self.__cursor.execute("""
+                SELECT * FROM projects WHERE id=?
+                """, (id_,))
+        tup = self.__cursor.fetchone()
+        if tup is None:
+            return Project(None, None, None)
+        return Project(*tup)
 
 class Contributors:
-    def __init__(self):
-        self.__conn = SingletonsAreWeird("composte.db", enforce_foreign_key)
-        print(id(self.__conn))
+    def __init__(self, dbname):
+        self.__conn = get_connection(dbname)
         self.__cursor = self.__conn.cursor()
 
         self.__cursor.execute("""
@@ -131,7 +155,8 @@ class Contributors:
                     SELECT username FROM contributors
                     WHERE project_id=?
                     """, (project_id,))
-            return self.__cursor.fetchone()
+            users = self.__cursor.fetchall()
+            return [ User(*user) for user in users ]
 
     def get_projects(self, username):
         with self.__lock:
@@ -139,7 +164,8 @@ class Contributors:
                     SELECT project_id from contributors
                     WHERE username=?
                     """, (username,))
-            return self.__cursor.fetchone()
+            projects = self.__cursor.fetchall()
+            return [ Project(*project) for project in projects ]
 
 if __name__ == "__main__":
     import os
@@ -149,9 +175,9 @@ if __name__ == "__main__":
     except:
         pass
 
-    auth  = Auth()
-    proj = Projects()
-    own = Contributors()
+    auth  = Auth("compose.db")
+    proj = Projects("composte.db")
+    own = Contributors("composte.db")
 
     auth.put("shark meldon", "there", "hello@composte.me")
     auth.put("save me", "whee", "saveme@composte.me")

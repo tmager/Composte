@@ -3,7 +3,7 @@
 import json
 import music21
 
-from base.exceptions import DeserializationFailure
+from protocol.base.exceptions import DeserializationFailure
 
 def serialize(username, projectID, function_name, *args):
     """ username =:= type(str)
@@ -12,13 +12,13 @@ def serialize(username, projectID, function_name, *args):
         args =:= type(list of str)
         """
     rpc = {
-        "username": username
-        "projectID": projectID
+        "username": username,
+        "projectID": projectID,
         "fName": function_name,
         "args": [str(arg) for arg in args],
     }
 
-    return json.dunps(rpc)
+    return json.dumps(rpc)
 
 def deserialize(msg):
     pythonObject = json.loads(msg)

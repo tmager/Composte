@@ -13,5 +13,5 @@ def verify(candidate, record):
     """
     Verify candidate against record
     """
-    return pbkdf2_sha256.verify(password, hash_)
+    return pbkdf2_sha256.verify(candidate, record)
 

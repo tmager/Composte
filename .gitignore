@@ -8,3 +8,5 @@ sandbox/
 *.swp
 *.db
 
+data/
+

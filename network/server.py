@@ -150,7 +150,9 @@ class Server(Loggable):
                     except:
                         self.fail(message, "Malformed message")
                         self.error("Uncaught exception: {}"
-                                .format(traceback.format_exec()))
+                                .format(traceback.format_exc()))
+                        # Yeesh
+                        raise
                         continue
 
                     self.__isocket.send_string(reply)
@@ -169,17 +171,18 @@ class Server(Loggable):
             self.__done = True
 
         with self.__ilock:
-            iaddr = self.__isocket.last_endpoint
+            iaddr = self.__isocket.last_endpoint.decode()
             self.info("Unbinding interactive socket from {}".format(iaddr))
             self.__isocket.unbind(iaddr)
 
-
         with self.__block:
-            baddr = self.__bsocket.last_endpoint
+            baddr = self.__bsocket.last_endpoint.decode()
             self.info("Unbinding broadcast socket from {}".format(baddr))
             self.__bsocket.unbind(baddr)
 
         self.__listen_thread.join()
+
+        self.info("Server stopped")
 
 def echo(server, message):
     """

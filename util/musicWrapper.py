@@ -5,8 +5,8 @@
 # the desired function must have been determined
 # before these functions are called.
 
-import musicFuns
-import composteProject
+from util import musicFuns
+from util import composteProject
 import music21
 
 def performMusicFun(projectID, fname, args, partIndex=None, offset=None):

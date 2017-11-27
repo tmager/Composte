@@ -188,6 +188,8 @@ class Client(Loggable):
         self.__background.join()
         self.__background = None
 
+        self.info("Client stopped")
+
 def echo(server, message):
     return message
 

@@ -32,7 +32,7 @@ DevNull = devnull()
 # write(). Usually an open file or sys.stderr.
 # Does not do formatting, etc
 class AdHoc:
-    def __init__(self, sink, loglevel = 0, name = None, **kwargs):
+    def __init__(self, sink, loglevel = logging.DEBUG, name = None, **kwargs):
         """
         Use kwargs to provide prefixes for loglevels:
             INFO
@@ -57,26 +57,27 @@ class AdHoc:
         self.__prefixes.update(kwargs)
 
     def __log(self, message, level):
-        if self.__level >= level:
+        message = str(message)
+        if self.__level <= level:
             self.__sink.write(message + "\n")
 
     def info(self, message):
-        self.__log(self.__prefixes["info"] + message, logging.INFO)
+        self.__log(self.__prefixes["info"] + str(message), logging.INFO)
 
     def debug(self, message):
-        self.__log(self.__prefixes["debug"] + message, logging.DEBUG)
+        self.__log(self.__prefixes["debug"] + str(message), logging.DEBUG)
 
     def warn(self, message):
-        self.__log(self.__prefixes["warn"] + message, logging.WARNING)
+        self.__log(self.__prefixes["warn"] + str(message), logging.WARNING)
 
     def error(self, message):
-        self.__log(self.__prefixes["error"] + message, logging.ERROR)
+        self.__log(self.__prefixes["error"] + str(message), logging.ERROR)
 
     def critical(self, message):
-        self.__log(self.__prefixes["critical"] + message, logging.CRITICAL)
+        self.__log(self.__prefixes["critical"] + str(message), logging.CRITICAL)
 
 import sys
-StdErr = AdHoc(sys.stderr, logging.INFO, "stderr")
+StdErr = AdHoc(sys.stderr, name = "stderr")
 
 # Combine loggers
 class Combined:
