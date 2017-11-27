@@ -63,8 +63,13 @@ class ComposteServer:
         # This is a dummy function
         self.__timer = timer.every(300, lambda: False)
 
+#         try:
+#             os.mkdir(self.__data_root)
+#         except FileExistsError as e:
+#             pass
+
         try:
-            os.mkdir(self.__project_root)
+            os.makedirs(self.__project_root)
         except FileExistsError as e:
             pass
 
