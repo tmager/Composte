@@ -107,8 +107,13 @@ if __name__ == "__main__":
         ip = dns.ip(sys.argv[1])
         endpoint_addr = ip
 
-    c = ComposteClient("tcp://{}:6666".format(endpoint_addr),
-            "tcp://{}:6667".format(endpoint_addr),
+    print(endpoint_addr)
+
+    iport = 5000
+    bport = 5001
+
+    c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
+            "tcp://{}:{}".format(endpoint_addr, bport),
             StdErr, Encryption())
 
     c.register("msheldon", "A", "!!!")

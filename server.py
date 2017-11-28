@@ -340,7 +340,11 @@ if __name__ == "__main__":
     version = get_version()
     print("Composte server version {}".format(version))
 
-    s = ComposteServer("tcp://*:6666", "tcp://*:6667", StdErr, Encryption())
+    iport = 5000
+    bport = 5001
+
+    s = ComposteServer("tcp://*:{}".format(iport),
+            "tcp://*:{}".format(bport), StdErr, Encryption())
 
     signal.signal(signal.SIGINT , lambda sig, f: stop_server(sig, f, s))
     signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
