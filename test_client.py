@@ -26,6 +26,10 @@ class ComposteClient:
                 logger, encryption_scheme)
         self.__client.start_background(self.__handle_broadcast)
 
+        self.__client.info("Connecting to {} and {}".format(
+            interactive_remote, broadcast_remote
+        ))
+
         self.__version_handshake()
 
     def __handle_broadcast(self, _, broadcast):
@@ -101,16 +105,23 @@ if __name__ == "__main__":
 
     from network import dns
 
-    endpoint_addr = "127.0.0.1"
+    import argparse
 
-    if len(sys.argv) == 2:
-        ip = dns.ip(sys.argv[1])
-        endpoint_addr = ip
+    parser = argparse.ArgumentParser(prog = "ComposteServer",
+            description = "A Composte Server")
 
-    print(endpoint_addr)
+    parser.add_argument("-i", "--interactive-port", default = 5000,
+            type = int)
+    parser.add_argument("-b", "--broadcast-port", default = 5001,
+            type = int)
+    parser.add_argument("-r", "--remote-address", default = "composte.me",
+            type = str)
 
-    iport = 5000
-    bport = 5001
+    args = parser.parse_args()
+
+    endpoint_addr = args.remote_address
+    iport = args.interactive_port
+    bport = args.broadcast_port
 
     c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
             "tcp://{}:{}".format(endpoint_addr, bport),

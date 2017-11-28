@@ -287,45 +287,44 @@ class ComposteServer:
     def __handle(self, _, rpc):
         self.get_db_connections()
 
+        def fail(*args):
+            return ("fail", "I don't know what you want me to do")
+
+        def unimplemented(*args):
+            return ("?", "?")
+
+        rpc_funs = {
+            "register": self.register,
+            "login": self.login,
+            "create_project": self.create_project,
+            "list_projects": self.list_projects_by_user,
+            "get_project": self.get_project,
+            "subscribe": self.subscribe,
+            "unsubscribe": self.unsubscribe,
+            "update": unimplemented,
+            "handshake": self.compare_versions,
+        }
+
         self.__server.debug(rpc)
         f = rpc["fName"]
-        if f == "register":
-            reply = self.register(*rpc["args"])
-        elif f == "login":
-            reply = self.login(*rpc["args"])
-        elif f == "create_project":
-            reply = self.create_project(*rpc["args"])
-        elif f == "list_projects":
-            reply = self.list_projects_by_user(*rpc["args"])
-        elif f == "get_project":
-            reply = self.get_project(*rpc["args"])
-        elif f == "subscribe":
-            reply = self.subscribe(*rpc["args"])
-        elif f == "unsubscribe":
-            reply = self.unsubscribe(*rpc["args"])
-        elif f == "update":
-            # Presumably, we want to broadcast, but this brings up an annoying
-            # issue for clients: They need to filter out which broadcasts are
-            # meant for them and which ones aren't
-            self.__server.broadcast(server.serialize(rpc))
-            reply = ("?", "?")
-            # This function signature needs some work if it's the single
-            # exposed function.
-            # reply = musicWrapper.performMusicFun(rpc["project_ID"], None,
-            # *rpc["args"], ???????, ????????) # Fuck
-        elif f == "handshake":
-            reply = self.compare_versions(*rpc["args"])
-        else:
-            reply = ("fail", "Unrecognized command")
 
-        return server.serialize(*reply)
+        do_rpc = rpc_funs.get(f, fail)
+
+        # Maybe move this to the update handler
+        if f == "update":
+            self.__server.broadcast(server.serialize(rpc))
+
+        # This is expected to be a tuple of things to send back
+        reply = do_rpc(*rpc["args"])
+
+        return reply
 
     # Probably deserialization
     def __preprocess(self, message):
         return client.deserialize(message)
 
-    def __postprocess(self, message):
-        return message
+    def __postprocess(self, reply):
+        return server.serialize(*reply)
 
     def stop(self):
         self.__server.stop()
@@ -337,14 +336,23 @@ def stop_server(sig, frame, server):
 if __name__ == "__main__":
     import signal
 
+    import argparse
+
+    parser = argparse.ArgumentParser(prog = "ComposteServer",
+            description = "A Composte Server")
+
+    parser.add_argument("-i", "--interactive-port", default = 5000,
+            type = int)
+    parser.add_argument("-b", "--broadcast-port", default = 5001,
+            type = int)
+
+    args = parser.parse_args()
+
     version = get_version()
     print("Composte server version {}".format(version))
 
-    iport = 5000
-    bport = 5001
-
-    s = ComposteServer("tcp://*:{}".format(iport),
-            "tcp://*:{}".format(bport), StdErr, Encryption())
+    s = ComposteServer("tcp://*:{}".format(args.interactive_port),
+            "tcp://*:{}".format(args.broadcast_port), StdErr, Encryption())
 
     signal.signal(signal.SIGINT , lambda sig, f: stop_server(sig, f, s))
     signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))
