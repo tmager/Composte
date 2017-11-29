@@ -23,18 +23,12 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
         if fname == 'changeKeySignature':
             return (musicFuns.changeKeySignature, [float(args[0]),
                     unpickleMusicData(args[1]), int(args[2])])
-        elif fname == 'changeTimeSignature':
-            return (musicFuns.changeTimeSignature, [float(args[0]),
-                    unpickleMusicData(args[1]), args[2]])
         elif fname == 'insertNote':
             return (musicFuns.insertNote, [float(args[0]),
                     unpickleMusicData(args[1]), args[2],
                     float(args[3])])
         elif fname == 'removeNote':
             return (musicFuns.removeNote, [float(args[0]),
-                    unpickleMusicData(args[1]), args[2]])
-        elif fname == 'updateTieStatus':
-            return (musicFuns.updateTieStatus, [float(args[0]),
                     unpickleMusicData(args[1]), args[2]])
         elif fname == 'insertMetronomeMark':
             return (musicFuns.insertMetronomeMark, [float(args[0]),
@@ -71,16 +65,19 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
             return (musicFuns.addLyric, [float(args[0]),
                     unpickleMusicData(args[1]), args[2]])
         else:
-            return None
+            return (("fail", "INVALID OPERATION"), None)
 
     (function, arguments) = unpackFun(fname, args)
-    alteredScore = function(arguments)
-    # TODO: Uncomment next line when database lookup is acuatlly implemented
+    (status, alterations) = function(arguments)
+    # TODO: Uncomment next line when database lookup is actually implemented
     # project = findProject(projectID)
     if partIndex is not None and offset is not None:
-        project.updatePartAtOffset(alteredScore, partIndex, offset)
+        project.updatePartAtOffset(alterations, partIndex, offset)
     elif partIndex is not None:
-        project.updatePart(alteredScore, partIndex)
+        project.updatePart(alterations, partIndex)
     else:
-        project.updateParts(alteredScore)
+        project.updateParts(alterations)
+    # TODO: Caching layer? Don't want to consult the database on every update, 
+    # that may be way too slow.
+    return status
 

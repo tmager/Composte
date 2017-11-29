@@ -1,19 +1,31 @@
 import music21
 import uuid
+import json
 
 class ComposteProject:
-    def __init__(self, owner, metadata):
+    def __init__(self, metadata):
         """ Initializes the Project with an empty stream,
             a list of subscribers consisting solely of the owner,
             and a dictionary of metadata about the score. """
         self.parts = [music21.stream.Stream()]
-        self.subscribers = [owner]
         self.metadata = metadata
         self.projectID = uuid.uuid4()
+
+    def __init__(self, parts, metadata, projectID): 
+        """ Initializer for Projects which are loaded from
+            disk, where all fields are already known, but 
+            the ComposteProject object itself doesn't exist yet. """
+        self.parts = parts
+        self.metadata = metadata
+        self.projectID = projectID
 
     def addPart(self):
         """ Adds a new part to a project. """
         self.parts.append(music21.stream.Stream())
+
+    def updateMetadata(self, fieldName, fieldValue):
+        """ Allow updates to project metadata. """
+        self.metadata.fieldName = str(fieldValue)
 
     def swapParts(self, firstPart, secondPart):
         """ Swaps two parts in a project. This is purely cosmetic: all
@@ -55,17 +67,26 @@ class ComposteProject:
         """ Removes a subscriber from a project. """
         self.subscribers.remove(user)
 
-    def pickleIndividualPart(self, partIndex):
-        """ Pickle a single part of music21 data in a project. """
-        return music21.converter.freezeStr(self.parts[partIndex])
-
     def pickleAllParts(self):
         """ Pickle all parts of music21 data in a project. """
         return music21.converter.freezeStr(self.parts)
 
-    def pickleObjectsAtPartOffset(self, offset, partIndex):
-        """ Pickle all objects at a given part offset to a client. """
-        objs = parts[partIndex].getElementsByOffset(offset)
-        return music21.converter.freezeStr(objs)
+    def serialize(self): 
+        """ Construct three JSON objects representing the fields of
+            a ComposteProject. Intended to be stored in three 
+            discrete database fields. Returns a tuple containing the 
+            serialized JSON objects. """
+        parts = json.dumps(music21.converter.freezeStr(self.parts))
+        metadata = json.dumps(self.metadata)
+        uuid = json.dumps(self.projectID)
+        return (parts, metadata, uuid)
 
+def deserializeProject(serializedProject): 
+    """ Deserialize a serialized music21 composteProject
+        into a composteProject object. """
+    (parts, metadata, uuid) = serializedProject
+    parts = music21.converter.thawStr(json.loads(parts))
+    metadata = json.loads(metadata)
+    uuid = json.loads(uuid)
+    return ComposteProject(parts, metadata, uuid)
 
