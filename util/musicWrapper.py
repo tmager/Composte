@@ -83,3 +83,4 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
         project.updatePart(alteredScore, partIndex)
     else:
         project.updateParts(alteredScore)
+

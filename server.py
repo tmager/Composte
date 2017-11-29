@@ -61,12 +61,16 @@ class ComposteServer:
         self.__project_root = os.path.join(self.__data_root, "users")
 
         # This is a dummy function
-        self.__timer = timer.every(300, lambda: False)
+        self.__dlock = Lock()
+        self.__done = False
 
-#         try:
-#             os.mkdir(self.__data_root)
-#         except FileExistsError as e:
-#             pass
+        def is_done(self):
+            with self.__dlock:
+                return not self.__done
+
+        self.__timer = timer.every(300, lambda: self.is_done())
+
+        self.__pool = bookkeeping.ProjectPool()
 
         try:
             os.makedirs(self.__project_root)
@@ -138,6 +142,8 @@ class ComposteServer:
             raise e
             return ("fail", "User {} is not registered".format(uname))
 
+        # This needs to be replaced once we have project
+        # serialization/deserialization
         base_path = os.path.join(self.__project_root, uname)
         base_path = os.path.join(base_path, uuid)
         with open(base_path + ".meta", "w") as f:
@@ -195,6 +201,7 @@ class ComposteServer:
     # Utility
 
     # Just header-like stuff
+    # This changes once we have project ser/deser
     def get_project_metadata(self, owner, pid):
         """
         TODO: Do fs stuff properly
@@ -207,6 +214,7 @@ class ComposteServer:
         return content
 
     # Get full project contents, including header-like stuff and notes, etc
+    # This changes once we have project ser/deser
     def get_project_contents(self, owner, pid):
         """
         TODO: Do fs stuff properly
@@ -231,6 +239,7 @@ class ComposteServer:
         return cookie
 
     # Session: {user, project}
+    # May need login cookies too...
     def cookie_to_session(self, cookie):
         return self.sessions[cookie]
 
@@ -255,6 +264,7 @@ class ComposteServer:
         return ("ok", "")
 
     # TODO: Actually get the damn project (and bump refcount)
+    #  --> Interact with the project pool self.__pool
     def subscribe(self, username, pid):
         # Assert permission
         contributors = self.__contributors.get(project_id = pid)
@@ -266,6 +276,7 @@ class ComposteServer:
             return ("fail", "You are not a contributor")
 
     # Un-get the damn project(and un-bump refcount)
+    #  --> Interact with the project pool self.__pool
     def unsubscribe(self, cookie):
         return self.remove_cookie(cookie)
 
@@ -327,6 +338,8 @@ class ComposteServer:
         return server.serialize(*reply)
 
     def stop(self):
+        with self.__dlock:
+            self.__done = True
         self.__server.stop()
 
 def stop_server(sig, frame, server):
