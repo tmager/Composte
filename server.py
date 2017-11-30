@@ -67,13 +67,15 @@ class ComposteServer:
         self.__dlock = Lock()
         self.__done = False
 
+        self.__pool = bookkeeping.ProjectPool()
+
         def is_done(self):
             with self.__dlock:
                 return not self.__done
 
-        # self.__timer = timer.every(300, lambda: is_done(self))
-
-        self.__pool = bookkeeping.ProjectPool()
+        self.__timer = timer.every(300, 2,
+                lambda: self.__pool.map(self.flush_project),
+                lambda: is_done(self))
 
         try:
             os.makedirs(self.__project_root)
@@ -81,6 +83,9 @@ class ComposteServer:
             pass
 
         self.sessions = {}
+
+    def flush_project(self, project, count):
+        self.write_project(project)
 
     # Database interactions
 
@@ -278,10 +283,10 @@ class ComposteServer:
 
     def do_update(self, args):
         try:
-            musicWrapper.performMusicFun(*args)
+            reply = musicWrapper.performMusicFun(*args)
         except e:
             return ("fail", "Internal Server Error")
-        return ("ok", "")
+        return reply
 
     def subscribe(self, username, pid):
         # Assert permission
@@ -365,7 +370,7 @@ class ComposteServer:
             "get_project": self.get_project_over_the_wire,
             "subscribe": self.subscribe,
             "unsubscribe": self.unsubscribe,
-            "update": unimplemented,
+            "update": self.do_update,
             "handshake": self.compare_versions,
             "share": self.share,
         }
@@ -380,10 +385,10 @@ class ComposteServer:
             (status, other) = do_rpc(*rpc["args"])
         except GenericError as e:
             return ("fail", "Internal server error")
-        # except:
-        #     return ("fail", "Internal server error (Developer error)")
+        except:
+            return ("fail", "Internal server error (Developer error)")
 
-        # Maybe move this to the update handler
+        # Only broadcast successful updates
         if f == "update" and status == "ok":
             self.__server.broadcast(server.serialize(rpc))
 
@@ -395,17 +400,20 @@ class ComposteServer:
 
     def __postprocess(self, reply):
         reply_str = server.serialize(*reply)
-        self.__server.info(reply_str)
+        self.__server.debug(reply_str)
         return reply_str
 
     def stop(self):
         with self.__dlock:
             self.__done = True
+
+        self.__timer.join()
+        self.__pool.map(self.flush_project)
+
         self.__server.stop()
 
 def stop_server(sig, frame, server):
     server.stop()
-    print()
 
 if __name__ == "__main__":
     import signal

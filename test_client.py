@@ -161,7 +161,7 @@ if __name__ == "__main__":
     c.unsubscribe(cookie)
     c.unsubscribe("not a cookie")
 
-    c.update("AAAAAAAAAAAAAAA")
+    # c.update("AAAAAAAAAAAAAAA")
 
     c.stop()
 

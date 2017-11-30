@@ -2,18 +2,27 @@
 import time
 from threading import Thread
 
-def every(delay_in_seconds, fun):
+def every(delay_in_seconds, timer_resolution, fun, continue_predicate):
     """
-    Invoke a funcction with a delay of delay_in_seconds between the end of one
-    invocation and the start of the next
+    Invoke a function with a delay of delay_in_seconds between the end of one
+    invocation and the start of the next. Invokes continue_predicate every
+    timetimer_resolution seconds, allowing polling-lke behavior
     """
 
     def go():
-        while True:
-            do_continue = fun()
-            if not do_continue:
-                break
-            time.sleep(delay_in_seconds)
+        t1 = time.clock_gettime(time.CLOCK_REALTIME)
+
+        print("Timer starting")
+        while continue_predicate():
+            t2 = time.clock_gettime(time.CLOCK_REALTIME)
+
+            if (t2 - t1) < delay_in_seconds:
+                sleep_time = min(delay_in_seconds - (t2 - t1), timer_resolution)
+                time.sleep(sleep_time)
+            else:
+                t1 = time.clock_gettime(time.CLOCK_REALTIME)
+                print("Timer running")
+                fun()
 
     thread = Thread(target = go)
     thread.start()
