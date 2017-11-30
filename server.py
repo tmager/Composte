@@ -68,6 +68,9 @@ class ComposteServer:
         self.__done = False
 
         self.__pool = bookkeeping.ProjectPool()
+        # A better solution would have a lock for every project, but in a
+        # classroom demo this won't be an issue
+        self.__flushing = Lock()
 
         def is_done(self):
             with self.__dlock:
@@ -85,7 +88,8 @@ class ComposteServer:
         self.sessions = {}
 
     def flush_project(self, project, count):
-        self.write_project(project)
+        with self.__flushing:
+            self.write_project(project)
 
     # Database interactions
 
@@ -282,11 +286,22 @@ class ComposteServer:
         return ("ok", "")
 
     def do_update(self, args):
-        try:
-            reply = musicWrapper.performMusicFun(*args)
-        except e:
-            return ("fail", "Internal Server Error")
-        return reply
+
+        # Use this function to get a project
+        def get_fun(pid):
+            # The client musicfuns shouldn't have to worry about how the
+            # server manages the lifetimes of project objects
+            proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
+            self.__pool.remove(pid)
+            return proj
+
+        with self.__flushing:
+            try:
+                # We still need to provide a way to get the project
+                reply = musicWrapper.performMusicFun(*args, fetchProject = get_fun)
+            except e:
+                return ("fail", "Internal Server Error")
+            return reply
 
     def subscribe(self, username, pid):
         # Assert permission

@@ -9,7 +9,8 @@ from util import musicFuns
 from util import composteProject
 import music21
 
-def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
+def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
+        fetchProject = None):
     """ Wrapper for all music functions, where the
         name of the function to be called (as a string)
         is the first argument, and the arguments to the
@@ -69,8 +70,9 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None):
 
     (function, arguments) = unpackFun(fname, args)
     (status, alterations) = function(arguments)
-    # TODO: Uncomment next line when database lookup is actually implemented
-    # project = findProject(projectID)
+
+    project = fetchProject(projectID)
+
     if partIndex is not None and offset is not None:
         project.updatePartAtOffset(alterations, partIndex, offset)
     elif partIndex is not None:

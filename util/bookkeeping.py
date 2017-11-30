@@ -80,6 +80,6 @@ class ProjectPool:
         return count - 1
 
     def map(self, mapfun):
-        for proj, count in ProjectPool.__objects:
+        for pid, (proj, count) in ProjectPool.__objects.items():
             mapfun(proj, count)
 

@@ -12,7 +12,6 @@ def every(delay_in_seconds, timer_resolution, fun, continue_predicate):
     def go():
         t1 = time.clock_gettime(time.CLOCK_REALTIME)
 
-        print("Timer starting")
         while continue_predicate():
             t2 = time.clock_gettime(time.CLOCK_REALTIME)
 
@@ -21,7 +20,6 @@ def every(delay_in_seconds, timer_resolution, fun, continue_predicate):
                 time.sleep(sleep_time)
             else:
                 t1 = time.clock_gettime(time.CLOCK_REALTIME)
-                print("Timer running")
                 fun()
 
     thread = Thread(target = go)
