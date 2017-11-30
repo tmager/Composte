@@ -3,21 +3,19 @@ import uuid
 import json
 
 class ComposteProject:
-    def __init__(self, metadata):
+    def __init__(self, metadata, parts=None, projectID=None):
         """ Initializes the Project with an empty stream,
             a list of subscribers consisting solely of the owner,
             and a dictionary of metadata about the score. """
-        self.parts = [music21.stream.Stream()]
         self.metadata = metadata
-        self.projectID = uuid.uuid4()
-
-    def __init__(self, parts, metadata, projectID): 
-        """ Initializer for Projects which are loaded from
-            disk, where all fields are already known, but 
-            the ComposteProject object itself doesn't exist yet. """
-        self.parts = parts
-        self.metadata = metadata
-        self.projectID = projectID
+        if parts is not None: 
+            self.parts = parts
+        else: 
+            self.parts = [music21.stream.Stream()]
+        if projectID is not None:
+            self.projectID = projectID
+        else: 
+            self.projectID = uuid.uuid4()
 
     def addPart(self):
         """ Adds a new part to a project. """
@@ -79,12 +77,12 @@ class ComposteProject:
         parts = json.dumps(music21.converter.freezeStr(self.parts))
         metadata = json.dumps(self.metadata)
         uuid = json.dumps(self.projectID)
-        return (parts, metadata, uuid)
+        return (metadata, parts, uuid)
 
 def deserializeProject(serializedProject): 
     """ Deserialize a serialized music21 composteProject
         into a composteProject object. """
-    (parts, metadata, uuid) = serializedProject
+    (metadata, parts, uuid) = serializedProject
     parts = music21.converter.thawStr(json.loads(parts))
     metadata = json.loads(metadata)
     uuid = json.loads(uuid)
