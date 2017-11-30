@@ -74,7 +74,10 @@ class ComposteProject:
             a ComposteProject. Intended to be stored in three 
             discrete database fields. Returns a tuple containing the 
             serialized JSON objects. """
-        parts = json.dumps(music21.converter.freezeStr(self.parts))
+        parts = []
+        for part in self.parts
+            parts.append(music21.converter.freezeStr(part)
+        parts = json.dumps(parts)
         metadata = json.dumps(self.metadata)
         uuid = json.dumps(self.projectID)
         return (metadata, parts, uuid)
@@ -82,9 +85,12 @@ class ComposteProject:
 def deserializeProject(serializedProject): 
     """ Deserialize a serialized music21 composteProject
         into a composteProject object. """
-    (metadata, parts, uuid) = serializedProject
-    parts = music21.converter.thawStr(json.loads(parts))
+    (metadata, storedParts, uuid) = serializedProject
+    storedParts = json.loads(storedParts)
+    parts = []
+    for part in storedParts: 
+        parts.append(music21.converter.thawStr(part))
     metadata = json.loads(metadata)
     uuid = json.loads(uuid)
-    return ComposteProject(parts, metadata, uuid)
+    return ComposteProject(metadata, parts, uuid)
 
