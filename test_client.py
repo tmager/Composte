@@ -44,8 +44,6 @@ class ComposteClient:
         msg = client.serialize("register", uname, pword, email)
         reply = self.__client.send(msg)
         print(reply)
-        # (status, reason) = self.__client.send(msg)
-        # print(status, reason)
 
     # We probably need cookies for login too, otherwise people can request
     # project listings (and thus projects) and subscribe to projects they
@@ -57,8 +55,10 @@ class ComposteClient:
         # status, reason = reply
         print(reply)
 
-    def create_project(self, uname, pname):
-        msg = client.serialize("create_project", uname, pname)
+    def create_project(self, uname, pname, metadata):
+        metadata["owner"] = uname
+        metadata = json.dumps(metadata)
+        msg = client.serialize("create_project", uname, pname, metadata)
         reply = self.__client.send(msg)
         print(reply)
 
@@ -137,7 +137,8 @@ if __name__ == "__main__":
     c.login("msheldon", "A")
     c.login("msheldon", "B")
 
-    c.create_project("msheldon", "a_project")
+    print(json.dumps({"owner": "msheldon"}))
+    c.create_project("msheldon", "a_project", {"owner": "msheldon"})
 
     # sys.exit(0)
 

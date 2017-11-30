@@ -30,6 +30,9 @@ import json
 import os
 import sqlite3
 
+# A temporary workaround, as this is a huge breach of abstraction boundaries
+import music21
+
 # This is going to hurt
 def get_version():
     import git
@@ -68,7 +71,7 @@ class ComposteServer:
             with self.__dlock:
                 return not self.__done
 
-        self.__timer = timer.every(300, lambda: self.is_done())
+        # self.__timer = timer.every(300, lambda: is_done(self))
 
         self.__pool = bookkeeping.ProjectPool()
 
@@ -118,15 +121,16 @@ class ComposteServer:
         else:
             return ("fail", "failed to login")
 
-    def create_project(self, uname, pname):
-        """
-        TODO: Actually create a project, not just a database entry
-        """
-        # This is questionable, but okay
-        proj = composteProject.ComposteProject(uname, { "title": pname })
-        uuid = str(proj.projectID)
+    def create_project(self, uname, pname, metadata):
+        metadata = json.loads(metadata)
+
+        proj = composteProject.ComposteProject(metadata)
+        id_ = str(proj.projectID)
+
+        self.write_project(proj)
+
         try:
-            self.__projects.put(uuid, pname, uname)
+            self.__projects.put(id_, pname, uname)
         except sqlite3.OperationalError as e:
             self.__server.info("?????????????")
             raise GenericError("The database is fucked")
@@ -137,28 +141,20 @@ class ComposteServer:
 
         # This could then potentially also lock the database...
         try:
-            self.__contributors.put(uname, uuid)
+            self.__contributors.put(uname, id_)
         except sqlite3.IntegrityError as e:
             raise e
             return ("fail", "User {} is not registered".format(uname))
 
-        # This needs to be replaced once we have project
-        # serialization/deserialization
-        base_path = os.path.join(self.__project_root, uname)
-        base_path = os.path.join(base_path, uuid)
-        with open(base_path + ".meta", "w") as f:
-            f.write("Hello yes this is metadata for {}".format(uuid))
+        return ("ok", id_)
 
-        with open(base_path + ".composte", "w") as f:
-            f.write("Hello yes this is project {}".format(uuid))
+    def get_project_over_the_wire(self, pid):
+        (status, proj) = self.get_project(pid)
 
-        return ("ok", uuid)
+        return (status, proj.serialize())
 
     # This one is slightly more complicated
     def get_project(self, pid):
-        """
-        TODO: Actually read a project from disk, not just pretend to
-        """
         project_entry = self.__projects.get(pid)
         if project_entry.id == None:
             return ("fail", "Project not found")
@@ -166,14 +162,9 @@ class ComposteServer:
         pid = project_entry.id
         owner = project_entry.owner
 
-        meta, proj = self.get_project_contents(owner, pid)
+        proj = self.read_project(pid)
 
-        # Do something here with bookkeeping.Pool, in the spirit of
-        # proj = bookkeeping.Pool.get(pid, get_project_contents(owner, pid))
-        # Deserialization wil be required, since we must distinguish between
-        # serialized forms for transfer and object forms for manipulation
-
-        return ("ok", (meta, proj))
+        return ("ok", proj)
 
     # TODO: This can probably fail
     def list_projects_by_user(self, uname):
@@ -181,6 +172,7 @@ class ComposteServer:
         listings = [ str(project) for project in listings ]
         return ("ok", json.dumps(listings))
 
+    # TODO: This can probably fail
     def list_contributors_of_project(self, pid):
         listings = self.__contributors.get(project_id = pid)
         listings = [ str(user) for user in listings ]
@@ -200,33 +192,52 @@ class ComposteServer:
 
     # Utility
 
-    # Just header-like stuff
-    # This changes once we have project ser/deser
-    def get_project_metadata(self, owner, pid):
+    def write_project(self, project):
         """
-        TODO: Do fs stuff properly
+        I'm going to cheat for now and dump to the filesystem. Ideally we
+        write to a database, but that requires more work. Either way, that can
+        be hidden in this function
         """
+        user = project.metadata["owner"]
+        id_ = str(project.projectID)
+
+        (parts, metadata, _) = project.serialize()
+
+        base_path = os.path.join(self.__project_root, user)
+        base_path = os.path.join(base_path, id_)
+        with open(base_path + ".meta", "w") as f:
+            f.write(metadata)
+
+        with open(base_path + ".composte", "w") as f:
+            f.write(parts)
+
+    def read_project(self, pid):
+        """
+        We've cheated and the projects live on the filesystem. Ideally we want
+        them in a database, but that's work. Either way, we hide the true
+        locations of projects inside of this function.
+        """
+
+        owner = self.__projects.get(pid).owner
+
         filename = pid + ".meta"
         relpath = os.path.join(owner, filename)
         fullpath = os.path.join(self.__project_root, relpath)
         with open(fullpath, "r") as f:
-            content = f.read()
-        return content
-
-    # Get full project contents, including header-like stuff and notes, etc
-    # This changes once we have project ser/deser
-    def get_project_contents(self, owner, pid):
-        """
-        TODO: Do fs stuff properly
-        """
-        meta = self.get_project_metadata(owner, pid)
+            metadata = f.read()
 
         filename = pid + ".composte"
         relpath = os.path.join(owner, filename)
         fullpath = os.path.join(self.__project_root, relpath)
         with open(fullpath, "r") as f:
-            content = f.read()
-        return (meta, content)
+            parts = f.read()
+
+        project = composteProject.deserializeProject(
+            (parts, metadata, pid)
+        )
+        # Don't put it into the pool yet, because then we end up with a
+        # use count that will never be 0 again
+        return project
 
     # Cookie: uuid
     def generate_cookie_for(self, user, project):
@@ -238,10 +249,19 @@ class ComposteServer:
         self.sessions[cookie] = (user, project)
         return cookie
 
-    # Session: {user, project}
+    # Session: {user, project_id}
     # May need login cookies too...
     def cookie_to_session(self, cookie):
-        return self.sessions[cookie]
+        try:
+            cookie = uuid.UUID(cookie)
+        except ValueError as e:
+            return ("fail", "That doesn't look like a cookie")
+
+        try:
+            session = self.sessions[cookie]
+        except KeyError as e:
+            return None
+        return session
 
     def remove_cookie(self, cookie):
         try:
@@ -263,22 +283,33 @@ class ComposteServer:
             return ("fail", "Internal Server Error")
         return ("ok", "")
 
-    # TODO: Actually get the damn project (and bump refcount)
-    #  --> Interact with the project pool self.__pool
     def subscribe(self, username, pid):
         # Assert permission
         contributors = self.__contributors.get(project_id = pid)
         contributors = [ user.uname for user in contributors ]
         if username in contributors:
+            self.__pool.put(pid, lambda: self.get_project(pid)[1])
             cookie = self.generate_cookie_for(username, pid)
             return ("ok", cookie)
         else:
             return ("fail", "You are not a contributor")
 
-    # Un-get the damn project(and un-bump refcount)
-    #  --> Interact with the project pool self.__pool
     def unsubscribe(self, cookie):
-        return self.remove_cookie(cookie)
+        session = self.cookie_to_session(cookie)
+
+        if session is None:
+            return ("fail", "You are not subscribed")
+
+        (user, project_id) = session
+        (status, reason) = self.remove_cookie(cookie)
+
+        if status == "ok":
+            project = self.__pool.put(project_id,
+                    lambda x: self.get_project(x)[1])
+            pid = project.projectID
+            self.__pool.remove(pid, lambda x: self.write_project(x))
+
+        return (status, reason)
 
     # Packaged for neatness
     def get_db_connections(self):
@@ -292,6 +323,28 @@ class ComposteServer:
 
         if self.__contributors is None:
             self.__contributors = driver.Contributors(dbname)
+
+    def share(self, pid, new_contributor):
+        """
+        Add a new user to the list of contributors to a project
+        """
+
+        contributors = self.__contributors.get(project_id = pid)
+        user = self.__users.get(new_contributor)
+
+        # If that's not a known user, fail
+        if user.uname is None:
+            return ("fail", "Who is that")
+
+        # If they are already a contributor, nothing to do
+        if new_contributor not in contributors:
+            # If that's not a valid project, fail
+            try:
+                self.__contributors.put(new_contributor, pid)
+            except sqlite3.IntegrityError as e:
+                return ("fail", "What project is that")
+
+        return ("ok", "")
 
     # Handlers
 
@@ -309,11 +362,12 @@ class ComposteServer:
             "login": self.login,
             "create_project": self.create_project,
             "list_projects": self.list_projects_by_user,
-            "get_project": self.get_project,
+            "get_project": self.get_project_over_the_wire,
             "subscribe": self.subscribe,
             "unsubscribe": self.unsubscribe,
             "update": unimplemented,
             "handshake": self.compare_versions,
+            "share": self.share,
         }
 
         self.__server.debug(rpc)
@@ -321,21 +375,28 @@ class ComposteServer:
 
         do_rpc = rpc_funs.get(f, fail)
 
+        try:
+            # This is expected to be a tuple of things to send back
+            (status, other) = do_rpc(*rpc["args"])
+        except GenericError as e:
+            return ("fail", "Internal server error")
+        # except:
+        #     return ("fail", "Internal server error (Developer error)")
+
         # Maybe move this to the update handler
-        if f == "update":
+        if f == "update" and status == "ok":
             self.__server.broadcast(server.serialize(rpc))
 
-        # This is expected to be a tuple of things to send back
-        reply = do_rpc(*rpc["args"])
-
-        return reply
+        return (status, other)
 
     # Probably deserialization
     def __preprocess(self, message):
         return client.deserialize(message)
 
     def __postprocess(self, reply):
-        return server.serialize(*reply)
+        reply_str = server.serialize(*reply)
+        self.__server.info(reply_str)
+        return reply_str
 
     def stop(self):
         with self.__dlock:

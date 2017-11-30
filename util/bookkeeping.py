@@ -50,7 +50,7 @@ class ProjectPool:
     def put(self, uuid, constructor = None):
         (proj, count) = ProjectPool.__objects.get(uuid, (None, 0))
 
-        if have is None:
+        if proj is None:
             if constructor is None:
                 # We don't have it and the client is going to go get it
                 return None
@@ -66,9 +66,9 @@ class ProjectPool:
         Un-use a project, running on_removal with the project as the only
         argumargument when the reference is removed
         """
-        (proj, have) = ProjectPool.__objects.get(uuid, (None, 0))
+        (proj, count) = ProjectPool.__objects.get(uuid, (None, 0))
 
-        if have is None:
+        if count is None:
             return
 
         if count > 1:

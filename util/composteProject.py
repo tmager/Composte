@@ -1,6 +1,7 @@
 import music21
 import uuid
 import json
+import base64
 
 class ComposteProject:
     def __init__(self, metadata, parts=None, projectID=None):
@@ -8,13 +9,14 @@ class ComposteProject:
             a list of subscribers consisting solely of the owner,
             and a dictionary of metadata about the score. """
         self.metadata = metadata
-        if parts is not None: 
+
+        if parts is not None:
             self.parts = parts
-        else: 
+        else:
             self.parts = [music21.stream.Stream()]
         if projectID is not None:
             self.projectID = projectID
-        else: 
+        else:
             self.projectID = uuid.uuid4()
 
     def addPart(self):
@@ -69,22 +71,26 @@ class ComposteProject:
         """ Pickle all parts of music21 data in a project. """
         return music21.converter.freezeStr(self.parts)
 
-    def serialize(self): 
+    def serialize(self):
         """ Construct three JSON objects representing the fields of
-            a ComposteProject. Intended to be stored in three 
-            discrete database fields. Returns a tuple containing the 
+            a ComposteProject. Intended to be stored in three
+            discrete database fields. Returns a tuple containing the
             serialized JSON objects. """
-        parts = json.dumps(music21.converter.freezeStr(self.parts))
+        bits = [ music21.converter.freezeStr(part) for part in self.parts ]
+        bytes_ = [ base64.b64encode(bit).decode() for bit in bits ]
+        parts = json.dumps(bytes_)
         metadata = json.dumps(self.metadata)
-        uuid = json.dumps(self.projectID)
+        uuid = str(self.projectID)
         return (metadata, parts, uuid)
 
-def deserializeProject(serializedProject): 
+def deserializeProject(serializedProject):
     """ Deserialize a serialized music21 composteProject
         into a composteProject object. """
-    (metadata, parts, uuid) = serializedProject
-    parts = music21.converter.thawStr(json.loads(parts))
+    (metadata, parts, id_) = serializedProject
+    bits = json.loads(parts)
+    bytes_ = [ base64.b64decode(bit.encode()) for bit in bits ]
+    parts = [ music21.converter.thawStr(byte) for byte in bytes_ ]
     metadata = json.loads(metadata)
-    uuid = json.loads(uuid)
-    return ComposteProject(parts, metadata, uuid)
+    id_ = uuid.UUID(id_)
+    return ComposteProject(metadata, parts, id_)
 
