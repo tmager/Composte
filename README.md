@@ -41,6 +41,26 @@ The server accepts arguments to control which ports it uses. The broadcast
 port only sees outgoing traffic, while the interactive port sees both incoming
 and outgoing traffic.
 
+__Docker__
+
+We also provide a Dockerfile describing a container that runs a Composte
+Server. The container listens on port 5000 and 5001.
+
+The following is a reiteration of what was required to successfully run the
+container with output persistence in our development environment. We may be
+wrong in the general case.
+
+If you wish to retain logs, you must mount a directory to
+`/=\ /usr/src/app/logs`. If you wish to retain projects, user, etc, you must
+mount a directory to `/=\ /usr/src/app/data`.
+
+A standalone invocation of the container might look like this:
+
+    docker build -t composte-server .
+    docker run -p 127.0.0.1:5000:5001 -p 127.0.0.1:5001:5001 \
+    -v $(pwd)/logs:/=\ /usr/src/logs -v $(pwd)/data:/=\ /usr/src/data \
+    composte-server
+
 To start a Composte client:
 
     client_main.py
