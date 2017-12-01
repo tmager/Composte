@@ -14,32 +14,24 @@
 
 from network.server import Server as NetworkServer
 from network.fake.security import Encryption
-from network.base.loggable import DevNull, StdErr
+from network.base.loggable import DevNull, StdErr, Combined
 from network.base.exceptions import GenericError
+
+from network.conf import logging as networkLog
+import logging
 
 from protocol import client, server
 
 from auth import auth
 from database import driver
 
-from util import musicWrapper, bookkeeping, composteProject, timer
+from util import musicWrapper, bookkeeping, composteProject, timer, misc
 
 from threading import Thread, Lock
 import uuid
 import json
 import os
 import sqlite3
-
-# A temporary workaround, as this is a huge breach of abstraction boundaries
-import music21
-
-# This is going to hurt
-def get_version():
-    import git
-    try:
-        return git.Repo(search_parent_directories = True).head.object.hexsha
-    except git.exc.InvalidGitRepositoryError as e:
-        return None
 
 class ComposteServer:
 
@@ -59,7 +51,7 @@ class ComposteServer:
         self.__projects     = None
         self.__contributors = None
 
-        self.version = get_version()
+        self.version = misc.get_version()
         self.__data_root = data_root
         self.__project_root = os.path.join(self.__data_root, "users")
 
@@ -162,7 +154,6 @@ class ComposteServer:
 
         return (status, proj.serialize())
 
-    # This one is slightly more complicated
     def get_project(self, pid):
         project_entry = self.__projects.get(pid)
         if project_entry.id == None:
@@ -445,11 +436,16 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    version = get_version()
+    version = misc.get_version()
     print("Composte server version {}".format(version))
 
+    networkLog.setup()
+    log = logging.getLogger("main")
+
+    real_log = Combined((log, StdErr))
+
     s = ComposteServer("tcp://*:{}".format(args.interactive_port),
-            "tcp://*:{}".format(args.broadcast_port), StdErr, Encryption())
+            "tcp://*:{}".format(args.broadcast_port), real_log, Encryption())
 
     signal.signal(signal.SIGINT , lambda sig, f: stop_server(sig, f, s))
     signal.signal(signal.SIGQUIT, lambda sig, f: stop_server(sig, f, s))

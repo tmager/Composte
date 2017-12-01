@@ -84,8 +84,8 @@ class Combined:
     def __init__(self, loggers):
         self.__loggers = []
 
-        if type(loggers) == list:
-            self.__loggers = loggers
+        if type(loggers) == list or type(loggers) == tuple:
+            self.__loggers = list(loggers)
         else: self.__loggers.append(loggers)
 
     def add(self, logger):

@@ -16,7 +16,8 @@ of these days we'll figure out how you can do that.
 ## Building and Running
 
 The Composte client and server provided here are `python3` applications and do
-not require compilation.
+not require compilation. However, the use of a virtual environment such as
+`virtualenv` or `venv` is recommended.
 
 General setup:
 
@@ -28,11 +29,174 @@ a list of python packages that are required.
 In general, you shouldn't be starting Composte servers manually. It is
 recommended that you run it as a service.
 
+By default, Composte servers listen on port 5000 and send outgoing traffic on
+ports 5000 and 5001. If you are running from behind a firewall, make sure that
+these ports or the ones you choose to use are not filtered.
+
 To start a Composte server:
 
     server.py
 
+The server accepts arguments to control which ports it uses. The broadcast
+port only sees outgoing traffic, while the interactive port sees both incoming
+and outgoing traffic.
+
 To start a Composte client:
 
     client_main.py
+
+## Source Code Tourist's Guide
+
+For your viewing pleasure or displaeasure, we provide an elided `tree` of the
+repository.
+
+[Skip](#Source Descriptions)
+
+    Composte
+    ├── auth
+    │   └── auth.py
+    ├── client.py
+    ├── data
+    │   ├── composte.db
+    │   └── users
+    │       └── <User data>
+    ├── database
+    │   └── driver.py
+    ├── doc
+    │   ├── architecture
+    │   │   └── index.md
+    │   ├── deliverables
+    │   │   └── index.md
+    │   ├── images
+    │   │   └── Bad_Diagrams
+    │   │       └── <"Diagrams">
+    │   ├── index.md
+    │   └── protocol
+    │       └── index.md
+    ├── network
+    │   ├── base
+    │   │   ├── exceptions.py
+    │   │   ├── handler.py
+    │   │   └── loggable.py
+    │   ├── client.py
+    │   ├── conf
+    │   │   └── logging.py
+    │   ├── dns.py
+    │   ├── fake
+    │   │   └── security.py
+    │   ├── logs
+    │   │   └── <logs>
+    │   ├── protocol.py
+    │   └── server.py
+    ├── protocol
+    │   ├── base
+    │   │   └── exceptions.py
+    │   ├── client.py
+    │   └── server.py
+    ├── README.md
+    ├── requirements.txt
+    ├── sandbox
+    │   ├── echo_client.py
+    │   └── echo_server.py
+    ├── server.py
+    └── util
+        ├── bookkeeping.py
+        ├── classExceptions.py
+        ├── composteProject.py
+        ├── misc.py
+        ├── musicFuns.py
+        ├── musicWrapper.py
+        └── timer.py
+
+### Source Descriptions
+
+__Top Level__
+
+`ComposteServer.py` implements a complete Composte server on top of the
+network server.
+
+`ComposteClient.py` implements a compete Composte client on top of the network
+client.
+
+__auth__
+
+`auth.py` contains functions to create and verify password hashes.
+
+__database__
+
+`driver.py` encapsulates access to the the database. It translates between
+database schemas and python objects.
+
+__network__
+
+`client.py` provides a network client.
+
+`server.py` provides a network server.
+
+`dns.py` provides methods to get ip addresses from domain names.
+
+__network/base__
+
+`exceptions.py` contains exceptions the network clients and servers expect
+users to raise in the event of trouble.
+
+`handler.py` provides a base class for a stateful message handler. Users may
+choose to derive their message handlers from this.
+
+`loggable.py` provides a base class to provide simpler logging.
+
+__network/fake__
+
+`security.py` provides classes conforming to the `encryption_scheme` interface
+that the network servers and clients expect, but provide no encryption.
+
+__network/conf__
+
+`logging.py` contains the default logging configuration that the network
+clients and servers use, as well as a method to read that configuration.
+
+__client__
+
+This module contains the GUI.
+
+__doc__
+
+This directory contains documentation of the project and deliverables for
+COMP 50CP. Much of the documentation is out of date, and a fair amount may
+also be wunreachable from internal links.
+
+__protocol__
+
+`client.py` contains methods for serializing and deserializing client
+messages.
+
+`server.py` contains methods for serializing and deserializing server
+messages.
+
+__protocol/base__
+
+`exceptions.py` contains exceptions that the `protocol` module may raise.
+
+__util__
+
+The `util` module implements a number of miscellaneous things that are needed
+to make the server work. Notably, the music backend is implemented here
+
+`bookkeeping.py` implements two static object pools.
+
+`classExceptions.py` provides exceptions used in the class hierarchy used by
+the GUI.
+
+`composteProject.py` provides the internal, in-memory representation of a
+project. This also provides serialization and deserialization facilities.
+
+`misc.py` provides a function to get the version (commit) hash.
+
+`musicFuns.py` provides the mutators for the internal representation of music.
+
+`musicWrapper.py` provides a thin wrapper around `musicFuns.py`, conforming to
+the message handler contracts that `ComposteServer` expects.
+
+`timer.py` provides a method to run a function at a configurably approximate
+interval.
 
