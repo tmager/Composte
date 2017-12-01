@@ -52,6 +52,8 @@ class ComposteServer:
         self.__contributors = None
 
         self.version = misc.get_version()
+        self.__server.info("Composte server version {}".format(self.version))
+
         self.__data_root = data_root
         self.__project_root = os.path.join(self.__data_root, "users")
 
@@ -436,8 +438,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    version = misc.get_version()
-    print("Composte server version {}".format(version))
+    print("Composte server version {}".format(misc.get_version()))
 
     networkLog.setup()
     log = logging.getLogger("main")
