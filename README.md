@@ -57,7 +57,7 @@ mount a directory to `/=\ /usr/src/app/data`.
 A standalone invocation of the container might look like this:
 
     docker build -t composte-server .
-    docker run -p 127.0.0.1:5000:5001 -p 127.0.0.1:5001:5001 \
+    docker run -p 0.0.0.0:5000:5001 -p 0.0.0.0:5001:5001 \
     -v $(pwd)/logs:/=\ /usr/src/logs -v $(pwd)/data:/=\ /usr/src/data \
     composte-server
 
