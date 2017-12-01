@@ -5,18 +5,10 @@ from network.fake.security import Encryption
 from network.base.loggable import DevNull, StdErr
 
 from protocol import client, server
-
+from util import misc
 from threading import Thread, Lock
 
 import json
-
-def get_version():
-    import git
-
-    try:
-        return git.Repo(search_parent_directories = True).head.object.hexsha
-    except git.exc.InvalidGitRepositoryError as e:
-        return None
 
 class ComposteClient:
     def __init__(self, interactive_remote, broadcast_remote,
@@ -36,7 +28,7 @@ class ComposteClient:
         print("Broadcast received: " + str(broadcast))
 
     def __version_handshake(self):
-        msg = client.serialize("handshake", get_version())
+        msg = client.serialize("handshake", misc.get_version())
         reply = self.__client.send(msg)
         print(reply)
 

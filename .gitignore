@@ -7,6 +7,8 @@ __pycache__
 sandbox/
 *.swp
 *.db
+logs/*
+*/logs/*
 
 data/
 
