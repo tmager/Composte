@@ -70,12 +70,14 @@ To start a Composte client:
 For your viewing pleasure or displaeasure, we provide an elided `tree` of the
 repository.
 
-[Skip](#Source Descriptions)
+[Maybe Skip](#source-descriptions)
 
     Composte
     ├── auth
     │   └── auth.py
-    ├── client.py
+    ├── client_main.py
+    ├── Composteclient.py
+    ├── ComposteServer.py
     ├── data
     │   ├── composte.db
     │   └── users
@@ -118,7 +120,6 @@ repository.
     ├── sandbox
     │   ├── echo_client.py
     │   └── echo_server.py
-    ├── server.py
     └── util
         ├── bookkeeping.py
         ├── classExceptions.py
@@ -128,7 +129,7 @@ repository.
         ├── musicWrapper.py
         └── timer.py
 
-### Source Descriptions
+## Source Descriptions
 
 __Top Level__
 
