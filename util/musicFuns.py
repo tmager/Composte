@@ -34,14 +34,14 @@ def changeKeySignature(offset, part, newSigSharps):
                 renameNotes(offset, part, newKeySig)
             else:
                 renameNotes(offset, part, newKeySig, oldKeySigs[i + 1].offset)
-            return (("ok", ""), part)
+            return part
     part.insert(offset, newKeySig)
     for oldKeySig in oldKeySigs:
         if offset < oldKeySig.offset:
             renameNotes(offset, part, newKeySig, oldKeySig.offset)
-            return (("ok", ""), part)
+            return part
     renameNotes(offset, part, newKeySig)
-    return (("ok", ""), part)
+    return part
 
 def renameNotes(startOffset, part, keySig, endOffset=None):
     """ Rename all notes affected by a key signature change
@@ -97,9 +97,9 @@ def changeTimeSignature(offset, part, newSigStr):
     for oldTimeSig in oldTimeSigs:
         if oldTimeSig.offset == offset:
             part.replace(oldTimeSig, newTimeSig)
-            return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
     part.insert(offset, newTimeSig)
-    return (("ok", ""), part.getElementsByOffset(offset))
+    return part.getElementsByOffset(offset)
 
 def insertMetronomeMark(offset, parts, text, bpm, pulseDuration):
     """ Insert a metronome marking in a list of
@@ -117,7 +117,7 @@ def insertMetronomeMark(offset, parts, text, bpm, pulseDuration):
             if marking[0] == offset:
                 marking[2] = mark
         part.insert(offset, mark)
-    return (("ok", ""), parts)
+    return parts
 
 def removeMetronomeMark(offset, parts):
     """ Remove a metronome marking from each part in
@@ -127,7 +127,7 @@ def removeMetronomeMark(offset, parts):
         for marking in markings:
             if marking[0] == offset:
                 part.remove(marking)
-    return (("ok", ""), parts)
+    return parts
 
 def createNote(pitchName, durationInQLs):
     """ Creates a Note from the name of a pitch (as a string)
@@ -141,7 +141,7 @@ def insertNote(offset, part, pitchStr, duration):
     """ Add a note at a given offset to a part. """
     newNote = createNote(pitchStr, duration)
     part.insert(offset, newNote)
-    return (("ok", ""), part.getElementsByOffset(offset))
+    return part.getElementsByOffset(offset)
 
 def removeNote(offset, part, removedNoteName):
     """ Remove a note at a given offset into a part. """
@@ -150,8 +150,8 @@ def removeNote(offset, part, removedNoteName):
         noteName = note.pitch.nameWithOctave
         if note.offset == offset and noteName == removedNoteName:
             part.remove(note)
-            return (("ok", ""), part.getElementsByOffset(offset))
-    return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
+    return part.getElementsByOffset(offset)
 
 # NOT IN MINIMUM DELIVERABLE
 def updateTieStatus(offset, part, noteName):
@@ -214,7 +214,7 @@ def transpose(part, semitones):
     """ Transposes the whole part up or down
         by an integer number of semitones. """
     part = part.transpose(semitones)
-    return (("ok", ""), part)
+    return part
 
 def insertClef(offset, part, clefStr):
     """ Inserts a new clef at a given offset in a given part.
@@ -229,9 +229,9 @@ def insertClef(offset, part, clefStr):
     for elem in elems:
         if elem.octaveChange is not None:
             part.replace(elem, newClef)
-            return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
     part.insert(offset, newClef)
-    return (("ok", ""), part.getElementsByOffset(offset))
+    return part.getElementsByOffset(offset)
 
 def removeClef(offset, part):
     """ Remove a clef from a given offset in a given part. """
@@ -240,14 +240,13 @@ def removeClef(offset, part):
         # Only clef objects have an octaveChange field
         if elem.octaveChange is not None:
             part.remove(elem)
-            return (("ok", ""), part.getElementsByOffset(offset))
-    return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
+    return part.getElementsByOffset(offset)
 
 def insertMeasures(insertionOffset, part, insertedQLs):
     """ Insert measures in a part by moving the offsets of
         portions of the score by a given number of QLs. """
-    return (("ok", ""), part.shiftElements(insertedQLs, 
-                                           insertionOffset))
+    return part.shiftElements(insertedQLs, insertionOffset)
 
 def addInstrument(offset, part, instrumentStr):
     """ Given an instrument name, assigns that instrument
@@ -258,9 +257,9 @@ def addInstrument(offset, part, instrumentStr):
     for elem in elems:
         if elem.instrumentName is not None:
             part.replace(elem, instrument)
-            return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
     part.insert(offset, instrument)
-    return (("ok", ""), part.getElementsByOffset(offset))
+    return part.getElementsByOffset(offset)
 
 def removeInstrument(offset, part):
     """ Remove an instrument beginning at offset from a given part. """
@@ -268,8 +267,8 @@ def removeInstrument(offset, part):
     for elem in elems:
         if elem.instrumentName is not None:
             part.remove(elem)
-            return (("ok", ""), part.getElementsByOffset(offset))
-    return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
+    return part.getElementsByOffset(offset)
 
 def addDynamic(offset, part, dynamicStr):
     """ Adds a dynamic marking to a part at a given offset.
@@ -280,9 +279,9 @@ def addDynamic(offset, part, dynamicStr):
     for elem in elems:
         if elem.volumeScalar is not None:
             part.replace(elem, dynamic)
-            return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
     part.insert(offset, dynamic)
-    return (("ok", ""), part.getElementsByOffset(offset))
+    return part.getElementsByOffset(offset)
 
 def removeDynamic(offset, part):
     """ Removes a dynamic marking from a part at a given offset. """
@@ -290,8 +289,8 @@ def removeDynamic(offset, part):
     for elem in elems:
         if elem.volumeScalar is not None:
             part.remove(elem)
-            return (("ok", ""), part.getElementsByOffset(offset))
-    return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
+    return part.getElementsByOffset(offset)
 
 def addLyric(offset, part, lyric):
     """ Add lyrics to a given note in the score. """
@@ -299,5 +298,5 @@ def addLyric(offset, part, lyric):
     for note in notes:
         if note.offset == offset:
             note.addLyric(lyric)
-            return (("ok", ""), part.getElementsByOffset(offset))
-    return (("ok", ""), part.getElementsByOffset(offset))
+            return part.getElementsByOffset(offset)
+    return part.getElementsByOffset(offset)

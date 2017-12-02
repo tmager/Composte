@@ -25,7 +25,7 @@ class ComposteProject:
 
     def updateMetadata(self, fieldName, fieldValue):
         """ Allow updates to project metadata. """
-        self.metadata.fieldName = str(fieldValue)
+        self.metadata[fieldName] = str(fieldValue)
 
     def swapParts(self, firstPart, secondPart):
         """ Swaps two parts in a project. This is purely cosmetic: all
@@ -58,18 +58,6 @@ class ComposteProject:
         """ Updates all parts with new part state. """
         for i in range(0, len(unpickledParts)):
             self.parts[i] = unpickledParts[i]
-
-    def addSubscriber(self, user):
-        """ Adds a new subscriber to the project. """
-        self.subscribers.append(user)
-
-    def removeSubscriber(self, user):
-        """ Removes a subscriber from a project. """
-        self.subscribers.remove(user)
-
-    def pickleAllParts(self):
-        """ Pickle all parts of music21 data in a project. """
-        return music21.converter.freezeStr(self.parts)
 
     def serialize(self):
         """ Construct three JSON objects representing the fields of
