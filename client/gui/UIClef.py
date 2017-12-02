@@ -8,10 +8,22 @@ class UIClef(QtWidgets.QGraphicsItem):
         super(UIClef, self).__init__(*args, **kwargs)
         self.__baseline = baseline
 
-    def position(self, note):
-        base_pitch = ord(str(self.__baseline.pitch)[0])
-        pitch = ord(str(note.pitch)[0])
-        base_octv = self.__baseline.pitch.implicitOctave
-        octv = note.pitch.implicitOctave
-        print(pitch, base_pitch, octv, base_octv)
-        return 8 * (octv - base_octv) + (pitch - base_pitch)
+    def position(self, pitch: music21.pitch.Pitch):
+        """
+        Return the line index of the given pitch relative to the lowest staff
+        line in this clef.
+
+        :param pitch: Pitch whose position is being checked
+
+        :return:
+          An integer, the number of lines above or below the lowest staff line of this clef
+        """
+        base_pitchnum = ord(str(self.__baseline)[0])
+        pitchnum = ord(str(pitch)[0])
+        base_octv = self.__baseline.implicitOctave
+        octv = pitch.implicitOctave
+        return 7 * (octv - base_octv) + (pitchnum - base_pitchnum)
+
+
+def treble():
+    return UIClef(music21.pitch.Pitch('E4'))
