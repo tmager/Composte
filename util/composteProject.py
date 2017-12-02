@@ -2,6 +2,7 @@ import music21
 import uuid
 import json
 import base64
+from network.base.exceptions import GenericError
 
 class ComposteProject:
     def __init__(self, metadata, parts=None, projectID=None):
@@ -32,32 +33,43 @@ class ComposteProject:
             it will affect is the order in which parts are presented on
             the GUI. firstPart and secondPart are both 0-indexed integers
             representing the indicies of the parts to swap. """
-        tmp = self.parts[firstPart]
-        self.parts[firstPart] = self.parts[secondPart]
-        self.parts[secondPart] = tmp
+        if int(firstPart) < len(self.parts) and int(secondPart) < len(self.parts):
+            tmp = self.parts[firstPart]
+            self.parts[firstPart] = self.parts[secondPart]
+            self.parts[secondPart] = tmp
+        else: 
+            raise GenericError
 
     def removePart(self, partToRemove):
         """ Remove a part from a project. partToRemove is a 0-indexed
             integer representing the index of the part to remove. """
-        del self.parts[partToRemove]
+        if int(partToRemove) < len(self.parts): 
+            del self.parts[partToRemove]
+        else: 
+            raise GenericError
 
     def updatePart(self, unpickledPart, partIndex):
         """ Updates an entire part as identified by a part index. """
-        self.parts[partIndex] = unpickledPart
+        if int(partIndex) < len(self.parts): 
+            self.parts[partIndex] = unpickledPart
+        else: 
+            raise GenericError
 
     def updatePartAtOffset(self, unpickledStream, partIndex, streamOffset):
         """ Updates a part at a given stream offset. """
-        part = self.parts[partIndex]
-        elems = part.getElementsByOffset(streamOffset)
-        for elem in elems:
-            part.remove(streamOffset, elem)
-        for member in unpickledStream:
-            part.insert(streamOffset, member)
+        if int(partIndex) < len(self.parts): 
+            part = self.parts[partIndex]
+            elems = part.getElementsByOffset(streamOffset)
+            for elem in elems:
+                part.remove(streamOffset, elem)
+            for member in unpickledStream:
+                part.insert(streamOffset, member)
+        else: 
+            raise GenericError
 
     def updateParts(self, unpickledParts):
         """ Updates all parts with new part state. """
-        for i in range(0, len(unpickledParts)):
-            self.parts[i] = unpickledParts[i]
+        self.parts = unpickledParts
 
     def serialize(self):
         """ Construct three JSON objects representing the fields of
