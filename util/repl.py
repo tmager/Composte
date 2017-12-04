@@ -29,7 +29,8 @@ def merge_args(args):
 
 def repl(callbacks, default_function = I_dont_know_what_you_want_me_to_do):
     """
-    Start an interactivve REPL backed by `client`
+    Start an interactive REPL backed by callbacks
+    { command-name: function-to-invoke }
     REPL commands have the form COMMAND [ARGUMENTS], splitting on whitespace
     """
 
