@@ -1,0 +1,6 @@
+
+
+class NoteExistsError(ValueError):
+    """
+
+    """

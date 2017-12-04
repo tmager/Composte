@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 
-from client.gui import UISettings
+import client.gui.UISettings as UISet
+from client.gui.UIMeasure import UIMeasure
+from client.gui.UIStaffGroup import UIStaffGroup
 
 class UIScoreViewport(QtWidgets.QGraphicsView):
 
@@ -23,28 +25,59 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         self.__lines = []
 
         self.__scoreScene = QtWidgets.QGraphicsScene(parent = self)
-        self.__scoreScene.setBackgroundBrush(QtGui.QBrush(UISettings.BG_COLOR))
+        self.__scoreScene.setBackgroundBrush(QtGui.QBrush(UISet.BG_COLOR))
         self.setScene(self.__scoreScene)
 
 
+    def addPart(self, clef, keysig, timesig):
+        measures = (len(self.__measures[0]) if self.__measures
+                    else self.__measuresPerLine)
+        part = []
+        for i in range(measures):
+            mea = UIMeasure(self.__scoreScene,
+                            self.__width / self.__measuresPerLine,
+                            clef, keysig, timesig,
+                            parent=None)
+            part.append(mea)
+        self.__measures.append(part)
+
+        if not self.__lines:
+            sg = UIStaffGroup(self.__scoreScene,
+                              self.__measures,
+                              0, len(self.__measures[0]),
+                              parent = None)
+            self.__lines.append(sg)
+            sg.setPos(0,0)
+            self.__scoreScene.addItem(sg)
+
+        for sg in self.__lines:
+            sg.refresh()
+
 
     def addLine(self):
-        if self.__measures:
-            lastMeasure = self.__measures[-1]
-            for i in range(self.__measuresPerLine):
-                mea = UIMeasure(self.__scoreScene,
-                                self.__width / self.__measuresPerLine,
-                                lastMeasure.clef(), lastMeasure.keysig(),
-                                lastMeasure.timesig(),
-                                parent=None)
-                self.__measures.append(mea)
+        for part in self.__measures:
+            if part:
+                lastMeasure = part[-1]
+                for i in range(self.__measuresPerLine):
+                    mea = UIMeasure(self.__scoreScene,
+                                    self.__width / self.__measuresPerLine,
+                                    lastMeasure.clef(), lastMeasure.keysig(),
+                                    lastMeasure.timesig(),
+                                    parent=None)
+                    part.append(mea)
+            else:
+                raise RuntimeError("Empty measure list in UIScoreViewport.addLine")
 
-            sg = UIStaffGroup(self.__measures,
-                              len(self.__measures) - self.__measuresPerLine,
-                              len(self.__measures),
-                              self.__width,
-                              parent = None)
-            self.__scoreScene.addItem(sg)
+        sg = UIStaffGroup(self.__scoreScene,
+                          self.__measures,
+                          len(self.__measures[0]) - self.__measuresPerLine,
+                          len(self.__measures[0]),
+                          parent = self.__lines[-1] if self.__lines else None)
+        y = sg.parentItem().boundingRect().height()
+        print(sg.parentItem().boundingRect().width())
+        sg.setPos(0, y)
+        self.__lines.append(sg)
+
 
 
     def keyPressEvent(self, ev):

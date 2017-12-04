@@ -1,7 +1,8 @@
 
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from client.gui.UIMeasure import UIMeasure
+import client.gui.UISettings as UISet
 
 class UIStaff(QtWidgets.QGraphicsItemGroup):
 
@@ -26,3 +27,14 @@ class UIStaff(QtWidgets.QGraphicsItemGroup):
     def length(self):
         return sum(map(length(self.__measures[self.__startMeasure
                                               :self.__endMeasure])))
+
+    def boundingRect(self):
+        childBoundRect = self.childrenBoundingRect()
+        x = childBoundRect.x()
+        y = childBoundRect.y()
+        width = childBoundRect.width()
+        height = childBoundRect.height()
+        return QtCore.QRectF(x - UISet.STAFF_X_PAD,
+                             y - UISet.STAFF_Y_PAD,
+                             width + 2 * UISet.STAFF_X_PAD,
+                             height + 2 * UISet.STAFF_Y_PAD)

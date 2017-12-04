@@ -9,8 +9,14 @@ import music21
 
 class UIMeasure(QtWidgets.QGraphicsItemGroup):
 
-    __stafflinePen = QtGui.QPen(QtGui.QBrush(Qt.black), 1, Qt.SolidLine, Qt.FlatCap)
-    __barlinePen = QtGui.QPen(QtGui.QBrush(Qt.black), 2, Qt.SolidLine, Qt.FlatCap)
+    __stafflineWidth = 1
+    __barlineWidth = 2
+    __stafflinePen = QtGui.QPen(QtGui.QBrush(Qt.black),
+                                __stafflineWidth,
+                                Qt.SolidLine, Qt.FlatCap)
+    __barlinePen = QtGui.QPen(QtGui.QBrush(Qt.black),
+                              __barlineWidth,
+                              Qt.SolidLine, Qt.FlatCap)
 
     def __init__(self, scene, width, clef, keysig, timesig,
                  newClef = False, newKeysig = False, newTimesig = False,
@@ -34,16 +40,23 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
     def __initGraphics(self):
         for i in range(0,5):
             line = QGraphicsLineItem(0, 2 * i * UISettings.PITCH_LINE_SEP,
-                                     self.__width, 2 * i * UISettings.PITCH_LINE_SEP,
+                                     self.__width,
+                                     2 * i * UISettings.PITCH_LINE_SEP,
                                      self)
             line.setPen(self.__stafflinePen)
             self.__baseObjs.append(line)
 
-        barline = QGraphicsLineItem(0, 0, 0, 4 * 2 * UISettings.PITCH_LINE_SEP + 1, parent=self)
+        barline_y1 = -self.__stafflineWidth/2
+        barline_y2 = 4 * 2 * UISettings.PITCH_LINE_SEP + self.__stafflineWidth/2
+
+        barline = QGraphicsLineItem(0, barline_y1,
+                                    0, barline_y2,
+                                    parent=self)
         barline.setPen(self.__barlinePen)
         self.__baseObjs.append(barline)
-        barline = QGraphicsLineItem(self.__width, 0,
-                                    self.__width, 4 * 2 * UISettings.PITCH_LINE_SEP + 1, parent=self)
+        barline = QGraphicsLineItem(self.__width, barline_y1,
+                                    self.__width, barline_y2,
+                                    parent = self)
         barline.setPen(self.__barlinePen)
         self.__baseObjs.append(barline)
 
