@@ -48,6 +48,10 @@ class ProjectPool:
         pass
 
     def put(self, uuid, constructor = None):
+        """
+        Fetch a project and bump its refcount. When the requested project is
+        not cached, invoke constructor if possible and cache the result.
+        """
         (proj, count) = ProjectPool.__objects.get(uuid, (None, 0))
 
         if proj is None:
@@ -80,6 +84,10 @@ class ProjectPool:
         return count - 1
 
     def map(self, mapfun):
+        """
+        Apply a function to all cached projects. Adding or removing projects
+        during this process results in undefined behavior.
+        """
         for pid, (proj, count) in ProjectPool.__objects.items():
             mapfun(proj, count)
 

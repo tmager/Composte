@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 
 # Things that should probably be a thing:
-# * Centralized pool of projects in memory (Pretty critical, otherwise edits
-#           don't survive)
-#       Requires support for project deserialization
-# * Timed flushing of projects in memory to disk (Important for robustness)
-#       Requires support for project serialization
-#       Likely requires projects to carry locks serverside to prevent writes
-#           during a flush causing project corruption
 # * Login cookies alongside project subscription cookies
 # * Separation of broadcasts per project (regardless of encryption)
 #       Would require moving from single broadcast to some other strategy
@@ -16,12 +9,9 @@ from network.server import Server as NetworkServer
 from network.fake.security import Encryption
 from network.base.loggable import DevNull, StdErr, Combined
 from network.base.exceptions import GenericError
-
 from network.conf import logging as networkLog
-import logging
 
 from protocol import client, server
-
 from auth import auth
 from database import driver
 
@@ -32,16 +22,24 @@ import uuid
 import json
 import os
 import sqlite3
+import logging
 
 class ComposteServer:
 
     # I'm so sorry
     __register_lock = Lock()
 
-    def __init__(self, interactive_address, broadcast_address,
+    def __init__(self, interactive_port, broadcast_port,
             logger, encryption_scheme, data_root = "data/"):
+        """
+        Start a Composte Server listening on interactive_port and broadcasting
+        on broadcast_port. Logs are directed to logger, messages are
+        transparently encrypted with encryption_scheme.encrypt() and
+        encryption_scheme.decrypt(), and data is stored in the directory
+        data_root.
+        """
 
-        self.__server = NetworkServer(interactive_address, broadcast_address,
+        self.__server = NetworkServer(interactive_port, broadcast_port,
                 logger, encryption_scheme)
 
         self.__server.start_background(self.__handle, self.__preprocess,
@@ -57,7 +55,6 @@ class ComposteServer:
         self.__data_root = data_root
         self.__project_root = os.path.join(self.__data_root, "users")
 
-        # This is a dummy function
         self.__dlock = Lock()
         self.__done = False
 
@@ -82,12 +79,18 @@ class ComposteServer:
         self.sessions = {}
 
     def flush_project(self, project, count):
+        """
+        Flush project to backing storage
+        """
         with self.__flushing:
             self.write_project(project)
 
     # Database interactions
 
     def register(self, uname, pword, email):
+        """
+        Register a new user. Username must be unique per user database.
+        """
         hash_ = auth.hash(pword)
 
         with ComposteServer.__register_lock:
@@ -112,6 +115,9 @@ class ComposteServer:
         return ("ok", "")
 
     def login(self, uname, pword):
+        """
+        Log a user in
+        """
         record = self.__users.get(uname)
         if record.hash is None:
             return ("fail", "failed to login")
@@ -125,6 +131,10 @@ class ComposteServer:
             return ("fail", "failed to login")
 
     def create_project(self, uname, pname, metadata):
+        """
+        Create a new Composte project. Projects are given unique identifiers,
+        so project names need not be unique.
+        """
         metadata = json.loads(metadata)
 
         proj = composteProject.ComposteProject(metadata)
@@ -152,11 +162,19 @@ class ComposteServer:
         return ("ok", id_)
 
     def get_project_over_the_wire(self, pid):
-        (status, proj) = self.get_project(pid)
+        """
+        Retrieve the serialized form of a project for transmission. Currently
+        only used during the initial handshake.
+        """
+        proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
+        self.__pool.remove(pid)
 
-        return (status, proj.serialize())
+        return ("ok", proj.serialize())
 
     def get_project(self, pid):
+        """
+        Fetch a Composte project object for manipulation
+        """
         project_entry = self.__projects.get(pid)
         if project_entry.id == None:
             return ("fail", "Project not found")
@@ -170,17 +188,26 @@ class ComposteServer:
 
     # TODO: This can probably fail
     def list_projects_by_user(self, uname):
+        """
+        Retrieve a list of projects that a user is a collaborator on
+        """
         listings = self.__contributors.get(username = uname)
         listings = [ str(project) for project in listings ]
         return ("ok", json.dumps(listings))
 
     # TODO: This can probably fail
     def list_contributors_of_project(self, pid):
+        """
+        Retrieve a list of a project's contributors
+        """
         listings = self.__contributors.get(project_id = pid)
         listings = [ str(user) for user in listings ]
         return ("ok", json.dumps(listings))
 
     def compare_versions(self, client_version):
+        """
+        Compare version hashes
+        """
         if client_version != self.version:
             status = "fail"
             reason = "Mismatched versions. " +\
@@ -252,8 +279,11 @@ class ComposteServer:
         return cookie
 
     # Session: {user, project_id}
-    # May need login cookies too...
+    # May need login cookies too
     def cookie_to_session(self, cookie):
+        """
+        Retrieve the session associated with a cookie
+        """
         try:
             cookie = uuid.UUID(cookie)
         except ValueError as e:
@@ -266,6 +296,9 @@ class ComposteServer:
         return session
 
     def remove_cookie(self, cookie):
+        """
+        Remove a cookie and its associated session
+        """
         try:
             cookie = uuid.UUID(cookie)
         except ValueError as e:
@@ -279,9 +312,16 @@ class ComposteServer:
         return ("ok", "")
 
     def do_update(self, args):
+        """
+        Perform a music-related update, deferring to
+        musicWrapper.performMusicFperformMusicFun
+        """
 
         # Use this function to get a project
         def get_fun(pid):
+            """
+            Fetch a project from the cache
+            """
             # The client musicfuns shouldn't have to worry about how the
             # server manages the lifetimes of project objects
             proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
@@ -297,6 +337,10 @@ class ComposteServer:
             return reply
 
     def subscribe(self, username, pid):
+        """
+        Subscribe a client to updates for a project. Pins the project in the
+        cache
+        """
         # Assert permission
         contributors = self.__contributors.get(project_id = pid)
         contributors = [ user.uname for user in contributors ]
@@ -308,6 +352,9 @@ class ComposteServer:
             return ("fail", "You are not a contributor")
 
     def unsubscribe(self, cookie):
+        """
+        Unsubscribe a client from a project. Unpins the project in the cache
+        """
         session = self.cookie_to_session(cookie)
 
         if session is None:
@@ -326,6 +373,9 @@ class ComposteServer:
 
     # Packaged for neatness
     def get_db_connections(self):
+        """
+        Open database connections if they are not already open
+        """
         dbname = "data/composte.db"
 
         if self.__users is None:
@@ -362,6 +412,9 @@ class ComposteServer:
     # Handlers
 
     def __handle(self, _, rpc):
+        """
+        Dispatch to handle messages
+        """
         self.get_db_connections()
 
         def fail(*args):
@@ -404,14 +457,23 @@ class ComposteServer:
 
     # Probably deserialization
     def __preprocess(self, message):
+        """
+        Deserialize messages for consumption by __handle
+        """
         return client.deserialize(message)
 
     def __postprocess(self, reply):
+        """
+        Serialize replies to be sent over the wire
+        """
         reply_str = server.serialize(*reply)
         self.__server.debug(reply_str)
         return reply_str
 
     def stop(self):
+        """
+        Stop the server elegantly
+        """
         with self.__dlock:
             self.__done = True
 
@@ -421,6 +483,9 @@ class ComposteServer:
         self.__server.stop()
 
 def stop_server(sig, frame, server):
+    """
+    Signal handler to stop the server elegantly, especially under a supervisor
+    """
     server.stop()
 
 if __name__ == "__main__":

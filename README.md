@@ -35,11 +35,15 @@ these ports or the ones you choose to use are not filtered.
 
 To start a Composte server:
 
-    server.py
+    ComposteServer.py
 
 The server accepts arguments to control which ports it uses. The broadcast
 port only sees outgoing traffic, while the interactive port sees both incoming
 and outgoing traffic.
+
+To start a Composte client:
+
+    client_main.py
 
 __Docker__
 
@@ -54,23 +58,19 @@ If you wish to retain logs, you must mount a directory to
 `/=\ /usr/src/app/logs`. If you wish to retain projects, user, etc, you must
 mount a directory to `/=\ /usr/src/app/data`.
 
-A standalone invocation of the container might look like this:
+A one-time, standalone invocation of the container might look like this:
 
     docker build -t composte-server .
     docker run -p 0.0.0.0:5000:5001 -p 0.0.0.0:5001:5001 \
     -v $(pwd)/logs:/=\ /usr/src/logs -v $(pwd)/data:/=\ /usr/src/data \
     composte-server
 
-To start a Composte client:
-
-    client_main.py
-
 ## Source Code Tourist's Guide
 
 For your viewing pleasure or displaeasure, we provide an elided `tree` of the
 repository.
 
-[Maybe Skip](#source-descriptions)
+[Skip](#source-descriptions)
 
     Composte
     ├── auth

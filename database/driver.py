@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import sqlite3
 import json
@@ -9,8 +10,11 @@ from threading import Lock
 
 # ._.
 def get_connection(dbname):
+    """
+    Make sure that foreign key constraints are enabled for every connection
+    """
     conn = sqlite3.connect(dbname)
-    conn.execute("PRAGMA foreign_keys = \"1\"")
+    conn.execute("PRAGMA foreign_keys = \"1\"") # ಠ_ಠ
     conn.commit()
     return conn
 
@@ -79,7 +83,7 @@ class Project:
         return json.dumps(obj)
 
 # Project storage path is always
-#   //owner/id.{meta,proj}
+#   //<owner>/<id>.{meta,proj}
 class Projects:
     __blueprint = ("id", "name", "owner")
 

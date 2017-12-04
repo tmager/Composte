@@ -3,17 +3,17 @@
 import zmq
 # A REP socket replies to the client who sent the last message. This means
 # that we can't really get away with worker threads here, as
-# REQ/Processing/REP must be serialized as a cohesive unit.
-
-from threading import Lock, Thread
+# REQ/Processing/REP must be serialized as a cohesive unit. This problem seems
+# to be generally tractable though, per
+# https://stackoverflow.com/questions/29420666/zmq-multiple-request-reply-pairs
 
 from network.fake.security import Encryption, Log
 from network.base.exceptions import DecryptError, EncryptError, GenericError
-
 from network.base.loggable import Loggable, StdErr
-
 from network.conf import logging as log
+
 import logging
+from threading import Lock, Thread
 
 # Need signal handlers to properly run as daemon
 import signal
@@ -57,7 +57,7 @@ class Server(Loggable):
 
         self.__listen_thread = None
 
-        # print("Bound to {} and {}".format(self.__iaddr, self.__baddr))
+        # self.info("Bound to {} and {}".format(self.__iaddr, self.__baddr))
 
     def broadcast(self, message):
         """
@@ -121,7 +121,7 @@ class Server(Loggable):
                         try:
                             message = self.__translator.decrypt(message)
                         except DecryptError as e:
-                            self.fail(message, "Decrypt failure")
+                            self.fail(message, "Decryption failure")
                             continue
 
                         try:
@@ -145,20 +145,17 @@ class Server(Loggable):
                         try:
                             reply = self.__translator.encrypt(reply)
                         except EncryptError as e:
-                            self.fail(message, "encrypt failure")
+                            self.fail(message, "Encryption failure")
                             continue
-                    except:
+                    except e:
                         self.fail(message, "Malformed message")
                         self.error("Uncaught exception: {}"
                                 .format(traceback.format_exc()))
-                        # Yeesh
-                        raise
                         continue
 
                     self.__isocket.send_string(reply)
         except KeyboardInterrupt as e:
             self.stop()
-            print()
 
     def stop(self):
         """

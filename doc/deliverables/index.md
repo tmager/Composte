@@ -8,3 +8,5 @@
 
 [Design](project-design.text)
 
+[Final Report (Markdown)](project-final-report.md)
+

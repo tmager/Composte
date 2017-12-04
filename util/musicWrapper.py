@@ -22,7 +22,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
     def unpackFun(fname, args):
         """ Determines which function to call and
             casts all arguments to the correct types. """
-        try: 
+        try:
             if fname == 'changeKeySignature':
                 return (musicFuns.changeKeySignature, [float(args[0]),
                         int(args[1]), int(args[2])])
@@ -67,21 +67,21 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                         int(args[1]), args[2]])
             else:
                 return (None, None)
-        except ValueError: 
+        except ValueError:
             raise GenericError
 
     (function, arguments) = unpackFun(fname, args)
     # Begin error handling
-    if (function, arguments) == (None, None): 
+    if (function, arguments) == (None, None):
         return ("fail", "INVALID OPERATION")
-    
-    try: 
+
+    try:
         alterations = function(arguments)
     except music21.exceptions21.Music21Exception:
         raise GenericError
 
-    if offset is not None: 
-        if offset < 0.0: 
+    if offset is not None:
+        if offset < 0.0:
             raise GenericError
 
     # End error handling
@@ -94,7 +94,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
         project.updatePart(alterations, partIndex)
     else:
         project.updateParts(alterations)
-    # TODO: Caching layer? Don't want to consult the database on every update, 
+    # TODO: Caching layer? Don't want to consult the database on every update,
     # that may be way too slow.
     return ("ok", "")
 
