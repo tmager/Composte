@@ -11,4 +11,8 @@ logs/*
 */logs/*
 
 data/
-
+lib/
+bin/
+include/
+.Python
+pip-selfcheck.json

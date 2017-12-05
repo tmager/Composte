@@ -89,7 +89,6 @@ class ComposteClient:
         """
         msg = client.serialize("list_projects", uname)
         reply = self.__client.send(msg)
-        reply = server.deserialize(reply)
         return server.deserialize(reply)
 
     def get_project(self, pid):
@@ -124,60 +123,88 @@ class ComposteClient:
         return server.deserialize(reply)
 
     # There's nothing here yet b/c we don't know what anything look like
-    def update(self, *args):
+    def update(self, pid, fname, args, partIndex = None, offset = None):
         """
         Send a music related update for the remote backend to process
         """
         print("Update with args: {}".format(str(args)))
-        msg = client.serialize("update")
+        args = json.dumps(args)
+        msg = client.serialize("update", pid, fname, args, partIndex, offset)
         reply = self.__client.send(msg)
         if DEBUG: print(reply)
         return server.deserialize(reply)
 
-    def changeKeySignature(self, offset, partIndex, newSigSharps):
-        return self.update("changeKeySignature", offset, partIndex,
-                newSigSharps)
+    def changeKeySignature(self, pid, offset, partIndex, newSigSharps):
+        return self.update(pid, 
+                           "changeKeySignature", (offset, partIndex, newSigSharps), 
+                           partIndex, offset)
 
-    def insertNote(self, offset, partIndex, pitch, duration):
-        return self.update("insertNote", offset, partIndex, pitch, duration)
+    def insertNote(self, pid, offset, partIndex, pitch, duration):
+        return self.update(pid, 
+                           "insertNote", (offset, partIndex, pitch, duration), 
+                           partIndex, offset)
 
-    def removeNote(self, offset, partIndex, removedNoteName):
-        return self.update("removeNote", offset, partIndex, removedNoteName)
+    def removeNote(self, pid, offset, partIndex, removedNoteName):
+        return self.update(pid, 
+                           "removeNote", (offset, partIndex, removedNoteName), 
+                           partIndex, offset)
 
-    def insertMetronomeMark(self, offset, parts, text, bpm, pulseDuration):
-        return self.update("inertMetronomeMark", offset, parts, text, bpm,
-                pulseDuration)
+    def insertMetronomeMark(self, pid, offset, parts, text, bpm, pulseDuration):
+        return self.update(pid, 
+                           "insertMetronomeMark", (offset, parts, 
+                            text, bpm, pulseDuration),
+                           None, offset)
 
-    def removeMetronomeMark(self, offset, parts):
-        return self.update("removeMetronomeMark", offset, parts)
+    def removeMetronomeMark(self, pid, offset, parts):
+        return self.update(pid, 
+                           "removeMetronomeMark", (offset, parts), 
+                           None, offset)
 
-    def transpose(self, partIndex, semitones):
-        return self.update("transpose", partIndex, semitones)
+    def transpose(self, pid, partIndex, semitones):
+        return self.update(pid, 
+                           "transpose", (partIndex, semitones), 
+                           partIndex, None)
 
-    def insertClef(self, offset, part, clefStr):
-        return self.update("insertClef", offset, part, clefStr)
+    def insertClef(self, pid, offset, partIndex, clefStr):
+        return self.update(pid, 
+                           "insertClef", (offset, partIndex, clefStr),
+                           partIndex, offset)
 
-    def removeClef(self, offset, part):
-        return self.update("removeClef", offset, part)
+    def removeClef(self, pid, offset, partIndex):
+        return self.update(pid, 
+                           "removeClef", (offset, partIndex),
+                           partIndex, offset)
 
-    def insertMeasures(self, insertionOffset, parts, insertedQLs):
-        return self.update("insertMeasures", insertionOffset, parts,
-                insertedQLs)
+    def insertMeasures(self, pid, insertionOffset, partIndex, insertedQLs):
+        return self.update(pid, 
+                           "insertMeasures", (insertionOffset, 
+                            partIndex, insertedQLs),
+                           partIndex, insertionOffset)
 
-    def addInstrument(self, offset, part, instrumentStr):
-        return self.update("addInstrument", offset, part, instrumentStr)
+    def addInstrument(self, pid, offset, partIndex, instrumentStr):
+        return self.update(pid, 
+                           "addInstrument", (offset, partIndex, instrumentStr),
+                           partIndex, offset)
 
-    def removeInstrument(self, offset, part):
-        return self.update("removeInstrument", offset, part)
+    def removeInstrument(self, pid, offset, partIndex):
+        return self.update(pid, 
+                           "removeInstrument", (offset, partIndex),
+                           partIndex, offset)
 
-    def addDynamic(self, offset, part, dynamicStr):
-        return self.update("addDynamic", offset, part, dynamicStr)
+    def addDynamic(self, pid, offset, partIndex, dynamicStr):
+        return self.update(pid, 
+                           "addDynamic", (offset, partIndex, dynamicStr),
+                           partIndex, offset)
 
-    def removeDynamic(self, offset, part):
-        return self.update("removeDynamic", offset, part)
+    def removeDynamic(self, pid, offset, partIndex):
+        return self.update(pid, 
+                           "removeDynamic", (offset, partIndex),
+                           partIndex, offset)
 
-    def addLyric(self, offset, part, lyric):
-        return self.update("addLyric", offset, part, lyric)
+    def addLyric(self, pid, offset, partIndex, lyric):
+        return self.update(pid, 
+                           "addLyric", (offset, partIndex, lyric),
+                           partIndex, offset)
 
     def stop(self):
         """
@@ -194,8 +221,8 @@ if __name__ == "__main__":
 
     DEBUG = True
 
-    parser = argparse.ArgumentParser(prog = "ComposteServer",
-            description = "A Composte Server")
+    parser = argparse.ArgumentParser(prog = "ComposteClient",
+            description = "A Composte Client")
 
     parser.add_argument("-i", "--interactive-port", default = 5000,
             type = int)
@@ -212,43 +239,33 @@ if __name__ == "__main__":
 
     c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
             "tcp://{}:{}".format(endpoint_addr, bport),
-            lambda x: x, StdErr, Encryption())
+            lambda x, y: (x, y), StdErr, Encryption())
 
     c.register("msheldon", "A", "!!!")
-
-    # sys.exit(0)
-
     c.register("shark meldon", "A", "!!!")
     c.register("mark", "A", "!!!")
     c.register("a", "A", "!!!")
     c.login("msheldon", "A")
     c.login("msheldon", "B")
+    tup = c.create_project("msheldon", "a_project", {"owner": "msheldon"})
+    if tup[0] == 'fail': 
+        print("FAILURE")
+    else: 
+        (status, pid) = tup
 
-    print(json.dumps({"owner": "msheldon"}))
-    c.create_project("msheldon", "a_project", {"owner": "msheldon"})
+    truePid = pid[0]
+    (status, proj) = c.get_project(truePid)
 
-    # sys.exit(0)
+    (status, cookie) = c.subscribe("msheldon", truePid)
+    c.subscribe("shark meldon", truePid)
 
-    [a_pid] = c.retrieve_project_listings_for("msheldon")
-    c.retrieve_project_listings_for("alex")
-
-    # print(type(a_pid))
-    # print(a_pid)
-    proj = json.loads(a_pid)[0]
-    print(proj)
-
-    pid = json.loads(proj)["id"]
-    print(pid)
-
-    c.get_project(pid)
-
-    cookie = c.subscribe("msheldon", pid)
-    c.subscribe("shark meldon", pid)
-
-    c.unsubscribe(cookie)
+    c.unsubscribe(cookie[0])
     c.unsubscribe("not a cookie")
 
-    # c.update("AAAAAAAAAAAAAAA")
+    c.insertNote(truePid, 0.0, 0, "C#4", 2.0)
+    c.insertNote(truePid, 1.0, 0, "E-5", 1.0)
+
+    print(status)
 
     c.stop()
 

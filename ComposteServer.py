@@ -309,7 +309,7 @@ class ComposteServer:
 
         return ("ok", "")
 
-    def do_update(self, args):
+    def do_update(self, *args):
         """
         Perform a music-related update, deferring to
         musicWrapper.performMusicFperformMusicFun
@@ -347,6 +347,7 @@ class ComposteServer:
             cookie = self.generate_cookie_for(username, pid)
             return ("ok", cookie)
         else:
+            self.__server.debug("{} is not one of {}".format(username, contributors))
             return ("fail", "You are not a contributor")
 
     def unsubscribe(self, cookie):
@@ -444,7 +445,8 @@ class ComposteServer:
             (status, other) = do_rpc(*rpc["args"])
         except GenericError as e:
             return ("fail", "Internal server error")
-        except:
+        except e:
+            print(e)
             return ("fail", "Internal server error (Developer error)")
 
         # Only broadcast successful updates

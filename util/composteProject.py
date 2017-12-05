@@ -3,6 +3,7 @@ import uuid
 import json
 import base64
 from network.base.exceptions import GenericError
+# from copy import deepcopy
 
 class ComposteProject:
     def __init__(self, metadata, parts=None, projectID=None):
@@ -60,8 +61,12 @@ class ComposteProject:
         if int(partIndex) < len(self.parts): 
             part = self.parts[partIndex]
             elems = part.getElementsByOffset(streamOffset)
+            for elem in part.getElementsByOffset(streamOffset):
+                print(elem)
             for elem in elems:
                 part.remove(streamOffset, elem)
+            for elem in part.getElementsByOffset(streamOffset):
+                print(elem)
             for member in unpickledStream:
                 part.insert(streamOffset, member)
         else: 
