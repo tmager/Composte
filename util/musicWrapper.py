@@ -93,12 +93,5 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
         raise GenericError
 
     # End error handling
-
-    #if partIndex is not None and offset is not None:
-    #    project.updatePartAtOffset(alterations, int(partIndex), float(offset))
-    #elif partIndex is not None:
-    #    project.updatePart(alterations, int(partIndex))
-    #else:
-    #    project.updateParts(alterations)
     return ("ok", "")
 

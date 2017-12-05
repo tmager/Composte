@@ -49,33 +49,6 @@ class ComposteProject:
         else: 
             raise GenericError
 
-    def updatePart(self, unpickledPart, partIndex):
-        """ Updates an entire part as identified by a part index. """
-        if int(partIndex) < len(self.parts): 
-            self.parts[partIndex] = unpickledPart
-        else: 
-            raise GenericError
-
-    def updatePartAtOffset(self, unpickledStream, partIndex, streamOffset):
-        """ Updates a part at a given stream offset. """
-        if int(partIndex) < len(self.parts): 
-            part = self.parts[partIndex]
-            elems = part.getElementsByOffset(streamOffset)
-            for elem in part.getElementsByOffset(streamOffset):
-                print(elem)
-            for elem in elems:
-                part.remove(streamOffset, elem)
-            for elem in part.getElementsByOffset(streamOffset):
-                print(elem)
-            for member in unpickledStream:
-                part.insert(streamOffset, member)
-        else: 
-            raise GenericError
-
-    def updateParts(self, unpickledParts):
-        """ Updates all parts with new part state. """
-        self.parts = unpickledParts
-
     def serialize(self):
         """ Construct three JSON objects representing the fields of
             a ComposteProject. Intended to be stored in three
