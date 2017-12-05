@@ -8,6 +8,7 @@ from network.base.exceptions import GenericError
 from protocol import client, server
 from util import misc
 from threading import Thread, Lock
+from util.repl import the_worst_repl_you_will_ever_see
 
 import json
 
@@ -51,6 +52,8 @@ class ComposteClient:
 
     def register(self, uname, pword, email):
         """
+        register username password email
+
         Attempt to register a new user
         """
         msg = client.serialize("register", uname, pword, email)
@@ -64,6 +67,8 @@ class ComposteClient:
     # for the course, but it is an issue in the long run
     def login(self, uname, pword):
         """
+        login username password
+
         Attempt to login as a user
         """
         msg = client.serialize("login", uname, pword)
@@ -74,7 +79,10 @@ class ComposteClient:
 
     def create_project(self, uname, pname, metadata):
         """
-        Attempt to create a project
+        create-project username project-name metadata
+
+        Attempt to create a project. Metdata must have the form of a json
+        object, eg "{ "owner": username }"
         """
         metadata["owner"] = uname
         metadata = json.dumps(metadata)
@@ -85,6 +93,8 @@ class ComposteClient:
 
     def retrieve_project_listings_for(self, uname):
         """
+        list-projects username
+
         Get a list of all projects this user is a collaborator on
         """
         msg = client.serialize("list_projects", uname)
@@ -93,7 +103,9 @@ class ComposteClient:
 
     def get_project(self, pid):
         """
-        Get a project to work on
+        get-project project-id
+
+        Given a uuid, get the project to work on
         """
         msg = client.serialize("get_project", pid)
         reply = self.__client.send(msg)
@@ -104,6 +116,8 @@ class ComposteClient:
     # from that, but we don't have that yet
     def subscribe(self, uname, pid):
         """
+        subscribe username project-id
+
         Subscribe to updates to a project
         """
         msg = client.serialize("subscribe", uname, pid)
@@ -125,9 +139,11 @@ class ComposteClient:
     # There's nothing here yet b/c we don't know what anything look like
     def update(self, pid, fname, args, partIndex = None, offset = None):
         """
-        Send a music related update for the remote backend to process
+        update project-id update-type args partIndex = None offset = None
+
+        Send a music related update for the remote backend to process. args is
+        a tuple of arguments
         """
-        print("Update with args: {}".format(str(args)))
         args = json.dumps(args)
         msg = client.serialize("update", pid, fname, args, partIndex, offset)
         reply = self.__client.send(msg)
@@ -135,74 +151,136 @@ class ComposteClient:
         return server.deserialize(reply)
 
     def changeKeySignature(self, pid, offset, partIndex, newSigSharps):
-        return self.update(pid, 
-                           "changeKeySignature", (offset, partIndex, newSigSharps), 
+        """
+        change-key-signature project-id offset partIndex newSigSharps
+
+        Change the key signature
+        """
+        return self.update(pid,
+                           "changeKeySignature", (offset, partIndex, newSigSharps),
                            partIndex, offset)
 
     def insertNote(self, pid, offset, partIndex, pitch, duration):
-        return self.update(pid, 
-                           "insertNote", (offset, partIndex, pitch, duration), 
+        """
+        insert-note project-id offset partIndex pitch duration
+
+        Insert a note into the score
+        """
+        return self.update(pid,
+                           "insertNote", (offset, partIndex, pitch, duration),
                            partIndex, offset)
 
     def removeNote(self, pid, offset, partIndex, removedNoteName):
-        return self.update(pid, 
-                           "removeNote", (offset, partIndex, removedNoteName), 
+        """
+        remove-note project-id offset partIndex removedNoteName
+
+        Remove a note from the score
+        """
+        return self.update(pid,
+                           "removeNote", (offset, partIndex, removedNoteName),
                            partIndex, offset)
 
     def insertMetronomeMark(self, pid, offset, parts, text, bpm, pulseDuration):
-        return self.update(pid, 
-                           "insertMetronomeMark", (offset, parts, 
+        """
+        insert-metronome-mark project-id offset parts text bpm pulseDuration
+
+        Insert a metronome mark
+        """
+        return self.update(pid,
+                           "insertMetronomeMark", (offset, parts,
                             text, bpm, pulseDuration),
                            None, offset)
 
     def removeMetronomeMark(self, pid, offset, parts):
-        return self.update(pid, 
-                           "removeMetronomeMark", (offset, parts), 
+        """
+        remove-metronome-mark project-id offset parts
+
+        Remove a metronome mark
+        """
+        return self.update(pid,
+                           "removeMetronomeMark", (offset, parts),
                            None, offset)
 
     def transpose(self, pid, partIndex, semitones):
-        return self.update(pid, 
-                           "transpose", (partIndex, semitones), 
+        """
+        transpose project-id partIndex semitones
+
+
+        """
+        return self.update(pid,
+                           "transpose", (partIndex, semitones),
                            partIndex, None)
 
     def insertClef(self, pid, offset, partIndex, clefStr):
-        return self.update(pid, 
+        """
+        insert-clef project-id offset partIndex clefStr
+
+        Insert a clef
+        """
+        return self.update(pid,
                            "insertClef", (offset, partIndex, clefStr),
                            partIndex, offset)
 
     def removeClef(self, pid, offset, partIndex):
-        return self.update(pid, 
+        """
+        remove-clef project-id offset partIndex
+
+        Remove a clef
+        """
+        return self.update(pid,
                            "removeClef", (offset, partIndex),
                            partIndex, offset)
 
     def insertMeasures(self, pid, insertionOffset, partIndex, insertedQLs):
-        return self.update(pid, 
-                           "insertMeasures", (insertionOffset, 
+        """
+        insert-measures project-id insertionOffset partIndex insertedQLs
+
+        Insert measures into the score
+        """
+        return self.update(pid,
+                           "insertMeasures", (insertionOffset,
                             partIndex, insertedQLs),
                            partIndex, insertionOffset)
 
     def addInstrument(self, pid, offset, partIndex, instrumentStr):
-        return self.update(pid, 
+        """
+        add-instrumnet project-id offset partIndex instrumentStr
+        """
+        return self.update(pid,
                            "addInstrument", (offset, partIndex, instrumentStr),
                            partIndex, offset)
 
     def removeInstrument(self, pid, offset, partIndex):
-        return self.update(pid, 
+        """
+        remove-instrument project-id offset partIndex
+        """
+        return self.update(pid,
                            "removeInstrument", (offset, partIndex),
                            partIndex, offset)
 
     def addDynamic(self, pid, offset, partIndex, dynamicStr):
-        return self.update(pid, 
+        """
+        add-dynamic project-id offset partIndex dynamicStr
+        """
+        return self.update(pid,
                            "addDynamic", (offset, partIndex, dynamicStr),
                            partIndex, offset)
 
     def removeDynamic(self, pid, offset, partIndex):
-        return self.update(pid, 
+        """
+        remove-dynamic project-id offset partIndex
+        """
+        return self.update(pid,
                            "removeDynamic", (offset, partIndex),
                            partIndex, offset)
 
     def addLyric(self, pid, offset, partIndex, lyric):
-        return self.update(pid, 
+        """
+        add-lyric project-id offset partIndex lyric
+
+        Attach a lyric to the score
+        """
+        return self.update(pid,
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
 
@@ -218,8 +296,6 @@ if __name__ == "__main__":
     from network import dns
 
     import argparse
-
-    DEBUG = True
 
     parser = argparse.ArgumentParser(prog = "ComposteClient",
             description = "A Composte Client")
@@ -241,6 +317,37 @@ if __name__ == "__main__":
             "tcp://{}:{}".format(endpoint_addr, bport),
             lambda x, y: (x, y), StdErr, Encryption())
 
+    repl_funs = {
+            "register": c.register,
+            "login": c.login,
+            "list-projects": c.retrieve_project_listings_for,
+            "create-project": c.create_project,
+            "get-project": c.get_project,
+            "subscribe": c.subscribe,
+            "unsubscribe": c.unsubscribe,
+            # Music updates
+            "change-key-signature": c.changeKeySignature,
+            "insert-note": c.insertNote,
+            "remove-note": c.removeNote,
+            "insert-metronome-mark": c.insertMetronomeMark,
+            "remove-metronome-mark": c.removeMetronomeMark,
+            "transpose": c.transpose,
+            "insert-clef": c.insertClef,
+            "remove-clef": c.removeClef,
+            "insert-measures": c.insertMeasures,
+            "add-instrument": c.addInstrument,
+            "remove-instrument": c.removeInstrument,
+            "add-dynamic": c.addDynamic,
+            "remove-dynamic": c.removeDynamic,
+            "add-lyric": c.addLyric,
+            }
+
+    the_worst_repl_you_will_ever_see(repl_funs)
+    c.stop()
+    sys.exit(0)
+
+    DEBUG = True
+
     c.register("msheldon", "A", "!!!")
     c.register("shark meldon", "A", "!!!")
     c.register("mark", "A", "!!!")
@@ -248,9 +355,9 @@ if __name__ == "__main__":
     c.login("msheldon", "A")
     c.login("msheldon", "B")
     tup = c.create_project("msheldon", "a_project", {"owner": "msheldon"})
-    if tup[0] == 'fail': 
+    if tup[0] == 'fail':
         print("FAILURE")
-    else: 
+    else:
         (status, pid) = tup
 
     truePid = pid[0]

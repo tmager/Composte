@@ -2,12 +2,27 @@
 
 import re
 import os, sys
+import inspect
 
 def I_dont_know_what_you_want_me_to_do(*args):
     sys.stderr.write("Unknown function requested\n")
-    return True
+
+def show_help(callbacks):
+            fnames = callbacks.keys()
+            print(
+"""help
+
+Type `help command` for specific help.
+
+The following commands are available:
+
+Stop-REPL""")
+            for fname in fnames: print(fname)
 
 def merge_args(args):
+    """
+    Merge arguments separated by escaped whitespace
+    """
     new_args = []
 
     skip = 0
@@ -27,7 +42,9 @@ def merge_args(args):
 
     return new_args
 
-def repl(callbacks, default_function = I_dont_know_what_you_want_me_to_do):
+def the_worst_repl_you_will_ever_see(callbacks,
+        default_function = I_dont_know_what_you_want_me_to_do,
+        prompt = lambda : ">>> "):
     """
     Start an interactive REPL backed by callbacks
     { command-name: function-to-invoke }
@@ -37,7 +54,7 @@ def repl(callbacks, default_function = I_dont_know_what_you_want_me_to_do):
     done = False
     while not done:
         try:
-            read = input(">>> ")
+            read = input(prompt())
         except KeyboardInterrupt as e:
             print()
             break
@@ -49,9 +66,6 @@ def repl(callbacks, default_function = I_dont_know_what_you_want_me_to_do):
 
         if len(components) == 0:
             continue
-        elif len(components) == 1:
-            command = components[0]
-            args = [None]
         else:
             command, args = components[0], components[1:]
 
@@ -60,14 +74,31 @@ def repl(callbacks, default_function = I_dont_know_what_you_want_me_to_do):
             continue
 
         args = merge_args(args)
-
         exec_ = callbacks.get(command, default_function)
 
+        # Show docstring as help
+        if command == "help" and len(args) > 0 and args[0] == "Stop-REPL":
+            print("Stop-REPL\nEnd this REPL session")
+            continue
+        elif command == "help" and len(args) > 0 and args[0] == "help":
+            show_help(callbacks)
+            continue
+        elif command == "help" and len(args) > 0:
+            target = callbacks.get(args[0], default_function)
+            doc = inspect.getdoc(target)
+            print(args[0])
+            print(doc)
+            continue
+        elif command == "help":
+            show_help(callbacks)
+            continue
+
         try:
-            # We don't want coercion to boolean here, so we can't use the
-            # shorthand
-            if exec_(*args) == False: done = True
+             res = exec_(*args)
         except TypeError as e:
             fname, msg = str(e).split(" ", 1)
             print("{} {}".format(command, msg))
+            continue
+
+        if res is not None: print(res)
 
