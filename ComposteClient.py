@@ -3,6 +3,7 @@
 from network.client import Client as NetworkClient
 from network.fake.security import Encryption
 from network.base.loggable import DevNull, StdErr
+from network.base.exceptions import GenericError
 
 from protocol import client, server
 from util import misc
@@ -10,14 +11,16 @@ from threading import Thread, Lock
 
 import json
 
+DEBUG = False
+
 class ComposteClient:
-    def __init__(self, interactive_remote, broadcast_remote, broadcast_handler
-            logger, encryption_scheme):
+    def __init__(self, interactive_remote, broadcast_remote,
+            broadcast_handler, logger, encryption_scheme):
         """
         RPC host for connecting to Composte Servers. Connects to a server
         listening at interactive_remote and broadcasting on on
         broadcast_remote. Logs are directed to logger, and messages are
-        transpatransparently encrypted and encrypted with
+        transparently encrypted and encrypted with
         encryption_scheme.encrypt() and decrypted with
         encryption_scheme.decrypt().
         Broadcasts are handled with broadcast_handler
@@ -39,7 +42,12 @@ class ComposteClient:
         """
         msg = client.serialize("handshake", misc.get_version())
         reply = self.__client.send(msg)
-        print(reply)
+        if DEBUG: print(reply)
+        reply = server.deserialize(reply)
+        if reply[0] == "fail":
+            status, reason = reply
+            version = reason[1]
+            raise GenericError(version)
 
     def register(self, uname, pword, email):
         """
@@ -47,7 +55,8 @@ class ComposteClient:
         """
         msg = client.serialize("register", uname, pword, email)
         reply = self.__client.send(msg)
-        print(reply)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
 
     # We probably need cookies for login too, otherwise people can request
     # project listings (and thus projects) and subscribe to projects they
@@ -60,7 +69,8 @@ class ComposteClient:
         msg = client.serialize("login", uname, pword)
         reply = self.__client.send(msg)
         # status, reason = reply
-        print(reply)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
 
     def create_project(self, uname, pname, metadata):
         """
@@ -70,7 +80,8 @@ class ComposteClient:
         metadata = json.dumps(metadata)
         msg = client.serialize("create_project", uname, pname, metadata)
         reply = self.__client.send(msg)
-        print(reply)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
 
     def retrieve_project_listings_for(self, uname):
         """
@@ -79,9 +90,7 @@ class ComposteClient:
         msg = client.serialize("list_projects", uname)
         reply = self.__client.send(msg)
         reply = server.deserialize(reply)
-        if reply[0] == "ok":
-            return reply[1]
-        else: return None
+        return server.deserialize(reply)
 
     def get_project(self, pid):
         """
@@ -89,7 +98,8 @@ class ComposteClient:
         """
         msg = client.serialize("get_project", pid)
         reply = self.__client.send(msg)
-        print(reply)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
 
     # Realistically, we send a login cookie and the server determines the user
     # from that, but we don't have that yet
@@ -101,8 +111,8 @@ class ComposteClient:
         reply = self.__client.send(msg)
         # print(reply)
         j = json.loads(reply)
-        print(j[1][0])
-        return j[1][0]
+        if DEBUG: print(j[1][0])
+        return server.deserialize(reply)
 
     def unsubscribe(self, cookie):
         """
@@ -110,7 +120,8 @@ class ComposteClient:
         """
         msg = client.serialize("unsubscribe", cookie)
         reply = self.__client.send(msg)
-        print(reply)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
 
     # There's nothing here yet b/c we don't know what anything look like
     def update(self, *args):
@@ -120,7 +131,8 @@ class ComposteClient:
         print("Update with args: {}".format(str(args)))
         msg = client.serialize("update")
         reply = self.__client.send(msg)
-        print(reply)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
 
     def changeKeySignature(self, offset, partIndex, newSigSharps):
         return self.update("changeKeySignature", offset, partIndex,
@@ -140,7 +152,7 @@ class ComposteClient:
         return self.update("removeMetronomeMark", offset, parts)
 
     def transpose(self, partIndex, semitones):
-        reteurn self.update("transpose", partIndex, semitones)
+        return self.update("transpose", partIndex, semitones)
 
     def insertClef(self, offset, part, clefStr):
         return self.update("insertClef", offset, part, clefStr)
@@ -180,6 +192,8 @@ if __name__ == "__main__":
 
     import argparse
 
+    DEBUG = True
+
     parser = argparse.ArgumentParser(prog = "ComposteServer",
             description = "A Composte Server")
 
@@ -198,7 +212,7 @@ if __name__ == "__main__":
 
     c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
             "tcp://{}:{}".format(endpoint_addr, bport),
-            StdErr, Encryption())
+            lambda x: x, StdErr, Encryption())
 
     c.register("msheldon", "A", "!!!")
 

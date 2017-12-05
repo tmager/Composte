@@ -194,9 +194,9 @@ def id(pre, elem):
 
 if __name__ == "__main__":
     # Set up the servers
-    s1 = Client("tcp://127.0.0.1:6666", "tcp://127.0.0.1:6667", DevNull,
+    s1 = Client("tcp://127.0.0.1:5000", "tcp://127.0.0.1:5001", DevNull,
             Encryption())
-    s2 = Client("tcp://127.0.0.1:6666", "tcp://127.0.0.1:6667", DevNull,
+    s2 = Client("tcp://127.0.0.1:5000", "tcp://127.0.0.1:5001", DevNull,
             Encryption())
 
     # Start broadcast handlers

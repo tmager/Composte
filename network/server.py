@@ -199,7 +199,7 @@ if __name__ == "__main__":
     logging.getLogger(__name__).info("Hello yes this is a test")
 
     # Set up the server
-    s = Server("tcp://127.0.0.1:6666", "tcp://127.0.0.1:6667",
+    s = Server("tcp://127.0.0.1:5000", "tcp://127.0.0.1:6667",
             logging.getLogger("server"),
             Log(sys.stderr))
 

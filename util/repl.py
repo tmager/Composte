@@ -16,7 +16,7 @@ def merge_args(args):
 
         if skip > 0:
             skip = skip - 1
-            new_args[-1] = new_args[-1] + arg
+            new_args[-1] = new_args[-1] + " " + arg
             continue
 
         if arg[-1] == "\\":

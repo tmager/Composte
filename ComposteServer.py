@@ -146,7 +146,7 @@ class ComposteServer:
             self.__projects.put(id_, pname, uname)
         except sqlite3.OperationalError as e:
             self.__server.info("?????????????")
-            raise GenericError("The database is fucked")
+            raise GenericError("The database is borked")
 
         hopefully_not_None = self.__users.get(uname)
         if hopefully_not_None is None:
@@ -186,7 +186,6 @@ class ComposteServer:
 
         return ("ok", proj)
 
-    # TODO: This can probably fail
     def list_projects_by_user(self, uname):
         """
         Retrieve a list of projects that a user is a collaborator on
@@ -195,7 +194,6 @@ class ComposteServer:
         listings = [ str(project) for project in listings ]
         return ("ok", json.dumps(listings))
 
-    # TODO: This can probably fail
     def list_contributors_of_project(self, pid):
         """
         Retrieve a list of a project's contributors
@@ -212,7 +210,7 @@ class ComposteServer:
             status = "fail"
             reason = "Mismatched versions. " +\
                     "This server uses version {}".format(self.version)
-            response = (status, reason)
+            response = (status, [ reason, self.version ])
         else:
             status = "ok"
             reason = ""
@@ -455,7 +453,6 @@ class ComposteServer:
 
         return (status, other)
 
-    # Probably deserialization
     def __preprocess(self, message):
         """
         Deserialize messages for consumption by __handle

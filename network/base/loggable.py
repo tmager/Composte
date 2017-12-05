@@ -96,14 +96,10 @@ class Combined:
         self.__loggers = []
 
         try:
-            for logger in logger:
+            for logger in loggers:
                 self.__loggers.append(logger)
         except TypeError as e:
             self.__loggers.append(loggers)
-
-        # if type(loggers) == list or type(loggers) == tuple:
-        #     self.__loggers = list(loggers)
-        # else: self.__loggers.append(loggers)
 
     def add(self, logger):
         self.__logger.append(logger)

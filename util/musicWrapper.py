@@ -94,7 +94,5 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
         project.updatePart(alterations, partIndex)
     else:
         project.updateParts(alterations)
-    # TODO: Caching layer? Don't want to consult the database on every update,
-    # that may be way too slow.
     return ("ok", "")
 
