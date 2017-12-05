@@ -29,13 +29,16 @@ class ComposteClient:
 
         self.__client = NetworkClient(interactive_remote, broadcast_remote,
                 logger, encryption_scheme)
-        self.__client.start_background(broadcast_handler)
 
         self.__client.info("Connecting to {} and {}".format(
             interactive_remote, broadcast_remote
         ))
 
         self.__version_handshake()
+
+        # If this happens too early, a failed version handshake prevents this
+        # thread from ever being joined, and the application will never exit
+        self.__client.start_background(broadcast_handler)
 
     def __version_handshake(self):
         """
@@ -318,6 +321,7 @@ if __name__ == "__main__":
             lambda x, y: (x, y), StdErr, Encryption())
 
     repl_funs = {
+            # Supporting/Utility routines
             "register": c.register,
             "login": c.login,
             "list-projects": c.retrieve_project_listings_for,

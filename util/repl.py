@@ -5,19 +5,67 @@ import os, sys
 import inspect
 
 def I_dont_know_what_you_want_me_to_do(*args):
-    sys.stderr.write("Unknown function requested\n")
+    """
+    Unknown command
+    """
+    print("Unknown command")
 
-def show_help(callbacks):
-            fnames = callbacks.keys()
-            print(
-"""help
+def stop_repl_help(*args):
+    """
+    Stop-REPL
 
-Type `help command` for specific help.
+    End this REPL session
+    """
+    pass
 
-The following commands are available:
+def last_help(*args):
+    """
+    last
+
+    Show the result of the most recently run command
+    """
+    pass
+
+def show_help(builtins, callbacks, fun = None, *args):
+    """
+    help [command]
+
+    Display help about `command`
+
+    External commands take precedence over builtins
+    Commands prefixed with a backslash will check builtins before external
+    commands
+    """
+
+    # Top level help
+    if fun is None:
+        fnames = callbacks.keys()
+        builtins = builtins.keys()
+        print(
+    """help [command]
+
+Display help about `command`. The following commands are available:
 
 Stop-REPL""")
-            for fname in fnames: print(fname)
+        for fname in fnames: print(fname)
+        for builtin_name in builtins: print(builtin_name)
+        return
+
+    # Command level help
+
+    first = callbacks
+    second = builtins
+
+    if fun[0] == "\\":
+        first, second = second, first
+        fun = fun[1:]
+
+    target = first.get(fun, None)
+    if target is None:
+        target = second.get(fun, I_dont_know_what_you_want_me_to_do)
+
+    doc = inspect.getdoc(target)
+    print(doc)
 
 def merge_args(args):
     """
@@ -51,10 +99,17 @@ def the_worst_repl_you_will_ever_see(callbacks,
     REPL commands have the form COMMAND [ARGUMENTS], splitting on whitespace
     """
 
+    # Help is an even more builtin builtin D:
+    builtins = {
+        "Stop-REPL": stop_repl_help,
+        "help": show_help,
+        "last": last_help,
+    }
+
     done = False
     while not done:
         try:
-            read = input(prompt())
+            read = input(prompt()).lstrip()
         except KeyboardInterrupt as e:
             print()
             break
@@ -74,24 +129,30 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
 
         args = merge_args(args)
-        exec_ = callbacks.get(command, default_function)
 
-        # Show docstring as help
-        if command == "help" and len(args) > 0 and args[0] == "Stop-REPL":
-            print("Stop-REPL\nEnd this REPL session")
+        # Show help
+        if command == "help":
+            show_help(builtins, callbacks, *args)
             continue
-        elif command == "help" and len(args) > 0 and args[0] == "help":
-            show_help(callbacks)
+        elif command == "last":
+            print(str(res))
             continue
-        elif command == "help" and len(args) > 0:
-            target = callbacks.get(args[0], default_function)
-            doc = inspect.getdoc(target)
-            print(args[0])
-            print(doc)
-            continue
-        elif command == "help":
-            show_help(callbacks)
-            continue
+
+        # Actually do something
+
+        exec_ = callbacks.get(command, default_function)
+        first = callbacks
+        second = builtins
+
+        if command[0] == "\\":
+            first, second = second, first
+            command = command[1:]
+
+        target = first.get(command, None)
+        if target is None:
+            target = second.get(command, default_function)
+
+        exec_ = target
 
         try:
              res = exec_(*args)
@@ -100,5 +161,5 @@ def the_worst_repl_you_will_ever_see(callbacks,
             print("{} {}".format(command, msg))
             continue
 
-        if res is not None: print(res)
+        if res is not None: print(str(res))
 

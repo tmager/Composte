@@ -124,9 +124,9 @@ class ComposteServer:
 
         success = auth.verify(pword, record.hash)
         if success:
-            listings = self.__contributors.get_projects(uname)
-            listings = [ str(project) for project in listings ]
-            return ("ok", str(listings))
+            uuids = self.__contributors.get_projects(uname)
+            project_ids = [ str(uuid_) for uuid_ in uuids ]
+            return ("ok", json.dumps(project_ids))
         else:
             return ("fail", "failed to login")
 
@@ -473,6 +473,7 @@ class ComposteServer:
         """
         Stop the server elegantly
         """
+        self.__server.info("ComposteServer shutting down")
         with self.__dlock:
             self.__done = True
 
