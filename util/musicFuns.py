@@ -140,6 +140,10 @@ def createNote(pitchName, durationInQLs):
 def insertNote(offset, part, pitchStr, duration):
     """ Add a note at a given offset to a part. """
     newNote = createNote(pitchStr, duration)
+    notes = part.notes
+    for note in notes: 
+        if note.pitch.nameWithOctave == pitchStr: 
+            return part.getElementsByOffset(offset) 
     part.insert(offset, newNote)
     return part.getElementsByOffset(offset)
 
