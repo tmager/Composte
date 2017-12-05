@@ -79,7 +79,7 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
         for note in notes:
             self.addNote(*note)
 
-    def addNote(self, pitch, ntype, offset):
+    def insertNote(self, pitch: music21.pitch.Pitch, ntype, offset: float):
         note = ntype(parent = self)
         if offset + note.length() > self.length():
             raise ValueError("Note extends past end of measure")
@@ -97,12 +97,13 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
         note.setPos(note_x, note_y)
 
 
-    def delNote(self, pitch: music21.pitch.Pitch,
-                ntype: UINote, offset: float):
-        if (pitch, ntype, offset) not in self.__noteObjs:
-            raise ValueError("Deleting nonexistent note")
-        self.__scene.removeItem(self.__noteObjs[(pitch, ntype, offset)])
-        del self.__noteObjs[(pitch, ntype, offset)]
+    def deleteNote(self, pitch: music21.pitch.Pitch, offset: float):
+        for note in self.__noteObjs.keys():
+            if note[0] == pitch and note[2] == offset:
+                self.__scene.removeItem(self.__noteObjs[note])
+                del self.__noteObjs[note]
+                return True
+        return False
 
     def clef(self):
         return self.__clef

@@ -36,15 +36,15 @@ if __name__ == '__main__':
     mea3.setPos(mea2.width(), 0)
     scene.addItem(mea)
 
-    mea.addNote(music21.pitch.Pitch('C4'), UINote.UINote_Whole, 0)
-    mea.addNote(music21.pitch.Pitch('E4'), UINote.UINote_Whole, 0)
-    mea.addNote(music21.pitch.Pitch('G4'), UINote.UINote_Whole, 0)
-    mea.addNote(music21.pitch.Pitch('C5'), UINote.UINote_Whole, 0)
+    mea.insertNote(music21.pitch.Pitch('C4'), UINote.UINote_Whole, 0)
+    mea.insertNote(music21.pitch.Pitch('E4'), UINote.UINote_Whole, 0)
+    mea.insertNote(music21.pitch.Pitch('G4'), UINote.UINote_Whole, 0)
+    mea.insertNote(music21.pitch.Pitch('C5'), UINote.UINote_Whole, 0)
 
-    mea2.addNote(music21.pitch.Pitch('B5'), UINote.UINote_Quarter, 1)
-    mea2.addNote(music21.pitch.Pitch('C5'), UINote.UINote_Quarter, 2)
-    mea2.addNote(music21.pitch.Pitch('D5'), UINote.UINote_Quarter, 3)
-    mea3.addNote(music21.pitch.Pitch('D5'), UINote.UINote_Half, 1)
+    mea2.insertNote(music21.pitch.Pitch('B5'), UINote.UINote_Quarter, 1)
+    mea2.insertNote(music21.pitch.Pitch('C5'), UINote.UINote_Quarter, 2)
+    mea2.insertNote(music21.pitch.Pitch('D5'), UINote.UINote_Quarter, 3)
+    mea3.insertNote(music21.pitch.Pitch('D5'), UINote.UINote_Half, 1)
 
     view.show()
 
