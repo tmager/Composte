@@ -190,25 +190,25 @@ class ComposteClient:
                            "removeNote", (offset, partIndex, removedNoteName),
                            partIndex, offset)
 
-    def insertMetronomeMark(self, pid, offset, parts, text, bpm, pulseDuration):
+    def insertMetronomeMark(self, pid, offset, bpm, pulseDuration):
         """
-        insert-metronome-mark project-id offset parts text bpm pulseDuration
+        insert-metronome-mark project-id offset bpm pulseDuration
 
         Insert a metronome mark
         """
         return self.update(pid,
-                           "insertMetronomeMark", (offset, parts,
-                            text, bpm, pulseDuration),
-                            None, offset)
+                           "insertMetronomeMark", (offset,
+                            bpm, pulseDuration),
+                           None, offset)
 
-    def removeMetronomeMark(self, pid, offset, parts):
+    def removeMetronomeMark(self, pid, offset):
         """
-        remove-metronome-mark project-id offset parts
+        remove-metronome-mark project-id offset
 
         Remove a metronome mark
         """
         return self.update(pid,
-                           "removeMetronomeMark", (offset, parts),
+                           "removeMetronomeMark", (offset,),
                            None, offset)
 
     def transpose(self, pid, partIndex, semitones):
@@ -389,6 +389,7 @@ if __name__ == "__main__":
     c.unsubscribe(cookie[0])
     c.unsubscribe("not a cookie")
 
+    c.insertNote(truePid, 0.0, 0, "C#4", 2.0)
     c.insertNote(truePid, 0.0, 0, "C#4", 2.0)
     c.insertNote(truePid, 1.0, 0, "E-5", 1.0)
 

@@ -101,21 +101,21 @@ def changeTimeSignature(offset, part, newSigStr):
     part.insert(offset, newTimeSig)
     return part.getElementsByOffset(offset)
 
-def insertMetronomeMark(offset, parts, text, bpm, pulseDuration):
+def insertMetronomeMark(offset, parts, bpm, pulseDuration):
     """ Insert a metronome marking in a list of
-        parts at a given offset. markData is a tuple of
-        staff text as a string (for almost all purposes, this will
-        be the empty string), pulses per minute as an integer, and
-        the duration in quarterLengths of a single pulse as a
-        float. When duration is 1.0, the second argument is
-        exactly equivalent to BPM (beats per minute). """
-    mark = music21.tempo.MetronomeMark(text, bpm, pulseDuration)
+        parts at a given offset. The constructor needs pulses per 
+        minute as an integer, and the duration in quarterLengths 
+        of a single pulse as a float. When duration 
+        is 1.0, the second argument is exactly equivalent to 
+        BPM (beats per minute). """
+    mark = music21.tempo.MetronomeMark("", bpm, pulseDuration)
     for part in parts:
         markings = part.metronomeMarkBoundaries()
         for marking in markings:
             # Marking already exists at that location, so update it
             if marking[0] == offset:
-                marking[2] = mark
+                part.replace(marking[2], mark) 
+                break
         part.insert(offset, mark)
     return parts
 
@@ -126,7 +126,7 @@ def removeMetronomeMark(offset, parts):
         markings = part.metronomeMarkBoundaries()
         for marking in markings:
             if marking[0] == offset:
-                part.remove(marking)
+                part.remove(marking[2])
     return parts
 
 def createNote(pitchName, durationInQLs):
@@ -239,7 +239,7 @@ def insertClef(offset, part, clefStr):
 
 def removeClef(offset, part):
     """ Remove a clef from a given offset in a given part. """
-    elems = getElementsByOffset(offset)
+    elems = part.getElementsByOffset(offset)
     for elem in elems:
         # Only clef objects have an octaveChange field
         if elem.octaveChange is not None:
@@ -257,7 +257,7 @@ def addInstrument(offset, part, instrumentStr):
         to a part in the score. The number of instruments
         supported on the backend are much to numerous to name."""
     instrument = music21.instrument.fromString(instrumentStr)
-    elems = getElementsByOffset(offset)
+    elems = part.getElementsByOffset(offset)
     for elem in elems:
         if elem.instrumentName is not None:
             part.replace(elem, instrument)
@@ -267,7 +267,7 @@ def addInstrument(offset, part, instrumentStr):
 
 def removeInstrument(offset, part):
     """ Remove an instrument beginning at offset from a given part. """
-    elems = getElementsByOffset(offset)
+    elems = part.getElementsByOffset(offset)
     for elem in elems:
         if elem.instrumentName is not None:
             part.remove(elem)
@@ -278,7 +278,7 @@ def addDynamic(offset, part, dynamicStr):
     """ Adds a dynamic marking to a part at a given offset.
         Acceptable values of dynamicStr are 'ppp', 'pp', 'p',
         'mp', 'mf', 'f', 'ff', and 'fff'. """
-    dyanmic = music21.dynamics.Dynamic(dynamicStr)
+    dynamic = music21.dynamics.Dynamic(dynamicStr)
     elems = part.getElementsByOffset(offset)
     for elem in elems:
         if elem.volumeScalar is not None:
@@ -289,7 +289,7 @@ def addDynamic(offset, part, dynamicStr):
 
 def removeDynamic(offset, part):
     """ Removes a dynamic marking from a part at a given offset. """
-    elems = getElementsByOffset(offset)
+    elems = part.getElementsByOffset(offset)
     for elem in elems:
         if elem.volumeScalar is not None:
             part.remove(elem)
