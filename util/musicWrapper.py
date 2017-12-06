@@ -26,7 +26,8 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
         """ Determines which function to call and
             casts all arguments to the correct types. """
         try:
-            if partIndex is not None: 
+            print(partIndex) 
+            if partIndex is not None and partIndex != "None": 
                 musicObject = project.parts[int(partIndex)]
             else: 
                 musicObject = project.parts
@@ -42,7 +43,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                         musicObject, args[2]])
             elif fname == 'insertMetronomeMark':
                 return (musicFuns.insertMetronomeMark, [float(args[0]),
-                        musicObject, args[2], int(args[3]), float(args[4])])
+                        musicObject, int(args[1]), float(args[2])])
             elif fname == 'removeMetronomeMark':
                 return (musicFuns.removeMetronomeMark, [float(args[0]),
                         musicObject])
@@ -75,15 +76,15 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                         musicObject, args[2]])
             else:
                 return (None, None)
-        except ValueError:
-            raise GenericError
+        except ValueError as e:
+            raise GenericError from e
 
     (function, arguments) = unpackFun(fname, args)
     # Begin error handling
     if (function, arguments) == (None, None):
         return ("fail", "INVALID OPERATION")
 
-    if offset is not None:
+    if offset is not None and offset != 'None':
         if float(offset) < 0.0:
             raise GenericError
 

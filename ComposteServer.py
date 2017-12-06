@@ -23,6 +23,7 @@ import json
 import os
 import sqlite3
 import logging
+import traceback
 
 class ComposteServer:
 
@@ -341,6 +342,7 @@ class ComposteServer:
                 reply = musicWrapper.performMusicFun(*args,
                         fetchProject = get_fun)
             except:
+                print(traceback.format_exc())
                 return ("fail", "Internal Server Error")
             return reply
 
