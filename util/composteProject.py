@@ -34,19 +34,20 @@ class ComposteProject:
             it will affect is the order in which parts are presented on
             the GUI. firstPart and secondPart are both 0-indexed integers
             representing the indicies of the parts to swap. """
-        if int(firstPart) < len(self.parts) and int(secondPart) < len(self.parts):
+        if (int(firstPart) < len(self.parts) and
+                int(secondPart) < len(self.parts)):
             tmp = self.parts[firstPart]
             self.parts[firstPart] = self.parts[secondPart]
             self.parts[secondPart] = tmp
-        else: 
+        else:
             raise GenericError
 
     def removePart(self, partToRemove):
         """ Remove a part from a project. partToRemove is a 0-indexed
             integer representing the index of the part to remove. """
-        if int(partToRemove) < len(self.parts): 
+        if int(partToRemove) < len(self.parts):
             del self.parts[partToRemove]
-        else: 
+        else:
             raise GenericError
 
     def serialize(self):

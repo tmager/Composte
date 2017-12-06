@@ -86,7 +86,8 @@ class Client(Loggable):
         # Receive broadcasts
         self.__done = False
         self.__background = None
-        self.__listener = Subscription(broadcast_address, self.__context, logger)
+        self.__listener = Subscription(broadcast_address, self.__context,
+                logger)
 
         self.__lock = Lock()
 

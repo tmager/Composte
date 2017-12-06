@@ -87,12 +87,19 @@ class ComposteClient:
         Attempt to create a project. Metdata must have the form of a json
         object, eg "{ "owner": username }"
         """
+        if type(metadata) == str:
+            metadata = json.loads(metadata)
         metadata["owner"] = uname
+        metadata["name"] = pname
         metadata = json.dumps(metadata)
         msg = client.serialize("create_project", uname, pname, metadata)
         reply = self.__client.send(msg)
         if DEBUG: print(reply)
-        return server.deserialize(reply)
+        try:
+            return server.deserialize(reply)
+        except:
+            print(reply)
+            return ("fail", "Mangled reply")
 
     def retrieve_project_listings_for(self, uname):
         """
@@ -160,8 +167,8 @@ class ComposteClient:
         Change the key signature
         """
         return self.update(pid,
-                           "changeKeySignature", (offset, partIndex, newSigSharps),
-                           partIndex, offset)
+                       "changeKeySignature", (offset, partIndex, newSigSharps),
+                       partIndex, offset)
 
     def insertNote(self, pid, offset, partIndex, pitch, duration):
         """

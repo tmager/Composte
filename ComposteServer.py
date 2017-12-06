@@ -136,11 +136,20 @@ class ComposteServer:
         so project names need not be unique.
         """
         metadata = json.loads(metadata)
+        metadata["name"] = pname
+        metadata["owner"] = uname
 
         proj = composteProject.ComposteProject(metadata)
         id_ = str(proj.projectID)
 
         self.write_project(proj)
+
+        hopefully_not_None = self.__users.get(uname)
+        if hopefully_not_None is None:
+            return ("fail", "User {} is not registered".format(uname))
+
+        self.__server.info("Creating project {} with name {} for {}".
+                format(id_, metadata["name"], uname))
 
         try:
             self.__projects.put(id_, pname, uname)
@@ -148,9 +157,8 @@ class ComposteServer:
             self.__server.info("?????????????")
             raise GenericError("The database is borked")
 
-        hopefully_not_None = self.__users.get(uname)
-        if hopefully_not_None is None:
-            return ("fail", "User {} is not registered".format(uname))
+        p = self.__projects.get(id_)
+        print(p)
 
         # This could then potentially also lock the database...
         try:
@@ -173,7 +181,8 @@ class ComposteServer:
 
     def get_project(self, pid):
         """
-        Fetch a Composte project object for manipulation
+        Fetch a Composte project object for manipulation.
+        Not suitable for use as a top-level handler
         """
         project_entry = self.__projects.get(pid)
         if project_entry.id == None:
@@ -329,8 +338,9 @@ class ComposteServer:
         with self.__flushing:
             try:
                 # We still need to provide a way to get the project
-                reply = musicWrapper.performMusicFun(*args, fetchProject = get_fun)
-            except e:
+                reply = musicWrapper.performMusicFun(*args,
+                        fetchProject = get_fun)
+            except:
                 return ("fail", "Internal Server Error")
             return reply
 
@@ -345,9 +355,10 @@ class ComposteServer:
         if username in contributors:
             self.__pool.put(pid, lambda: self.get_project(pid)[1])
             cookie = self.generate_cookie_for(username, pid)
-            return ("ok", cookie)
+            return ("ok", str(cookie))
         else:
-            self.__server.debug("{} is not one of {}".format(username, contributors))
+            self.__server.debug("{} is not one of {}".format(username,
+                contributors))
             return ("fail", "You are not a contributor")
 
     def unsubscribe(self, cookie):
@@ -445,8 +456,8 @@ class ComposteServer:
             (status, other) = do_rpc(*rpc["args"])
         except GenericError as e:
             return ("fail", "Internal server error")
-        except e:
-            print(e)
+        except:
+            self.__server.__error(traceback.format_exc())
             return ("fail", "Internal server error (Developer error)")
 
         # Only broadcast successful updates

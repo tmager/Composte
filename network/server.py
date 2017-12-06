@@ -147,7 +147,7 @@ class Server(Loggable):
                         except EncryptError as e:
                             self.fail(message, "Encryption failure")
                             continue
-                    except e:
+                    except:
                         self.fail(message, "Malformed message")
                         self.error("Uncaught exception: {}"
                                 .format(traceback.format_exc()))
