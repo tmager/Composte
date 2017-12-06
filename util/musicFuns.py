@@ -166,29 +166,51 @@ def createNote(pitchName, durationInQLs):
     note = music21.note.Note(pitchName)
     note.duration = music21.duration.Duration(durationInQLs)
     note.pitch.spellingIsInferred = False
+    # Needed in order to sever ties between notes
+    note.tiePartners = [None, None]
     return note
 
 def insertNote(offset, part, pitchStr, duration):
     """ Add a note at a given offset to a part. """
     newNote = createNote(pitchStr, duration)
+    bounds = (offset, offset + duration) 
     notes = part.notes
+    maxLims = [None, None]
     for note in notes: 
-        if note.pitch.nameWithOctave == pitchStr: 
-            return part.getElementsByOffset(offset) 
+        limits = (note.offset, 
+                  note.duration.quarterLength + note.offset)          
+        if bounds[0] < limits[1] and limits[0] < bounds[1]:
+            removeNote(note.offset, part, note.pitch.nameWithOctave)
+            if maxLims[0] is None and maxLims[1] is None: 
+                maxLims = [limits[0], limits[1]]
+            else: 
+                maxLims = [min(maxLims[0], limits[0]),
+                           max(maxLims[1], limits[1])]
+    if maxLims[0] is None and maxLims[1] is None: 
+        maxLims = [bounds[0], bounds[1]]
+    else: 
+        maxLims = [min(maxLims[0], bounds[0]),
+                   max(maxLims[1], bounds[1])]
     part.insert(offset, newNote)
-    return part.getElementsByOffset(offset)
+    return maxLims
 
 def removeNote(offset, part, removedNoteName):
     """ Remove a note at a given offset into a part. """
     notes = part.notes
+    maxLims = [offset, offset]
     for note in notes:
         noteName = note.pitch.nameWithOctave
         if note.offset == offset and noteName == removedNoteName:
+            if note.tiePartners[0] is not None: 
+                maxLims[0] = note.tiePartners[0]
+                updateTieStatus(note.tiePartners[0], part, noteName)
+            if note.tiePartners[1] is not None: 
+                maxLims[1] = note.tiePartners[1]
+                updateTieStatus(offset, part, noteName)
             part.remove(note)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return maxLims
+    return maxLims
 
-# NOT IN MINIMUM DELIVERABLE
 def updateTieStatus(offset, part, noteName):
     """ Updates the tie status of a note with the name noteName
         at a given offset into a given part. The offset given to
@@ -206,10 +228,8 @@ def updateTieStatus(offset, part, noteName):
                     makeTieUpdate([note, cantidate])
                 else:
                     pass
-            return part # Saves some time by exiting the outer loop early
-    return part
+            return # Saves some time by exiting early
 
-# NOT IN MINIMUM DELIVERABLE
 def makeTieUpdate(notes):
     """ If the pair of notes passed to this function is untied,
         this function ties them together. If ther pair of notes
@@ -217,28 +237,44 @@ def makeTieUpdate(notes):
     [firstNote, secondNote] = notes
     # Add Ties
     if firstNote.tie is None and secondNote.tie is None:
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie = music21.tie.Tie("start")
         secondNote.tie = music21.tie.Tie("stop")
     elif firstNote.tie.type == "stop" and secondNote.tie is None:
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie.type = "continue"
         secondNote.tie = music21.tie.Tie("stop")
     elif firstNote.tie is None and secondNote.tie.type == "start":
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie = music21.tie.Tie("start")
         secondNote.tie.type = "continue"
     elif firstNote.tie.type == "stop" and secondNote.tie.type == "start":
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie.type = "continue"
         secondNote.tie.type = "continue"
     # Remove Ties
     elif firstNote.tie.type == "start" and secondNote.tie.type == "stop":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie = None
         secondNote.tie = None
     elif firstNote.tie.type == "start" and secondNote.tie.type == "continue":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie = None
         secondNote.tie.type = "start"
     elif firstNote.tie.type == "continue" and secondNote.tie.type == "continue":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie.type = "stop"
         secondNote.tie.type = "start"
     elif firstNote.tie.type == "continue" and secondNote.tie.type == "stop":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie.type = "stop"
         secondNote.tie = None
     # For completeness and defense against race conditions
@@ -340,3 +376,13 @@ def playback(part):
     """ Playback the current project from the beginning 
         of a part. """
     music21.midi.realtime.StreamPlayer(part).play()    
+
+def boundedOffset(part, bounds): 
+    """ Returns a bounded offset list for GUI uses. 
+        An offset map is an (element, offset, endTime) triple.
+        element is the music21 object to insert.
+        offset is the insertion offset of the music21 object. 
+        endTime is the termination offset of the music21 object. """
+    offs = part.offsetMap()
+    return [x for x in offs 
+            if bounds[0] <= offs.offset and offs.endTime < bounds[1]]
