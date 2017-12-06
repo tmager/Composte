@@ -4,6 +4,10 @@ import re
 import os, sys
 import inspect
 
+DEBUG = True
+
+class SyntaxError(Exception): pass
+
 def I_dont_know_what_you_want_me_to_do(*args):
     """
     Unknown command
@@ -16,7 +20,45 @@ def echo(*args):
 
     Prints its arguments
     """
-    print(", ".join(list(args)))
+    if DEBUG: print(", ".join(list(args)))
+    else: print(" ".join(args))
+
+class REPL_env:
+    def __init__(self):
+        self.__bindings = {}
+
+    def set(self, name, value):
+        """
+        set name value
+
+        Set a variable called `name` to have value `value`
+        """
+        self.__bindings[name] = value
+        return value
+
+    def unset(self, name):
+        """
+        unset name
+
+        Unset the variable called `name`
+        """
+        try:
+            val = self.__bindings[name]
+            del self.__bindings[name]
+        except KeyError as e:
+            pass
+        return val
+
+    def get(self, name):
+        """
+        get name
+
+        Get the value of the variable called `name`
+        """
+        try:
+            return self.__bindings[name]
+        except KeyError as e:
+            return ""
 
 def stop_repl_help(*args):
     """
@@ -108,14 +150,93 @@ def merge_args(args):
 
     return new_args
 
+def expand_vars(env, args):
+    new_args = []
+    for arg in args:
+        if arg[0] == "$":
+            arg = arg[1:]
+            arg = env.get(arg)
+        new_args.append(arg)
+
+    return new_args
+
+def quote(args):
+    new_args = []
+
+    for arg in args:
+        bits = arg.split()
+        bobs = "\ ".join(bits)
+        new_args.append(bobs)
+
+    return new_args
+
+def do_sub_repl_if_needed(callbacks,
+        default_function = I_dont_know_what_you_want_me_to_do,
+        prompt = lambda : ">>> ", args = None):
+
+    print("Subrepl invoked")
+
+    if args is None: return ""
+    else: print(args)
+
+    new_args = []
+
+    sub_command = None
+    sub_command_args = []
+
+    started_subcommand = False
+    for arg in args:
+
+        # Start a subrepl substitution
+        if arg[0] == "`":
+            sub_command = arg[1:]
+            started_subcommand = True
+
+        # End a subrepl substitution
+        if arg[-1] == "`":
+
+            arg = arg[:-1]
+
+            started_subcommand = False
+
+            # When the substitution is more than one word, this is the last
+            # argument.
+            if arg[0] != "`":
+                sub_command_args.append(arg)
+            # Otherwise, this was also the first word, and so there are no
+            # arguments
+
+            # Quote arguments again
+            sub_command_args = quote(sub_command_args)
+
+            # Evaluate expression and get result
+            replacement = the_worst_repl_you_will_ever_see(callbacks,
+                    default_function, prompt, once = True,
+                    to_eval = [sub_command] + sub_command_args)
+            # Replace expression with result
+            new_args.append(replacement)
+            continue
+
+        if started_subcommand and arg[0] != "`":
+            sub_command_args.append(arg)
+        else:
+            new_args.append(arg)
+
+    if started_subcommand:
+        raise SyntaxError("Unmatched \"`\"")
+
+    return new_args
+
 def the_worst_repl_you_will_ever_see(callbacks,
         default_function = I_dont_know_what_you_want_me_to_do,
-        prompt = lambda : ">>> "):
+        prompt = lambda : ">>> ", once = False, to_eval = None):
     """
     Start an interactive REPL backed by callbacks
     { command-name: function-to-invoke }
     REPL commands have the form COMMAND [ARGUMENTS], splitting on whitespace
     """
+
+    env = REPL_env()
 
     # Help is an even more builtin builtin D:
     builtins = {
@@ -123,18 +244,26 @@ def the_worst_repl_you_will_ever_see(callbacks,
         "help": show_help,
         "last": last_help,
         "echo": echo,
+        "set": env.set,
+        "unset": env.unset,
+        "get": env.get,
     }
 
+    res = None
     done = False
     while not done:
-        try:
-            read = input(prompt()).lstrip()
-        except KeyboardInterrupt as e:
-            print()
-            break
-        except EOFError as e:
-            print()
-            break
+        if to_eval is None:
+            try:
+                read = input(prompt()).lstrip()
+            except KeyboardInterrupt as e:
+                print()
+                break
+            except EOFError as e:
+                print()
+                break
+        else:
+            read = " ".join(to_eval)
+            to_eval = None
 
         components = read.split()
 
@@ -148,6 +277,8 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
 
         args = merge_args(args)
+        args = expand_vars(env, args)
+        args = do_sub_repl_if_needed(callbacks, default_function, prompt, args)
 
         # Show help
         if command == "help":
@@ -183,4 +314,6 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
 
         if res is not None: print(str(res))
+
+    return res
 

@@ -199,7 +199,7 @@ class ComposteClient:
         return self.update(pid,
                            "insertMetronomeMark", (offset, parts,
                             text, bpm, pulseDuration),
-                           None, offset)
+                            None, offset)
 
     def removeMetronomeMark(self, pid, offset, parts):
         """
@@ -294,6 +294,14 @@ class ComposteClient:
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
 
+    def share(self, pid, new_contributor):
+        """
+        share project-id new-contributor
+
+        Allow another person to contribute to your project
+        """
+        return self.send("share", pid, new_contributor)
+
     def stop(self):
         """
         Stop the client elegantly
@@ -336,6 +344,7 @@ if __name__ == "__main__":
             "get-project": c.get_project,
             "subscribe": c.subscribe,
             "unsubscribe": c.unsubscribe,
+            "share": c.share,
             # Music updates
             "change-key-signature": c.changeKeySignature,
             "insert-note": c.insertNote,
