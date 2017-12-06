@@ -10,6 +10,14 @@ def I_dont_know_what_you_want_me_to_do(*args):
     """
     print("Unknown command")
 
+def echo(*args):
+    """
+    echo
+
+    Prints its arguments
+    """
+    print(", ".join(list(args)))
+
 def stop_repl_help(*args):
     """
     Stop-REPL
@@ -45,8 +53,7 @@ def show_help(builtins, callbacks, fun = None, *args):
     """help [command]
 
 Display help about `command`. The following commands are available:
-
-Stop-REPL""")
+""")
         for fname in fnames: print(fname)
         for builtin_name in builtins: print(builtin_name)
         return
@@ -74,19 +81,30 @@ def merge_args(args):
     new_args = []
 
     skip = 0
+    collect = ""
     for arg in args:
         if arg is None: return []
 
         if skip > 0:
             skip = skip - 1
-            new_args[-1] = new_args[-1] + " " + arg
-            continue
+            if arg[-1] != "\\":
+                collect = collect + " " + arg
+            else:
+                skip = skip + 1
+                collect = collect + " " + arg[:-1]
+                continue
+        else:
+            collect = arg
 
         if arg[-1] == "\\":
-            skip = 1
+            skip = skip + 1
             arg = arg[:-1]
+            collect = arg
+            continue
 
-        new_args.append(arg)
+        new_args.append(collect)
+
+    if skip > 0: new_args.append(collect)
 
     return new_args
 
@@ -104,6 +122,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
         "Stop-REPL": stop_repl_help,
         "help": show_help,
         "last": last_help,
+        "echo": echo,
     }
 
     done = False

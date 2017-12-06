@@ -142,11 +142,11 @@ class ComposteServer:
         proj = composteProject.ComposteProject(metadata)
         id_ = str(proj.projectID)
 
-        self.write_project(proj)
-
         hopefully_not_None = self.__users.get(uname)
         if hopefully_not_None is None:
             return ("fail", "User {} is not registered".format(uname))
+
+        self.write_project(proj)
 
         self.__server.info("Creating project {} with name {} for {}".
                 format(id_, metadata["name"], uname))
