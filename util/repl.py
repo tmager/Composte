@@ -174,10 +174,7 @@ def do_sub_repl_if_needed(callbacks,
         default_function = I_dont_know_what_you_want_me_to_do,
         prompt = lambda : ">>> ", args = None):
 
-    print("Subrepl invoked")
-
     if args is None: return ""
-    else: print(args)
 
     new_args = []
 
@@ -251,15 +248,20 @@ def the_worst_repl_you_will_ever_see(callbacks,
 
     res = None
     done = False
+    laps = 0
     while not done:
+        if once:
+            if laps > 0: break
+            else: laps = laps + 1
+
         if to_eval is None:
             try:
                 read = input(prompt()).lstrip()
             except KeyboardInterrupt as e:
-                print()
+                print(e)
                 break
             except EOFError as e:
-                print()
+                print(e)
                 break
         else:
             read = " ".join(to_eval)
@@ -307,6 +309,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
         try:
              res = exec_(*args)
         except TypeError as e:
+            print(str(e))
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)
                 print("{} {}".format(command, msg))

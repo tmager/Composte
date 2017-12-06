@@ -101,6 +101,17 @@ class ComposteClient:
             print(reply)
             return ("fail", "Mangled reply")
 
+    def share(self, pid, new_contributor):
+        """
+        share project-id new-contributor
+
+        Allow another person to contribute to your project
+        """
+        msg = client.serialize("share", pid, new_contributor)
+        reply = self.__client.send(msg)
+        if DEBUG: print(reply)
+        return server.deserialize(reply)
+
     def retrieve_project_listings_for(self, uname):
         """
         list-projects username
@@ -293,14 +304,6 @@ class ComposteClient:
         return self.update(pid,
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
-
-    def share(self, pid, new_contributor):
-        """
-        share project-id new-contributor
-
-        Allow another person to contribute to your project
-        """
-        return self.send("share", pid, new_contributor)
 
     def stop(self):
         """
