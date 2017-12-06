@@ -1,0 +1,11 @@
+set pid <PID FROM LOGINANDCREATE>
+change-key-signature $pid 0.0 0 -1
+add-instrument $pid 0.0 0 saxophone
+insert-clef $pid 0.0 0 treble
+insert-metronome-mark $pid 0.0 114
+add-dynamic $pid 0.0 0 mp
+insert-note $pid 1.0 0 D5 0.5
+insert-note $pid 1.5 0 E5 0.5
+insert-note $pid 2.0 0 F5 0.5
+insert-note $pid 2.5 0 F5 0.5
+insert-note $pid 3.0 0 G5 0.5
