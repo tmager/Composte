@@ -16,12 +16,15 @@ def I_dont_know_what_you_want_me_to_do(*args):
 
 def echo(*args):
     """
-    echo
+    echo [args...]
 
     Prints its arguments
     """
-    if DEBUG: print(", ".join(list(args)))
-    else: print(" ".join(args))
+    if DEBUG: str_ = ", ".join(list(args))
+    else: str_ = " ".join(args)
+
+    # print(str_)
+    return str_
 
 class REPL_env:
     def __init__(self):
@@ -216,7 +219,7 @@ def do_sub_repl_if_needed(callbacks,
 
         if started_subcommand and arg[0] != "`":
             sub_command_args.append(arg)
-        else:
+        elif not started_subcommand:
             new_args.append(arg)
 
     if started_subcommand:
@@ -280,7 +283,11 @@ def the_worst_repl_you_will_ever_see(callbacks,
 
         args = merge_args(args)
         args = expand_vars(env, args)
-        args = do_sub_repl_if_needed(callbacks, default_function, prompt, args)
+        try:
+            args = do_sub_repl_if_needed(callbacks, default_function, prompt, args)
+        except SyntaxError as e:
+            print(str(e))
+            continue
 
         # Show help
         if command == "help":
@@ -309,14 +316,14 @@ def the_worst_repl_you_will_ever_see(callbacks,
         try:
              res = exec_(*args)
         except TypeError as e:
-            print(str(e))
+            print("TypeError: " + str(e))
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)
                 print("{} {}".format(command, msg))
             else: print(str(e))
             continue
 
-        if res is not None: print(str(res))
+        if res is not None and not once: print(str(res))
 
     return res
 
