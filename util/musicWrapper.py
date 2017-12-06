@@ -43,7 +43,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                         musicObject, args[2]])
             elif fname == 'insertMetronomeMark':
                 return (musicFuns.insertMetronomeMark, [float(args[0]),
-                        musicObject, int(args[1]), float(args[2])])
+                        musicObject, int(args[1])])
             elif fname == 'removeMetronomeMark':
                 return (musicFuns.removeMetronomeMark, [float(args[0]),
                         musicObject])

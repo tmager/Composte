@@ -9,6 +9,7 @@ from protocol import client, server
 from util import misc
 from threading import Thread, Lock
 from util.repl import the_worst_repl_you_will_ever_see
+import util.musicFuns
 
 import json
 
@@ -201,15 +202,14 @@ class ComposteClient:
                            "removeNote", (offset, partIndex, removedNoteName),
                            partIndex, offset)
 
-    def insertMetronomeMark(self, pid, offset, bpm, pulseDuration):
+    def insertMetronomeMark(self, pid, offset, bpm):
         """
         insert-metronome-mark project-id offset bpm pulseDuration
 
         Insert a metronome mark
         """
         return self.update(pid,
-                           "insertMetronomeMark", (offset,
-                            bpm, pulseDuration),
+                           "insertMetronomeMark", (offset, bpm),
                            None, offset)
 
     def removeMetronomeMark(self, pid, offset):
@@ -304,6 +304,7 @@ class ComposteClient:
         return self.update(pid,
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
+    # def playback(part
 
     def stop(self):
         """
@@ -363,40 +364,11 @@ if __name__ == "__main__":
             "add-dynamic": c.addDynamic,
             "remove-dynamic": c.removeDynamic,
             "add-lyric": c.addLyric,
+            # Client exclusive updates
+            # "playback": c.playback,
             }
 
     the_worst_repl_you_will_ever_see(repl_funs)
     c.stop()
     sys.exit(0)
-
-    DEBUG = True
-
-    c.register("msheldon", "A", "!!!")
-    c.register("shark meldon", "A", "!!!")
-    c.register("mark", "A", "!!!")
-    c.register("a", "A", "!!!")
-    c.login("msheldon", "A")
-    c.login("msheldon", "B")
-    tup = c.create_project("msheldon", "a_project", {"owner": "msheldon"})
-    if tup[0] == 'fail':
-        print("FAILURE")
-    else:
-        (status, pid) = tup
-
-    truePid = pid[0]
-    (status, proj) = c.get_project(truePid)
-
-    (status, cookie) = c.subscribe("msheldon", truePid)
-    c.subscribe("shark meldon", truePid)
-
-    c.unsubscribe(cookie[0])
-    c.unsubscribe("not a cookie")
-
-    c.insertNote(truePid, 0.0, 0, "C#4", 2.0)
-    c.insertNote(truePid, 0.0, 0, "C#4", 2.0)
-    c.insertNote(truePid, 1.0, 0, "E-5", 1.0)
-
-    print(status)
-
-    c.stop()
 

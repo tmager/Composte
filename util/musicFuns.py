@@ -1,5 +1,10 @@
 import music21
 
+# TODO FOR FUTURE SELVES BEYOND COMP50: 
+# Refactor projects and streams globally to obey a
+# Score > Part > Measure hierarchy
+# END TODO
+
 # The server always needs to know WHERE to make
 # an update, and needs to send that information
 # to all connected clients. Thus, the offset from
@@ -101,21 +106,47 @@ def changeTimeSignature(offset, part, newSigStr):
     part.insert(offset, newTimeSig)
     return part.getElementsByOffset(offset)
 
-def insertMetronomeMark(offset, parts, bpm, pulseDuration):
+def insertMetronomeMark(offset, parts, bpm):
     """ Insert a metronome marking in a list of
-        parts at a given offset. The constructor needs pulses per 
+        parts at a given offset. The constructor needs 
+        staff text as a string (empty for our purposes), pulses per 
         minute as an integer, and the duration in quarterLengths 
-        of a single pulse as a float. When duration 
+        of a single pulse as a float. Since duration 
         is 1.0, the second argument is exactly equivalent to 
         BPM (beats per minute). """
-    mark = music21.tempo.MetronomeMark("", bpm, pulseDuration)
+    mark = music21.tempo.MetronomeMark("", bpm, 1.0)
     for part in parts:
         markings = part.metronomeMarkBoundaries()
+        markFound = False
         for marking in markings:
             # Marking already exists at that location, so update it
             if marking[0] == offset:
-                part.replace(marking[2], mark) 
-                break
+                markFound = True
+                # This special case is rediculous. 
+                # 
+                # Because music21 gives back a default value for the 
+                # metronome mark at 0.0, a simple call to replace 
+                # will not update the stream. This is because the 
+                # default metronome marking is not *actually* 
+                # in the stream.
+                # This bug was tricky to track down, because it 
+                # was the very definition of "failing silently".
+                # The workaround is to add an extra "real" field to 
+                # user specified mark objects and check for them when 
+                # inserting a mark at offset 0.0
+                if offset == 0.0 and hasattr(marking[2], "real"): 
+                    mark.real = True
+                    part.replace(marking[2], mark) 
+                    break
+                elif offset == 0.0: 
+                    mark.real = True
+                    part.insert(offset, mark)
+                    break
+                else: 
+                    part.replace(marking[2], mark)
+                    break
+        if markFound: 
+            continue
         part.insert(offset, mark)
     return parts
 
@@ -231,7 +262,7 @@ def insertClef(offset, part, clefStr):
     elems = part.getElementsByOffset(offset)
     # Only clef objects have an octaveChange field
     for elem in elems:
-        if elem.octaveChange is not None:
+        if hasattr(elem, 'octaveChange'):
             part.replace(elem, newClef)
             return part.getElementsByOffset(offset)
     part.insert(offset, newClef)
@@ -242,7 +273,7 @@ def removeClef(offset, part):
     elems = part.getElementsByOffset(offset)
     for elem in elems:
         # Only clef objects have an octaveChange field
-        if elem.octaveChange is not None:
+        if hasattr(elem, 'octaveChange'):
             part.remove(elem)
             return part.getElementsByOffset(offset)
     return part.getElementsByOffset(offset)
@@ -259,7 +290,7 @@ def addInstrument(offset, part, instrumentStr):
     instrument = music21.instrument.fromString(instrumentStr)
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.instrumentName is not None:
+        if hasattr(elem, 'instrumentName'):
             part.replace(elem, instrument)
             return part.getElementsByOffset(offset)
     part.insert(offset, instrument)
@@ -269,7 +300,7 @@ def removeInstrument(offset, part):
     """ Remove an instrument beginning at offset from a given part. """
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.instrumentName is not None:
+        if hasattr(elem, 'instrumentName'):
             part.remove(elem)
             return part.getElementsByOffset(offset)
     return part.getElementsByOffset(offset)
@@ -281,7 +312,7 @@ def addDynamic(offset, part, dynamicStr):
     dynamic = music21.dynamics.Dynamic(dynamicStr)
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.volumeScalar is not None:
+        if hasattr(elem, 'volumeScalar'):
             part.replace(elem, dynamic)
             return part.getElementsByOffset(offset)
     part.insert(offset, dynamic)
@@ -291,7 +322,7 @@ def removeDynamic(offset, part):
     """ Removes a dynamic marking from a part at a given offset. """
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.volumeScalar is not None:
+        if hasattr(elem, 'volumeScalar'):
             part.remove(elem)
             return part.getElementsByOffset(offset)
     return part.getElementsByOffset(offset)
@@ -304,3 +335,8 @@ def addLyric(offset, part, lyric):
             note.addLyric(lyric)
             return part.getElementsByOffset(offset)
     return part.getElementsByOffset(offset)
+
+def playback(part): 
+    """ Playback the current project from the beginning 
+        of a part. """
+    music21.midi.realtime.StreamPlayer(part).play()    
