@@ -3,22 +3,20 @@
 import json
 import music21
 
-from base.exceptions import DeserializationFailure
+from protocol.base.exceptions import DeserializationFailure
 
-def serialize(username, projectID, function_name, *args):
-    """ username =:= type(str)
-        projectID =:= type(ComposteProject.projectID)
-        function_name =:= type(str)
-        args =:= type(list of str)
-        """
+def serialize(function_name, *args):
+    """
+    function_name =:= type(str)
+    args =:= type(list of str)
+    """
+
     rpc = {
-        "username": username
-        "projectID": projectID
         "fName": function_name,
         "args": [str(arg) for arg in args],
     }
 
-    return json.dunps(rpc)
+    return json.dumps(rpc)
 
 def deserialize(msg):
     pythonObject = json.loads(msg)
@@ -26,5 +24,5 @@ def deserialize(msg):
         raise DeserializationFailure("Received malformed data: {}".format(msg))
     return pythonObject
 
-# =================================================================================
+# ==============================================================================
 

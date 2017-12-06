@@ -6,3 +6,13 @@ __pycache__
 
 sandbox/
 *.swp
+*.db
+logs/*
+*/logs/*
+
+data/
+lib/
+bin/
+include/
+.Python
+pip-selfcheck.json

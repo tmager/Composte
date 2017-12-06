@@ -1,71 +1,75 @@
 import music21
 import uuid
+import json
+import base64
+from network.base.exceptions import GenericError
+# from copy import deepcopy
 
 class ComposteProject:
-    def __init__(self, owner, metadata):
+    def __init__(self, metadata, parts=None, projectID=None):
         """ Initializes the Project with an empty stream,
             a list of subscribers consisting solely of the owner,
             and a dictionary of metadata about the score. """
-        self.parts = [music21.stream.Stream()]
-        self.subscribers = [owner]
         self.metadata = metadata
-        self.projectID = uuid.uuid4()
+
+        if parts is not None:
+            self.parts = parts
+        else:
+            self.parts = [music21.stream.Stream()]
+        if projectID is not None:
+            self.projectID = projectID
+        else:
+            self.projectID = uuid.uuid4()
 
     def addPart(self):
         """ Adds a new part to a project. """
         self.parts.append(music21.stream.Stream())
+
+    def updateMetadata(self, fieldName, fieldValue):
+        """ Allow updates to project metadata. """
+        self.metadata[fieldName] = str(fieldValue)
 
     def swapParts(self, firstPart, secondPart):
         """ Swaps two parts in a project. This is purely cosmetic: all
             it will affect is the order in which parts are presented on
             the GUI. firstPart and secondPart are both 0-indexed integers
             representing the indicies of the parts to swap. """
-        tmp = self.parts[firstPart]
-        self.parts[firstPart] = self.parts[secondPart]
-        self.parts[secondPart] = tmp
+        if (int(firstPart) < len(self.parts) and
+                int(secondPart) < len(self.parts)):
+            tmp = self.parts[firstPart]
+            self.parts[firstPart] = self.parts[secondPart]
+            self.parts[secondPart] = tmp
+        else:
+            raise GenericError
 
     def removePart(self, partToRemove):
         """ Remove a part from a project. partToRemove is a 0-indexed
             integer representing the index of the part to remove. """
-        del self.parts[partToRemove]
+        if int(partToRemove) < len(self.parts):
+            del self.parts[partToRemove]
+        else:
+            raise GenericError
 
-    def updatePart(self, unpickledPart, partIndex):
-        """ Updates an entire part as identified by a part index. """
-        self.parts[partIndex] = unpickledPart
+    def serialize(self):
+        """ Construct three JSON objects representing the fields of
+            a ComposteProject. Intended to be stored in three
+            discrete database fields. Returns a tuple containing the
+            serialized JSON objects. """
+        bits = [ music21.converter.freezeStr(part) for part in self.parts ]
+        bytes_ = [ base64.b64encode(bit).decode() for bit in bits ]
+        parts = json.dumps(bytes_)
+        metadata = json.dumps(self.metadata)
+        uuid = str(self.projectID)
+        return (metadata, parts, uuid)
 
-    def updatePartAtOffset(self, unpickledStream, partIndex, streamOffset):
-        """ Updates a part at a given stream offset. """
-        part = self.parts[partIndex]
-        elems = part.getElementsByOffset(streamOffset)
-        for elem in elems:
-            part.remove(streamOffset, elem)
-        for member in unpickledStream:
-            part.insert(streamOffset, member)
-
-    def updateParts(self, unpickledParts):
-        """ Updates all parts with new part state. """
-        for i in range(0, len(unpickledParts)):
-            self.parts[i] = unpickledParts[i]
-
-    def addSubscriber(self, user):
-        """ Adds a new subscriber to the project. """
-        self.subscribers.append(user)
-
-    def removeSubscriber(self, user):
-        """ Removes a subscriber from a project. """
-        self.subscribers.remove(user)
-
-    def pickleIndividualPart(self, partIndex):
-        """ Pickle a single part of music21 data in a project. """
-        return music21.converter.freezeStr(self.parts[partIndex])
-
-    def pickleAllParts(self):
-        """ Pickle all parts of music21 data in a project. """
-        return music21.converter.freezeStr(self.parts)
-
-    def pickleObjectsAtPartOffset(self, offset, partIndex):
-        """ Pickle all objects at a given part offset to a client. """
-        objs = parts[partIndex].getElementsByOffset(offset)
-        return music21.converter.freezeStr(objs)
-
+def deserializeProject(serializedProject):
+    """ Deserialize a serialized music21 composteProject
+        into a composteProject object. """
+    (metadata, parts, id_) = serializedProject
+    bits = json.loads(parts)
+    bytes_ = [ base64.b64decode(bit.encode()) for bit in bits ]
+    parts = [ music21.converter.thawStr(byte) for byte in bytes_ ]
+    metadata = json.loads(metadata)
+    id_ = uuid.UUID(id_)
+    return ComposteProject(metadata, parts, id_)
 

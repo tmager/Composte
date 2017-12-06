@@ -1,0 +1,8 @@
+
+*/__pycache__
+sandbox/
+doc/
+html/
+
+# We can't ignore .git because we need the git commit hash for versioning...
+

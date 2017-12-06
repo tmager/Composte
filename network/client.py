@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
 import zmq
+
+from network.fake.security import Encryption, Log
+from network.base.exceptions import EncryptError, DecryptError, GenericError
+from network.base.loggable import Loggable, DevNull
+
 from threading import Thread, Lock
 from queue import Queue
-
-from fake.security import Encryption, Log
-from base.exceptions import EncryptError, DecryptError, GenericError
-
-from base.loggable import Loggable, DevNull
-
-import sys
 
 class Subscription(Loggable):
     def __init__(self, remote_address, zmq_context, logger):
@@ -27,7 +25,6 @@ class Subscription(Loggable):
         self.__socket = self.__context.socket(zmq.SUB)
         self.__socket.setsockopt_string(zmq.SUBSCRIBE, "")
         self.__socket.connect(self.__addr)
-        # print("Subscription to {}".format(self.__addr))
 
         self.__backlog = Queue(1024)
         self.__lock = Lock()
@@ -35,7 +32,8 @@ class Subscription(Loggable):
     def recv(self, poll_timeout = 500):
         """
         Subscription.recv(self, poll_timeout = 500)
-        Retrieve a message, failing after poll_timeout milliseconds.
+        Retrieve a message, failing with return value None after poll_timeout
+        milliseconds.
         Returns string on success, None on failure
         """
         # If we have a backlog, deal with that first, in order
@@ -45,7 +43,6 @@ class Subscription(Loggable):
             if not empty:
                 msg = self.__backlog.get()
             else:
-                # Wait up to 500 ms
                 nmsg = self.__socket.poll(poll_timeout)
                 if nmsg == 0:
                     msg = None
@@ -65,7 +62,7 @@ class Subscription(Loggable):
             self.__socket.disconnect(self.__addr)
             self.__socket.close()
 
-# Broadcast handler is separate: Subscription.
+# For legacy reasons, broadcast handler is separate: Subscription.
 class Client(Loggable):
     __context = zmq.Context()
     def __init__(self, remote_address, broadcast_address,
@@ -89,7 +86,8 @@ class Client(Loggable):
         # Receive broadcasts
         self.__done = False
         self.__background = None
-        self.__listener = Subscription(broadcast_address, self.__context, logger)
+        self.__listener = Subscription(broadcast_address, self.__context,
+                logger)
 
         self.__lock = Lock()
 
@@ -126,7 +124,6 @@ class Client(Loggable):
         Messages are pipelined through preprocess and then handler.
         """
         while True:
-            # print("Listening for broadcasts")
             with self.__lock:
                 if self.__done: break
 
@@ -188,6 +185,8 @@ class Client(Loggable):
         self.__background.join()
         self.__background = None
 
+        self.info("Client stopped")
+
 def echo(server, message):
     return message
 
@@ -196,9 +195,9 @@ def id(pre, elem):
 
 if __name__ == "__main__":
     # Set up the servers
-    s1 = Client("ipc:///tmp/interactive", "ipc:///tmp/broadcast", DevNull,
+    s1 = Client("tcp://127.0.0.1:5000", "tcp://127.0.0.1:5001", DevNull,
             Encryption())
-    s2 = Client("ipc:///tmp/interactive", "ipc:///tmp/broadcast", DevNull,
+    s2 = Client("tcp://127.0.0.1:5000", "tcp://127.0.0.1:5001", DevNull,
             Encryption())
 
     # Start broadcast handlers

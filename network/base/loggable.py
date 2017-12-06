@@ -6,6 +6,9 @@ import logging
 class IsNone(exceptions.GenericError): pass
 
 class Loggable:
+    """
+    Base class to provide logging facilities
+    """
     def __init__(self, logger):
         if logger == None:
             raise IsNone("Logger must not be None")
@@ -18,6 +21,9 @@ class Loggable:
     def critical(self, message): self.__logger.critical(message)
 
 class devnull(Loggable):
+    """
+    Sometimes you don't care what they have to say
+    """
     def __init__(self, logger = None): pass
 
     def info    (self, message): pass
@@ -28,20 +34,22 @@ class devnull(Loggable):
 
 DevNull = devnull()
 
-# Ad-Hoc logger for and Loggable. Provide your own sink that supports
-# write(). Usually an open file or sys.stderr.
-# Does not do formatting, etc
 class AdHoc:
-    def __init__(self, sink, loglevel = 0, name = None, **kwargs):
+    """
+    Ad-Hoc logger for Loggable. Provide your own sink that supports write().
+    Usually an open file or sys.stderr.
+    Does not do formatting, etc
+    """
+    def __init__(self, sink, loglevel = logging.DEBUG, name = None, **kwargs):
         """
-        Use kwargs to provide prefixes for loglevels:
+        Use kwargs to provide prefixes for custom loglevels:
             INFO
             DEBUG
             WARNING
             ERROR
             CRITICAL
         Prefixes default to the names of the loglevels
-        The logger name is provided alongside all message
+        The logger name is provided alongside all messages
         """
         self.__sink = sink
         self.__level = loglevel
@@ -57,32 +65,41 @@ class AdHoc:
         self.__prefixes.update(kwargs)
 
     def __log(self, message, level):
-        if self.__level >= level:
+        message = str(message)
+        if self.__level <= level:
             self.__sink.write(message + "\n")
 
     def info(self, message):
-        self.__log(self.__prefixes["info"] + message, logging.INFO)
+        self.__log(self.__prefixes["info"] + str(message), logging.INFO)
 
     def debug(self, message):
-        self.__log(self.__prefixes["debug"] + message, logging.DEBUG)
+        self.__log(self.__prefixes["debug"] + str(message), logging.DEBUG)
 
     def warn(self, message):
-        self.__log(self.__prefixes["warn"] + message, logging.WARNING)
+        self.__log(self.__prefixes["warn"] + str(message), logging.WARNING)
 
     def error(self, message):
-        self.__log(self.__prefixes["error"] + message, logging.ERROR)
+        self.__log(self.__prefixes["error"] + str(message), logging.ERROR)
 
     def critical(self, message):
-        self.__log(self.__prefixes["critical"] + message, logging.CRITICAL)
+        self.__log(self.__prefixes["critical"] + str(message), logging.CRITICAL)
+
+import sys
+StdErr = AdHoc(sys.stderr, name = "stderr")
 
 # Combine loggers
 class Combined:
+    """
+    Combine loggers to duplicate logging statements to multiple sinks
+    """
     def __init__(self, loggers):
         self.__loggers = []
 
-        if type(loggers) == list:
-            self.__loggers = loggers
-        else: self.__loggers.append(loggers)
+        try:
+            for logger in loggers:
+                self.__loggers.append(logger)
+        except TypeError as e:
+            self.__loggers.append(loggers)
 
     def add(self, logger):
         self.__logger.append(logger)
