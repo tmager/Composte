@@ -11,7 +11,10 @@ def serialize(status, *args):
     )
 
 def deserialize(msg):
-    pythonObject = json.loads(msg)
+    try:
+        pythonObject = json.loads(msg)
+    except json.decoder.JSONDecodeError as e:
+        return ("fail", msg)
     if type(pythonObject) != list:
         raise DeserializationFailure("Received malformed data: {}".format(msg))
     return pythonObject
