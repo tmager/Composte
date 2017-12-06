@@ -68,10 +68,10 @@ class UINote(QtWidgets.QGraphicsItem):
                              y - 2 * UISet.PITCH_LINE_SEP,
                              UISet.ACCIDENTAL_X_OFFSET
                                                 + 0.5 * UISet.PITCH_LINE_SEP,
-                             y + 1.5 * UISet.PITCH_LINE_SEP)
+                             y + 1.1 * UISet.PITCH_LINE_SEP)
             painter.drawLine(UISet.ACCIDENTAL_X_OFFSET
                                                 + 1.25 * UISet.PITCH_LINE_SEP,
-                             y - 1.5 * UISet.PITCH_LINE_SEP,
+                             y - 1.1 * UISet.PITCH_LINE_SEP,
                              UISet.ACCIDENTAL_X_OFFSET
                                                 + 1.25 * UISet.PITCH_LINE_SEP,
                              y + 2 * UISet.PITCH_LINE_SEP)
@@ -82,7 +82,7 @@ class UINote(QtWidgets.QGraphicsItem):
                                                 + 1.25 * UISet.PITCH_LINE_SEP,
                              y - 1 * UISet.PITCH_LINE_SEP)
             painter.drawLine(UISet.ACCIDENTAL_X_OFFSET
-                                                + 1.25 * UISet.PITCH_LINE_SEP,
+                                                + 0.5 * UISet.PITCH_LINE_SEP,
                              y + 1 * UISet.PITCH_LINE_SEP,
                              UISet.ACCIDENTAL_X_OFFSET
                                                 + 1.25 * UISet.PITCH_LINE_SEP,
