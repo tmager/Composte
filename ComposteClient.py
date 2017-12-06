@@ -336,7 +336,7 @@ if __name__ == "__main__":
 
     c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
             "tcp://{}:{}".format(endpoint_addr, bport),
-            lambda x, y: (x, y), StdErr, Encryption())
+            lambda x, y: print(y), StdErr, Encryption())
 
     repl_funs = {
             # Supporting/Utility routines
