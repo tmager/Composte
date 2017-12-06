@@ -23,7 +23,6 @@ def echo(*args):
     if DEBUG: str_ = ", ".join(list(args))
     else: str_ = " ".join(args)
 
-    # print(str_)
     return str_
 
 class REPL_env:
@@ -284,7 +283,8 @@ def the_worst_repl_you_will_ever_see(callbacks,
         args = merge_args(args)
         args = expand_vars(env, args)
         try:
-            args = do_sub_repl_if_needed(callbacks, default_function, prompt, args)
+            args = do_sub_repl_if_needed(callbacks, default_function, prompt,
+                    args)
         except SyntaxError as e:
             print(str(e))
             continue
@@ -316,7 +316,6 @@ def the_worst_repl_you_will_ever_see(callbacks,
         try:
              res = exec_(*args)
         except TypeError as e:
-            print("TypeError: " + str(e))
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)
                 print("{} {}".format(command, msg))
