@@ -80,7 +80,7 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
             self.addNote(*note)
 
     def insertNote(self, pitch: music21.pitch.Pitch, ntype, offset: float):
-        note = ntype(parent = self)
+        note = ntype(pitch, self.__clef, self.__keysig, parent = self)
         if offset + note.length() > self.length():
             raise ValueError("Note extends past end of measure")
         if (pitch, ntype, offset) in self.__noteObjs:
@@ -92,8 +92,8 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
                         - UISettings.BARLINE_REAR_PAD )
         note_x = (UISettings.BARLINE_FRONT_PAD
                     + notesWidth * (offset / (self.length() - 1)))
-        note_y = (8 * UISettings.PITCH_LINE_SEP
-                    - self.clef().position(pitch) * UISettings.PITCH_LINE_SEP)
+        note_y = 0 #(8 * UISettings.PITCH_LINE_SEP
+                   # - self.clef().position(pitch) * UISettings.PITCH_LINE_SEP)
         note.setPos(note_x, note_y)
 
 

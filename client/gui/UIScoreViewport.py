@@ -101,9 +101,9 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
 
     def insertNote(self, part, pitch, ntype, offset):
         if part >= len(self.__measures):
-            raise RuntimeError('Inserting note into non-existent part')
+            raise ValueError('Part index ' + str(part) + ' does not exist.')
         if offset < 0:
-            raise RuntimeError('Inserting note at negative offset')
+            raise ValueError('Note offset ' + str(offset) + ' is invalid.')
 
         # Figure out what measure to insert in, and add new measures at the end
         # if necessary to make that measure exist.

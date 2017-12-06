@@ -18,8 +18,8 @@ class UIClef(QtWidgets.QGraphicsItem):
         :return:
           An integer, the number of lines above or below the lowest staff line of this clef
         """
-        base_pitchnum = ord(str(self.__baseline)[0])
-        pitchnum = ord(str(pitch)[0])
+        base_pitchnum = ord(self.__baseline.step)
+        pitchnum = ord(pitch.step)
         base_octv = self.__baseline.implicitOctave
         octv = pitch.implicitOctave
         return 7 * (octv - base_octv) + (pitchnum - base_pitchnum)

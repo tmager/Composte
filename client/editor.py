@@ -47,7 +47,7 @@ class Editor(QtWidgets.QMainWindow):
                             QtWidgets.QLineEdit(self.__ui_debugConsole_layoutWidget)
         self.__ui_debugConsole_input.setFont(self.__ui_debugConsole_font)
         self.__ui_debugConsole_input.returnPressed \
-                            .connect(self.__processDebugCommand)
+                            .connect(self.__processDebugInput)
         self.__ui_debugConsole_layout.addWidget(self.__ui_debugConsole_log)
         self.__ui_debugConsole_layout.addWidget(self.__ui_debugConsole_input)
         self.__ui_debugConsole_layoutWidget.hide()
@@ -55,6 +55,7 @@ class Editor(QtWidgets.QMainWindow):
         self.__ui_mainSplitter.addWidget(self.__ui_scoreViewport)
         self.__ui_mainSplitter.addWidget(self.__ui_debugConsole_layoutWidget)
 
+        # Make the debug console not take up most of the window.
         self.__ui_mainSplitter.setStretchFactor(0, 3)
 
         self.setCentralWidget(self.__ui_mainSplitter)
@@ -63,16 +64,17 @@ class Editor(QtWidgets.QMainWindow):
         self.__makeToolbar()
 
     def __makeMenuBar(self):
-        self.__ui_filemenu = QtWidgets.QMenu("File", parent = self)
+        self.__ui_filemenu = QtWidgets.QMenu('File', parent = self)
 
         self.__ui_act_debugConsole = \
-                        self.__ui_filemenu.addAction("Debug Console Enabled")
+                        self.__ui_filemenu.addAction('Debug Console Enabled')
         self.__ui_act_debugConsole.setCheckable(True)
         self.__ui_act_debugConsole \
                         .setShortcut(QtGui.QKeySequence(Qt.Key_Escape))
         self.__ui_act_debugConsole.changed.connect(self.__toggleDebug)
 
-        self.__ui_act_quit = self.__ui_filemenu.addAction("Quit")
+        self.__ui_act_quit = self.__ui_filemenu.addAction('Quit')
+        self.__ui_act_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self.__ui_act_quit.triggered.connect(self.close)
 
         self.__ui_menubar = QtWidgets.QMenuBar(parent = self)
@@ -120,7 +122,10 @@ class Editor(QtWidgets.QMainWindow):
     def __handleInsertNote(self, part, pitch, ntype, offset):
         ## TODO: This actually needs to do server interaction; this is just for
         ## testing.
-        self.__ui_scoreViewport.insertNote(part, pitch, ntype, offset)
+        try:
+            self.__ui_scoreViewport.insertNote(part, pitch, ntype, offset)
+        except ValueError as e:
+            self.__debugConsoleWrite(str(e))
 
     def __handleDeleteNote(self, part, pitch, offset):
         ## TODO: This actually needs to do server interaction; this is just for
@@ -128,13 +133,17 @@ class Editor(QtWidgets.QMainWindow):
         if not self.__ui_scoreViewport.deleteNote(part, pitch, offset):
             self.__debugConsoleWrite('No note ' + str((part, pitch, offset)))
 
-    def __processDebugCommand(self):
+    def __processDebugInput(self):
         text = self.__ui_debugConsole_input.text()
         self.__ui_debugConsole_input.clear()
         if not text:
             return
+        cmdstrs = map(str.strip, text.split(';'))
+        for cmdstr in cmdstrs:
+            self.__processDebugCommand(cmdstr)
 
-        args = text.split(' ')
+    def __processDebugCommand(self, cmdstr):
+        args = cmdstr.split(' ')
         cmd = args[0].lower()
         args.pop(0)
 
@@ -167,12 +176,14 @@ class Editor(QtWidgets.QMainWindow):
             else:
                 msg = 'Unknown note type \'' + args[2] + '\''
                 self.__debugConsoleWrite(msg)
+                return
 
             try:
                 offset = float(args[3])
             except ValueError:
                 msg = 'Unable to generate time offset from \'' + args[3] + '\''
                 self.__debugConsoleWrite(msg)
+                return
 
             self.__handleInsertNote(part, pitch, ntype, offset)
         elif cmd in ['delete','d']:
@@ -185,6 +196,7 @@ class Editor(QtWidgets.QMainWindow):
             except ValueError:
                 msg = 'Unable to generate part index from \'' + args[1] + '\''
                 self.__debugConsoleWrite(msg)
+                return
 
             try:
                 pitch = music21.pitch.Pitch(args[1])
@@ -198,6 +210,7 @@ class Editor(QtWidgets.QMainWindow):
             except ValueError:
                 msg = 'Unable to generate time offset from \'' + args[2] + '\''
                 self.__debugConsoleWrite(msg)
+                return
 
             self.__handleDeleteNote(part, pitch, offset)
         else:
