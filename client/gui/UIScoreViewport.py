@@ -28,6 +28,25 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         self.__scoreScene.setBackgroundBrush(QtGui.QBrush(UISet.BG_COLOR))
         self.setScene(self.__scoreScene)
 
+    def __measureIndexFromOffset(self, offset, extend = False):
+        if len(self.__measures) == 0:
+            return (None, None)
+        mea_offset = 0
+        mea_index = 0
+        while mea_offset <= offset:
+            if mea_index >= len(self.__measures[0]):
+                if extend:
+                    self.addLine()
+                else:
+                    return (None, None)
+            mea = self.__measures[0][mea_index]
+            mea_offset += mea.length()
+            mea_index += 1
+
+        mea_offset -= mea.length()
+        mea_index -= 1
+
+        return (mea_index, mea_offset)
 
     def addPart(self, clef, keysig = None, timesig = None):
         if len(self.__measures) == 0 and (keysig is None or timesig is None):
@@ -72,8 +91,6 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
             last_sg = sg
 
 
-
-
     def addLine(self):
         for part in self.__measures:
             if part:
@@ -105,19 +122,8 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         if offset < 0:
             raise ValueError('Note offset ' + str(offset) + ' is invalid.')
 
-        # Figure out what measure to insert in, and add new measures at the end
-        # if necessary to make that measure exist.
-        mea_offset = 0
-        mea_index = 0
-        while mea_offset <= offset:
-            if mea_index >= len(self.__measures[part]):
-                self.addLine()
-            mea = self.__measures[part][mea_index]
-            mea_offset += mea.length()
-            mea_index += 1
-
-        mea_offset -= mea.length()
-        mea_index -= 1
+        mea_index, mea_offset = self.__measureIndexFromOffset(offset,
+                                                              extend = True)
         self.__measures[part][mea_index].insertNote(pitch, ntype,
                                                     offset - mea_offset)
 
@@ -127,19 +133,9 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         if offset < 0:
             raise RuntimeError('Inserting note at negative offset')
 
-        # Figure out what measure to insert in, and add new measures at the end
-        # if necessary to make that measure exist.
-        mea_offset = 0
-        mea_index = 0
-        while mea_offset <= offset:
-            if mea_index >= len(self.__measures[part]):
-                self.addLine()
-            mea = self.__measures[part][mea_index]
-            mea_offset += mea.length()
-            mea_index += 1
-
-        mea_offset -= mea.length()
-        mea_index -= 1
+        mea_index, mea_offset = self.__measureIndexFromOffset(offset)
+        if mea_index is None:
+            return False
         return self.__measures[part][mea_index].deleteNote(pitch, offset - mea_offset)
 
 

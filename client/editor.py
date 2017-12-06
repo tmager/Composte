@@ -16,7 +16,7 @@ class Editor(QtWidgets.QMainWindow):
         }
     __defaultClef = UIClef.treble()
     __defaultTimeSignature = UITimeSignature.UITimeSignature(4,4)
-    __defaultKeySignature = UIKeySignature.UIKeySignature('C')
+    __defaultKeySignature = UIKeySignature.C()
 
     def __init__(self, *args, **kwargs):
         super(Editor, self).__init__(*args, **kwargs)
