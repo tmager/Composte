@@ -165,8 +165,10 @@ class Contributors:
     def get_projects(self, username):
         with self.__lock:
             self.__cursor.execute("""
-                    SELECT project_id from contributors
-                    WHERE username=?
+                    SELECT projects.id, projects.name, projects.owner
+                    FROM projects INNER JOIN contributors
+                        ON projects.id = contributors.project_id
+                    WHERE contributors.username = ?
                     """, (username,))
             projects = self.__cursor.fetchall()
             return [ Project(*project) for project in projects ]

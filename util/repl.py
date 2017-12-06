@@ -157,8 +157,10 @@ def the_worst_repl_you_will_ever_see(callbacks,
         try:
              res = exec_(*args)
         except TypeError as e:
-            fname, msg = str(e).split(" ", 1)
-            print("{} {}".format(command, msg))
+            if str(e).startswith(exec_.__name__):
+                fname, msg = str(e).split(" ", 1)
+                print("{} {}".format(command, msg))
+            else: print(str(e))
             continue
 
         if res is not None: print(str(res))
