@@ -74,6 +74,7 @@ class Editor(QtWidgets.QMainWindow):
 
     def __makeMenuBar(self):
         self.__ui_filemenu = QtWidgets.QMenu('File', parent = self)
+        self.__ui_editmenu = QtWidgets.QMenu('Edit', parent = self)
 
         self.__ui_act_debugConsole = \
                         self.__ui_filemenu.addAction('Debug Console Enabled')
@@ -86,8 +87,13 @@ class Editor(QtWidgets.QMainWindow):
         self.__ui_act_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self.__ui_act_quit.triggered.connect(self.close)
 
+        self.__ui_act_edit = self.__ui_editmenu.addAction('Play')
+        self.__ui_act_edit.setShortcut(QtGui.QKeySequence('Ctrl+space'))
+        self.__ui_act_edit.triggered.connect(self.__handlePlay)
+
         self.__ui_menubar = QtWidgets.QMenuBar(parent = self)
         self.__ui_menubar.addMenu(self.__ui_filemenu)
+        self.__ui_menubar.addMenu(self.__ui_editmenu)
 
         self.setMenuBar(self.__ui_menubar)
 
@@ -127,6 +133,10 @@ class Editor(QtWidgets.QMainWindow):
                                             self.__defaultTimeSignature)
         else:
             self.__ui_scoreViewport.addPart(clef)
+
+    def __handlePlay(self):
+        ## TODO: Implement me!
+        raise NotImplementedError
 
     def __handleAddLine(self):
         self.__ui_scoreViewport.addLine()
@@ -168,6 +178,8 @@ class Editor(QtWidgets.QMainWindow):
             self.__ui_debugConsole_log.clear()
         elif cmd in ['chat', 'c']:
             self.__handleChatMessage(' '.join(args))
+        elif cmd in ['play', 'p']:
+            self.__handlePlay()
         elif cmd in ['addpart']:
             self.__handleAddPart(self.__defaultClef)
         elif cmd in ['addline']:
