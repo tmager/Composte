@@ -76,7 +76,6 @@ class ComposteClient:
             print(traceback.format_exc())
             return ('fail', 'error')
 
-
     def __version_handshake(self):
         """
         Perform a version handshake with the remote Composte server
@@ -210,6 +209,12 @@ class ComposteClient:
         reply = self.__client.send(msg)
         if DEBUG: print(reply)
         return server.deserialize(reply)
+
+    def chat(self, pid, from_, *message_parts):
+        """
+        chat project-id sender [message-parts]
+        """
+        return self.update(pid, "chat", (from_, " ".join(message_parts)))
 
     def changeKeySignature(self, pid, offset, partIndex, newSigSharps):
         """
