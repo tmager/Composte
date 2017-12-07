@@ -124,12 +124,21 @@ class Editor(QtWidgets.QMainWindow):
         pass
 
     def printChatMessage(self, msg):
+        """
+        Display a chat message to the debug console.
+        """
         self.__debugConsoleWrite(msg)
 
     def __debugConsoleWrite(self, msg):
+        """
+        Display a message in the debug console.
+        """
         self.__ui_debugConsole_log.append(msg)
 
     def __toggleDebug(self):
+        """
+        Show/hide the debug console.
+        """
         self.__ui_debugConsole_layoutWidget \
                             .setVisible(self.__ui_act_debugConsole.isChecked())
         if self.__ui_act_debugConsole.isChecked():
@@ -163,6 +172,8 @@ class Editor(QtWidgets.QMainWindow):
 
 
     def __handleAddPart(self, clef):
+        ## TODO: This actually needs to do server interaction; this is just for
+        ## testing.
         if self.__ui_scoreViewport.parts() == 0:
             self.__ui_scoreViewport.addPart(clef, self.__defaultKeySignature,
                                             self.__defaultTimeSignature)
@@ -199,9 +210,15 @@ class Editor(QtWidgets.QMainWindow):
         self.printChatMessage(msg)
 
     def __handleTTSon(self):
+        """
+        Tell the Composte client to enable text-to-speech, if available.
+        """
         self.__client.ttsOn()
 
     def __handleTTSoff(self):
+        """
+        Tell the Composte client to disable text-to-speech.
+        """
         self.__client.ttsOff()
 
     def __processDebugInput(self):
