@@ -178,7 +178,7 @@ class ComposteServer:
         proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
         self.__pool.remove(pid)
 
-        return ("ok", proj.serialize())
+        return ("ok", json.dumps(proj.serialize()))
 
     def get_project(self, pid):
         """
