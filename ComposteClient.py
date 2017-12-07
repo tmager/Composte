@@ -10,14 +10,20 @@ from util import misc
 from threading import Thread, Lock
 from util.repl import the_worst_repl_you_will_ever_see
 import util.musicFuns
-
+import util.musicWrapper
+import util.composteProject
 import json
+import music21
+import traceback
+import uuid
+import subprocess
+import shlex
 
 DEBUG = False
 
 class ComposteClient:
     def __init__(self, interactive_remote, broadcast_remote,
-            broadcast_handler, logger, encryption_scheme):
+                 logger, encryption_scheme):
         """
         RPC host for connecting to Composte Servers. Connects to a server
         listening at interactive_remote and broadcasting on on
@@ -39,9 +45,24 @@ class ComposteClient:
 
         self.__project = None
 
+        self.__tts = False
+
+        espeak = subprocess.check_output("which espeak | cat -",
+                                         stderr=subprocess.DEVNULL,
+                                         shell=True)
+        say = subprocess.check_output("which say | cat -",
+                                      stderr=subprocess.DEVNULL,
+                                      shell=True)
+        if espeak.decode() != "":
+            self.__ttsCommand = "espeak "
+        elif say.decode() != "":
+            self.__ttsCommand = "say "
+        else:
+            self.__ttsCommand = None
+
         # If this happens too early, a failed version handshake prevents this
         # thread from ever being joined, and the application will never exit
-        self.__client.start_background(broadcast_handler)
+        self.__client.start_background(self.__handle)
 
     def project(self):
         return self.__project
@@ -57,7 +78,25 @@ class ComposteClient:
             "update": self.__do_update,
         }
 
+        rpc = client.deserialize(rpc)
+        if self.__project is None or \
+           str(self.__project.projectID) != rpc["args"][0]:
+            return
         f = rpc["fName"]
+        if rpc["args"][1] == "chat":
+            rpc["args"][2] = json.loads(rpc["args"][2])
+
+            printedStr = rpc["args"][2][0] + ": " + rpc["args"][2][1]
+            spokenStr = shlex.quote(rpc["args"][2][0] +
+                                    " says " +
+                                    rpc["args"][2][1])
+            print(printedStr)
+            if self.__tts and (self.__ttsCommand is not None):
+                subprocess.call(str(self.__ttsCommand) + spokenStr,
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                                shell=True)
+            return
 
         do_rpc = rpc_funs.get(f, fail)
         try:
@@ -69,8 +108,9 @@ class ComposteClient:
         project = lambda x : self.__project
 
         try:
-            (status, other) = musicWrapper.performMusicFun(*args,
-                    fetchProject = project)
+            return util.musicWrapper.performMusicFun(*args,
+                                     fetchProject = project)
+
         except:
             print(traceback.format_exc())
             return ('fail', 'error')
@@ -168,7 +208,9 @@ class ComposteClient:
         if DEBUG: print(reply)
         status, ret = reply
         if status == 'ok':
-            self.__project = ret[0]
+            print(type(ret))
+            realProj = json.loads(ret[0])
+            self.__project = util.composteProject.deserializeProject(realProj)
         return reply
 
     # Realistically, we send a login cookie and the server determines the user
@@ -214,6 +256,32 @@ class ComposteClient:
         chat project-id sender [message-parts]
         """
         return self.update(pid, "chat", (from_, " ".join(message_parts)))
+
+    def toggleTTS(self):
+        """
+        toggle-tts
+
+        If text-to-speech is turned on, toggle-tts turns it off.
+        If text-to-speech is turned off, toggle-tts turns it on.
+        Text-to-speech will only work if it is availible.
+        """
+        self.__tts = not self.__tts
+
+    def ttsOn(self):
+        """
+        tts-on
+
+        Turns text-to-speech on if it is availible.
+        """
+        self.__tts = True
+
+    def ttsOff(self):
+        """
+        tts-off
+
+        Turns text-to-speech off.
+        """
+        self.__tts = False
 
     def changeKeySignature(self, pid, offset, partIndex, newSigSharps):
         """
@@ -347,7 +415,14 @@ class ComposteClient:
         return self.update(pid,
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
-    # def playback(part
+    def playback(self, partIndex):
+        """
+        playback partIndex
+
+        Playback the project set by get-project.
+        """
+        print(self.__project.parts[int(partIndex)].offsetMap())
+        util.musicFuns.playback(self.__project.parts[int(partIndex)])
 
     def stop(self):
         """
@@ -380,7 +455,7 @@ if __name__ == "__main__":
 
     c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
             "tcp://{}:{}".format(endpoint_addr, bport),
-            lambda x, y: print(y), StdErr, Encryption())
+            StdErr, Encryption())
 
     repl_funs = {
             # Supporting/Utility routines
@@ -408,9 +483,14 @@ if __name__ == "__main__":
             "remove-dynamic": c.removeDynamic,
             "add-lyric": c.addLyric,
             # Client exclusive updates
-            # "playback": c.playback,
+            "playback": c.playback,
+            "chat": c.chat,
+            "toggle-tts": c.toggleTTS,
+            "tts-on": c.ttsOn,
+            "tts-off": c.ttsOff,
             }
 
     the_worst_repl_you_will_ever_see(repl_funs)
     c.stop()
     sys.exit(0)
+

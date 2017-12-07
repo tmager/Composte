@@ -29,8 +29,8 @@ The message initiator is listed first.
 * `Create`
 * `Share`
 * `Subscribe`
-* `Update`
 * `Unbscribe`
+* `Update`
 
 ## Details
 

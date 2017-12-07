@@ -1,5 +1,11 @@
 
 class Encryption:
+    """
+    Filler class defining the minimum interface that network encryption_scheme
+    must implement.
+
+    Note that this particular one doesn't do anything.
+    """
     def __init__(self):
         pass
 
@@ -10,6 +16,9 @@ class Encryption:
         return message
 
 class Log:
+    """
+    Sample class that logs to a write()-able sink
+    """
     def __init__(self, sink):
         self.__sink = sink
 

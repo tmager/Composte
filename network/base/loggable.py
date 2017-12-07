@@ -42,7 +42,8 @@ class AdHoc:
     """
     def __init__(self, sink, loglevel = logging.DEBUG, name = None, **kwargs):
         """
-        Use kwargs to provide prefixes for custom loglevels:
+        Use kwargs to provide prefixes for custom loglevels. The following are
+        provided by default:
             INFO
             DEBUG
             WARNING
