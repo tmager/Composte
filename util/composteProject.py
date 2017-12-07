@@ -15,7 +15,13 @@ class ComposteProject:
         if parts is not None:
             self.parts = parts
         else:
-            self.parts = [music21.stream.Stream()]
+            s = music21.stream.Stream()
+            s.insert(0.0, music21.key.KeySignature(0))
+            s.insert(0.0, music21.meter.TimeSignature("4/4"))
+            s.insert(0.0, music21.tempo.MetronomeMark("", 120, 1.0))
+            s.insert(0.0, music21.clef.clefFromString('treble'))
+            s.insert(0.0, music21.instrument.fromString('piano'))
+            self.parts = [s]
         if projectID is not None:
             self.projectID = projectID
         else:
@@ -23,7 +29,13 @@ class ComposteProject:
 
     def addPart(self):
         """ Adds a new part to a project. """
-        self.parts.append(music21.stream.Stream())
+        s = music21.stream.Stream()
+        s.insert(0.0, music21.key.keySignature(0))
+        s.insert(0.0, music21.meter.TimeSignature("4/4"))
+        s.insert(0.0, music21.tempo.MetronomeMark("", 120, 1.0))
+        s.insert(0.0, music21.clef.clefFromString('treble'))
+        s.insert(0.0, music21.instrument.fromString('piano'))
+        self.parts.append(s)
 
     def updateMetadata(self, fieldName, fieldValue):
         """ Allow updates to project metadata. """

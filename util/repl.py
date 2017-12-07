@@ -214,6 +214,10 @@ def do_sub_repl_if_needed(callbacks,
                     to_eval = [sub_command] + sub_command_args)
             # Replace expression with result
             new_args.append(replacement)
+
+            # Clear subcommand and args
+            sub_command = None
+            sub_command_args = []
             continue
 
         if started_subcommand and arg[0] != "`":
@@ -233,6 +237,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
     Start an interactive REPL backed by callbacks
     { command-name: function-to-invoke }
     REPL commands have the form COMMAND [ARGUMENTS], splitting on whitespace
+    %% begins a linewise comment
     """
 
     env = REPL_env()
@@ -259,6 +264,9 @@ def the_worst_repl_you_will_ever_see(callbacks,
         if to_eval is None:
             try:
                 read = input(prompt()).lstrip()
+                read = read.split("%%", 1)[0]
+                if read == "":
+                    continue
             except KeyboardInterrupt as e:
                 print(e)
                 break
