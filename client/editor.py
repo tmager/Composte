@@ -29,7 +29,10 @@ class Editor(QtWidgets.QMainWindow):
                                        startOffset, endOffset)
 
     def __resetAll(self):
-        self.__ui_scoreViewport.update(self.__client.project(), None, None)
+        try:
+            self.__ui_scoreViewport.update(self.__client.project(), None, None)
+        except RuntimeError as e:
+            self.__debugConsoleWrite(e.msg)
 
     def __makeUI(self):
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)
@@ -134,7 +137,7 @@ class Editor(QtWidgets.QMainWindow):
         else:
             self.__ui_scoreViewport.addPart(clef)
 
-    def __handlePlay(self):
+    def __handlePlay(self, part = 0):
         ## TODO: Implement me!
         raise NotImplementedError
 
@@ -179,7 +182,18 @@ class Editor(QtWidgets.QMainWindow):
         elif cmd in ['chat', 'c']:
             self.__handleChatMessage(' '.join(args))
         elif cmd in ['play', 'p']:
-            self.__handlePlay()
+            if len(args) == 0:
+                self.__handlePlay()
+            if len(args) == 1:
+                try:
+                    part = int(args[0])
+                except ValueError:
+                    msg = 'Unable to generate part index from \'' + args[1] + '\''
+                    self.__debugConsoleWrite(msg)
+                    return
+                self.__handlePlay(part)
+            else:
+                self.__debugConsoleHelp('play')
         elif cmd in ['addpart']:
             self.__handleAddPart(self.__defaultClef)
         elif cmd in ['addline']:
