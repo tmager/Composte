@@ -37,9 +37,45 @@ class ComposteClient:
 
         self.__version_handshake()
 
+        self.__project = None
+
         # If this happens too early, a failed version handshake prevents this
         # thread from ever being joined, and the application will never exit
         self.__client.start_background(broadcast_handler)
+
+    def project(self):
+        return self.__project
+
+    def __handle(self, _, rpc):
+        def fail(*args):
+            return ("fail", "I don't know what you want me to do")
+
+        def unimplemented(*args):
+            return ("?", "?")
+
+        rpc_funs = {
+            "update": self.__do_update,
+        }
+
+        f = rpc["fName"]
+
+        do_rpc = rpc_funs.get(f, fail)
+        try:
+            (status, other) = do_rpc(*rpc['args'])
+        except Exception as e:
+            print(e)
+
+    def __do_update(self, *args):
+        project = lambda x : self.__project
+
+        try:
+            (status, other) = musicWrapper.performMusicFun(*args,
+                                                           fetchProject
+                                                                    = project)
+        except:
+            print(traceback.format_exc())
+            return ('fail', 'error')
+
 
     def __version_handshake(self):
         """
@@ -130,9 +166,12 @@ class ComposteClient:
         Given a uuid, get the project to work on
         """
         msg = client.serialize("get_project", pid)
-        reply = self.__client.send(msg)
+        reply = server.deserialize(self.__client.send(msg))
         if DEBUG: print(reply)
-        return server.deserialize(reply)
+        status, ret = reply
+        if status == 'ok':
+            self.__project = ret[0]
+        return reply
 
     # Realistically, we send a login cookie and the server determines the user
     # from that, but we don't have that yet
@@ -371,4 +410,3 @@ if __name__ == "__main__":
     the_worst_repl_you_will_ever_see(repl_funs)
     c.stop()
     sys.exit(0)
-
