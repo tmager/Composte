@@ -238,7 +238,7 @@ class ComposteServer:
         user = project.metadata["owner"]
         id_ = str(project.projectID)
 
-        (parts, metadata, _) = project.serialize()
+        (metadata, parts, _) = project.serialize()
 
         base_path = os.path.join(self.__project_root, user)
         base_path = os.path.join(base_path, id_)
@@ -270,7 +270,7 @@ class ComposteServer:
             parts = f.read()
 
         project = composteProject.deserializeProject(
-            (parts, metadata, pid)
+            (metadata, parts, pid)
         )
         # Don't put it into the pool yet, because then we end up with a
         # use count that will never be 0 again
@@ -326,6 +326,7 @@ class ComposteServer:
         """
 
         # Use this function to get a project
+        pid_ = None
         def get_fun(pid):
             """
             Fetch a project from the cache
@@ -333,7 +334,8 @@ class ComposteServer:
             # The client musicfuns shouldn't have to worry about how the
             # server manages the lifetimes of project objects
             proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
-            self.__pool.remove(pid)
+            # We need to steal the pid to release it later
+            pid_ = pid
             return proj
 
         with self.__flushing:
@@ -345,6 +347,11 @@ class ComposteServer:
                 print(traceback.format_exc())
                 return ("fail", "Internal Server Error")
             return reply
+
+            # We can't decrement the refcount before now, because we could
+            # cause an early flush otherwise, and then serverside persistence
+            # is breaks.
+            self.__pool.remove(pid_, self.write_project)
 
     def subscribe(self, username, pid):
         """
@@ -459,7 +466,7 @@ class ComposteServer:
         except GenericError as e:
             return ("fail", "Internal server error")
         except:
-            self.__server.__error(traceback.format_exc())
+            self.__server.error(traceback.format_exc())
             return ("fail", "Internal server error (Developer error)")
 
         # Only broadcast successful updates

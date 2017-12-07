@@ -47,17 +47,17 @@ class ComposteClient:
 
         self.__tts = False
 
-        espeak = subprocess.check_output("which espeak | cat -", 
+        espeak = subprocess.check_output("which espeak | cat -",
                                          stderr=subprocess.DEVNULL,
                                          shell=True)
-        say = subprocess.check_output("which say | cat -", 
+        say = subprocess.check_output("which say | cat -",
                                       stderr=subprocess.DEVNULL,
                                       shell=True)
-        if espeak.decode() != "": 
-            self.__ttsCommand = "espeak " 
-        elif say.decode() != "": 
+        if espeak.decode() != "":
+            self.__ttsCommand = "espeak "
+        elif say.decode() != "":
             self.__ttsCommand = "say "
-        else: 
+        else:
             self.__ttsCommand = None
 
         # If this happens too early, a failed version handshake prevents this
@@ -80,19 +80,19 @@ class ComposteClient:
 
         rpc = client.deserialize(rpc)
         if self.__project is None or \
-           str(self.__project.projectID) != rpc["args"][0]: 
+           str(self.__project.projectID) != rpc["args"][0]:
             return
         f = rpc["fName"]
         if rpc["args"][1] == "chat":
-            rpc["args"][2] = json.loads(rpc["args"][2]) 
-            
+            rpc["args"][2] = json.loads(rpc["args"][2])
+
             printedStr = rpc["args"][2][0] + ": " + rpc["args"][2][1]
-            spokenStr = shlex.quote(rpc["args"][2][0] + 
-                                    " says " + 
+            spokenStr = shlex.quote(rpc["args"][2][0] +
+                                    " says " +
                                     rpc["args"][2][1])
             print(printedStr)
-            if self.__tts and (self.__ttsCommand is not None): 
-                subprocess.call(str(self.__ttsCommand) + spokenStr, 
+            if self.__tts and (self.__ttsCommand is not None):
+                subprocess.call(str(self.__ttsCommand) + spokenStr,
                                 stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL,
                                 shell=True)
@@ -103,14 +103,14 @@ class ComposteClient:
             (status, other) = do_rpc(*rpc['args'])
         except Exception as e:
             print(e)
-        
+
     def __do_update(self, *args):
         project = lambda x : self.__project
 
         try:
             return util.musicWrapper.performMusicFun(*args,
                                      fetchProject = project)
-            
+
         except:
             print(traceback.format_exc())
             return ('fail', 'error')
@@ -257,30 +257,30 @@ class ComposteClient:
         """
         return self.update(pid, "chat", (from_, " ".join(message_parts)))
 
-    def toggleTTS(self): 
+    def toggleTTS(self):
         """
         toggle-tts
 
-        If text-to-speech is turned on, toggle-tts turns it off. 
+        If text-to-speech is turned on, toggle-tts turns it off.
         If text-to-speech is turned off, toggle-tts turns it on.
         Text-to-speech will only work if it is availible.
-        """ 
+        """
         self.__tts = not self.__tts
 
-    def ttsOn(self): 
+    def ttsOn(self):
         """
         tts-on
 
-        Turns text-to-speech on if it is availible. 
-        """ 
+        Turns text-to-speech on if it is availible.
+        """
         self.__tts = True
 
     def ttsOff(self):
         """
         tts-off
 
-        Turns text-to-speech off. 
-        """ 
+        Turns text-to-speech off.
+        """
         self.__tts = False
 
     def changeKeySignature(self, pid, offset, partIndex, newSigSharps):
@@ -416,11 +416,12 @@ class ComposteClient:
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
     def playback(self, partIndex):
-        """ 
+        """
         playback partIndex
 
         Playback the project set by get-project.
         """
+        print(self.__project.parts[int(partIndex)].offsetMap())
         util.musicFuns.playback(self.__project.parts[int(partIndex)])
 
     def stop(self):
@@ -492,3 +493,4 @@ if __name__ == "__main__":
     the_worst_repl_you_will_ever_see(repl_funs)
     c.stop()
     sys.exit(0)
+
