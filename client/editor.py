@@ -29,7 +29,7 @@ class Editor(QtWidgets.QMainWindow):
                                        startOffset, endOffset)
 
     def __resetAll(self):
-        self.__ui_scoreViewport.update(project, None, None)
+        self.__ui_scoreViewport.update(self.__client.project(), None, None)
 
     def __makeUI(self):
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)
@@ -95,6 +95,9 @@ class Editor(QtWidgets.QMainWindow):
     def __makeToolbar(self):
         pass
 
+    def printChatMessage(self, msg):
+        self.__debugConsoleWrite(msg)
+
     def __debugConsoleWrite(self, msg):
         self.__ui_debugConsole_log.append(msg)
 
@@ -142,6 +145,11 @@ class Editor(QtWidgets.QMainWindow):
         if not self.__ui_scoreViewport.deleteNote(part, pitch, offset):
             self.__debugConsoleWrite('No note ' + str((part, pitch, offset)))
 
+    def __handleChatMessage(self, msg):
+        ## TODO: This actually needs to do server interaction; this is just for
+        ## testing.
+        self.printChatMessage(msg)
+
     def __processDebugInput(self):
         text = self.__ui_debugConsole_input.text()
         self.__ui_debugConsole_input.clear()
@@ -158,6 +166,8 @@ class Editor(QtWidgets.QMainWindow):
 
         if cmd in ['clear']:
             self.__ui_debugConsole_log.clear()
+        elif cmd in ['chat', 'c']:
+            self.__handleChatMessage(' '.join(args))
         elif cmd in ['addpart']:
             self.__handleAddPart(self.__defaultClef)
         elif cmd in ['addline']:
