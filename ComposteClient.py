@@ -53,8 +53,6 @@ class ComposteClient:
         say = subprocess.check_output("which say | cat -", 
                                       stderr=subprocess.DEVNULL,
                                       shell=True)
-        print(espeak)
-        print(say)
         if espeak.decode() != "": 
             self.__ttsCommand = "espeak " 
         elif say.decode() != "": 
@@ -62,7 +60,6 @@ class ComposteClient:
         else: 
             self.__ttsCommand = None
 
-        print(self.__ttsCommand)
         # If this happens too early, a failed version handshake prevents this
         # thread from ever being joined, and the application will never exit
         self.__client.start_background(self.__handle)
