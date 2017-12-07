@@ -15,23 +15,20 @@ import client.gui.UIClef as UIClef
 import client.gui.UITimeSignature as UITimeSignature
 import client.gui.UINote as UINote
 
-WIDTH = 200
+WIDTH = 1000
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    vp = UIScoreViewport.UIScoreViewport(measuresPerLine = 5, width=1000)
+    vp = UIScoreViewport.UIScoreViewport(measuresPerLine = 5, width=WIDTH)
 
     parts = []
     pr = music21.stream.Stream()
     pr.append(music21.clef.TrebleClef())
     pr.append(music21.key.KeySignature(0))
     pr.append(music21.meter.TimeSignature('4/4'))
-    pr.append(music21.note.Note('C5', type='quarter'))
-    pr.append(music21.note.Note('D5', type='quarter'))
+    pr.insert(music21.note.Note('D5', type='half', dots=1))
     pr.append(music21.note.Note('E5', type='quarter'))
-    pr.append(music21.note.Note('F5', type='quarter'))
-    pr.append(music21.note.Note('E4', type='half'))
-    pr.append(music21.note.Note('G4', type='half'))
+    pr.append(music21.note.Note('C5', type='16th', dots=1))
     parts.append(pr)
     pr = music21.stream.Stream()
     pr.append(music21.clef.TrebleClef())
