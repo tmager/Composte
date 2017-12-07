@@ -46,19 +46,19 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
             line.setPen(self.__stafflinePen)
             self.__baseObjs.append(line)
 
-        barline_y1 = -self.__stafflineWidth/2
-        barline_y2 = 4 * 2 * UISettings.PITCH_LINE_SEP + self.__stafflineWidth/2
+        # barline_y1 = -self.__stafflineWidth/2
+        # barline_y2 = 4 * 2 * UISettings.PITCH_LINE_SEP + self.__stafflineWidth/2
 
-        barline = QGraphicsLineItem(0, barline_y1,
-                                    0, barline_y2,
-                                    parent=self)
-        barline.setPen(self.__barlinePen)
-        self.__baseObjs.append(barline)
-        barline = QGraphicsLineItem(self.__width, barline_y1,
-                                    self.__width, barline_y2,
-                                    parent = self)
-        barline.setPen(self.__barlinePen)
-        self.__baseObjs.append(barline)
+        # barline = QGraphicsLineItem(0, barline_y1,
+        #                             0, barline_y2,
+        #                             parent=self)
+        # barline.setPen(self.__barlinePen)
+        # self.__baseObjs.append(barline)
+        # barline = QGraphicsLineItem(self.__width, barline_y1,
+        #                             self.__width, barline_y2,
+        #                             parent = self)
+        # barline.setPen(self.__barlinePen)
+        # self.__baseObjs.append(barline)
 
     def clear(self):
         for item in self.__noteObjs.values():
@@ -85,8 +85,8 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
 
     def insertNote(self, pitch: music21.pitch.Pitch, ntype, offset: float):
         note = ntype(pitch, self.__clef, self.__keysig, parent = self)
-        if offset + note.length() > self.length():
-            raise ValueError("Note extends past end of measure")
+        # if offset + note.length() > self.length():
+        #     raise ValueError("Note extends past end of measure")
         if (pitch, ntype, offset) in self.__noteObjs:
             raise ValueError("Note already exists")
         self.__noteObjs[(pitch, ntype, offset)] = note
@@ -95,7 +95,7 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
                         - UISettings.BARLINE_FRONT_PAD
                         - UISettings.BARLINE_REAR_PAD )
         note_x = (UISettings.BARLINE_FRONT_PAD
-                    + notesWidth * (offset / (self.length() - 1)))
+                    + notesWidth * (offset / (self.length())))
         note_y = 0 #(8 * UISettings.PITCH_LINE_SEP
                    # - self.clef().position(pitch) * UISettings.PITCH_LINE_SEP)
         note.setPos(note_x, note_y)
