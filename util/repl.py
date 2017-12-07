@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+# This file provides what is quite possibly the world's worst REPL. Some
+# docstrings are shoehorned into being used as interactivev REPL help, so it
+# is not possible to give them more useful docstrings. Mark, I apologize in
+# advance for the pain that attempting to understand the contents of this file
+# will cause you.
+
 import re
 import os, sys
 import inspect
@@ -26,6 +32,11 @@ def echo(*args):
     return str_
 
 class REPL_env:
+    """
+    Literally a wrapper around a python dictionary. Could be done better if I
+    wanted to chain REPL bindings correctly, but I'm lazy and this is low
+    priority.
+    """
     def __init__(self):
         self.__bindings = {}
 
@@ -68,6 +79,7 @@ def stop_repl_help(*args):
 
     End this REPL session
     """
+    # Exists to provide help for a REPL builtin
     pass
 
 def last_help(*args):
@@ -76,6 +88,7 @@ def last_help(*args):
 
     Show the result of the most recently run command
     """
+    # Exists to provide help for a REPL builtin
     pass
 
 def show_help(builtins, callbacks, fun = None, *args):
@@ -153,6 +166,13 @@ def merge_args(args):
     return new_args
 
 def expand_vars(env, args):
+    """
+    Expand variables to their contents. Unset variables expand to the empty
+    string.
+
+    For example, if the variable `hello` is set to the value "world", then
+    `$hello` will be expanded to "world"
+    """
     new_args = []
     for arg in args:
         if arg[0] == "$":
@@ -163,6 +183,9 @@ def expand_vars(env, args):
     return new_args
 
 def quote(args):
+    """
+    Quote whitespace in arguments by escaping whitespace
+    """
     new_args = []
 
     for arg in args:
@@ -175,6 +198,12 @@ def quote(args):
 def do_sub_repl_if_needed(callbacks,
         default_function = I_dont_know_what_you_want_me_to_do,
         prompt = lambda : ">>> ", args = None):
+    """
+    Perform command substitution if necessary. `command args` will be replaced
+    with the output of evaluating `command args`.
+
+    For example, echo `echo a` prints a
+    """
 
     if args is None: return ""
 

@@ -2,8 +2,7 @@
 
 [Up](../index.md)
 
-Composte clients and servers communicate using a custom protocol over
-secure websockets. More details are provided below.
+Composte clients and servers communicate using a custom protocol over ØMQ.
 
 [Overview](overview.md)
 

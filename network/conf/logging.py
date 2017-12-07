@@ -5,6 +5,9 @@ import logging
 import logging.config
 
 def setup():
+    """
+    Set up logging configs based on a logging config file.
+    """
 
     try:
         os.mkdir("logs")
