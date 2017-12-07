@@ -370,4 +370,4 @@ def boundedOffset(part, bounds):
         endTime is the termination offset of the music21 object. """
     offs = part.offsetMap()
     return [x for x in offs 
-            if bounds[0] <= offs.offset and offs.endTime < bounds[1]]
+            if bounds[0] <= x.offset and x.endTime < bounds[1]]
