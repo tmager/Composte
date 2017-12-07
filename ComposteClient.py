@@ -70,8 +70,7 @@ class ComposteClient:
 
         try:
             (status, other) = musicWrapper.performMusicFun(*args,
-                                                           fetchProject
-                                                                    = project)
+                    fetchProject = project)
         except:
             print(traceback.format_exc())
             return ('fail', 'error')
