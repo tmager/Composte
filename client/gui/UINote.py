@@ -6,6 +6,18 @@ from PyQt5.QtCore import Qt
 from util.classExceptions import virtualmethod
 import client.gui.UISettings as UISet
 
+
+def ntypeFromMusic21(note: music21.note.Note):
+    ntypeMap = {
+        'quarter' : UINote_Quarter,
+        'half'    : UINote_Half,
+        'whole'   : UINote_Whole
+    }
+    if note.duration.type in ntypeMap:
+        return ntypeMap[note.duration.type]
+    else:
+        raise RuntimeError('Unsupported note duration ' + note.duration)
+
 class UINote(QtWidgets.QGraphicsItem):
 
     __accidentalLineWidth = 1.5
@@ -188,12 +200,12 @@ class UINote_Half(UINote):
         painter.setBrush(self.__brush)
         painter.setPen(self.__pen)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.drawEllipse(1.25 * UISet.PITCH_LINE_SEP + self.__linewidth/2,
+        painter.drawEllipse(-1.25 * UISet.PITCH_LINE_SEP + self.__linewidth/2,
                             y - UISet.PITCH_LINE_SEP + self.__linewidth/2,
                             2.5 * UISet.PITCH_LINE_SEP - self.__linewidth,
                             2 * UISet.PITCH_LINE_SEP - self.__linewidth)
         painter.drawLine(1.5 * UISet.PITCH_LINE_SEP - self.__linewidth,
                          y,
                          1.5 * UISet.PITCH_LINE_SEP - self.__linewidth,
-                         y + 7 * UISet.PITCH_LINE_SEP)
+                         y - 7 * UISet.PITCH_LINE_SEP)
         self._paintAccidental(painter, option, widget)
