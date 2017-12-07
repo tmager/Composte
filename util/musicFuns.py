@@ -37,16 +37,19 @@ def changeKeySignature(offset, part, newSigSharps):
             part.replace(oldKeySigs[i], newKeySig)
             if i + 1 == len(oldKeySigs):
                 renameNotes(offset, part, newKeySig)
+                return [offset, part.highestTime]
             else:
                 renameNotes(offset, part, newKeySig, oldKeySigs[i + 1].offset)
-            return part
+                return [offset, oldKeySigs[i + 1].offset]
     part.insert(offset, newKeySig)
     for oldKeySig in oldKeySigs:
+        # oldKeySigs is sorted, so this finds the first oldKeySig
+        # That's after the one that was just inserted
         if offset < oldKeySig.offset:
             renameNotes(offset, part, newKeySig, oldKeySig.offset)
-            return part
+            return [offset, oldKeySig.offset]
     renameNotes(offset, part, newKeySig)
-    return part
+    return [offset, part.highestTime]
 
 def renameNotes(startOffset, part, keySig, endOffset=None):
     """ Rename all notes affected by a key signature change
@@ -148,7 +151,7 @@ def insertMetronomeMark(offset, parts, bpm):
         if markFound: 
             continue
         part.insert(offset, mark)
-    return parts
+    return [offset, offset]
 
 def removeMetronomeMark(offset, parts):
     """ Remove a metronome marking from each part in
@@ -158,7 +161,7 @@ def removeMetronomeMark(offset, parts):
         for marking in markings:
             if marking[0] == offset:
                 part.remove(marking[2])
-    return parts
+    return [offset, offset]
 
 def createNote(pitchName, durationInQLs):
     """ Creates a Note from the name of a pitch (as a string)
@@ -228,7 +231,8 @@ def updateTieStatus(offset, part, noteName):
                     makeTieUpdate([note, cantidate])
                 else:
                     pass
-            return # Saves some time by exiting early
+            return [offset, note.offset + qL]
+    return [offset, offset]
 
 def makeTieUpdate(notes):
     """ If the pair of notes passed to this function is untied,
@@ -285,7 +289,7 @@ def transpose(part, semitones):
     """ Transposes the whole part up or down
         by an integer number of semitones. """
     part = part.transpose(semitones)
-    return part
+    return [0.0, part.highestTime]
 
 def insertClef(offset, part, clefStr):
     """ Inserts a new clef at a given offset in a given part.
@@ -300,9 +304,9 @@ def insertClef(offset, part, clefStr):
     for elem in elems:
         if hasattr(elem, 'octaveChange'):
             part.replace(elem, newClef)
-            return part.getElementsByOffset(offset)
+            return [offset, offset]
     part.insert(offset, newClef)
-    return part.getElementsByOffset(offset)
+    return [offset, offset]
 
 def removeClef(offset, part):
     """ Remove a clef from a given offset in a given part. """
@@ -311,13 +315,13 @@ def removeClef(offset, part):
         # Only clef objects have an octaveChange field
         if hasattr(elem, 'octaveChange'):
             part.remove(elem)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def insertMeasures(insertionOffset, part, insertedQLs):
     """ Insert measures in a part by moving the offsets of
         portions of the score by a given number of QLs. """
-    return part.shiftElements(insertedQLs, insertionOffset)
+    return [insertionOffset, part.highestTime]
 
 def addInstrument(offset, part, instrumentStr):
     """ Given an instrument name, assigns that instrument
@@ -328,9 +332,9 @@ def addInstrument(offset, part, instrumentStr):
     for elem in elems:
         if hasattr(elem, 'instrumentName'):
             part.replace(elem, instrument)
-            return part.getElementsByOffset(offset)
+            return [offset, offset]
     part.insert(offset, instrument)
-    return part.getElementsByOffset(offset)
+    return [offset, offset]
 
 def removeInstrument(offset, part):
     """ Remove an instrument beginning at offset from a given part. """
@@ -338,8 +342,8 @@ def removeInstrument(offset, part):
     for elem in elems:
         if hasattr(elem, 'instrumentName'):
             part.remove(elem)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def addDynamic(offset, part, dynamicStr):
     """ Adds a dynamic marking to a part at a given offset.
@@ -350,9 +354,9 @@ def addDynamic(offset, part, dynamicStr):
     for elem in elems:
         if hasattr(elem, 'volumeScalar'):
             part.replace(elem, dynamic)
-            return part.getElementsByOffset(offset)
+            return [offset, offset]
     part.insert(offset, dynamic)
-    return part.getElementsByOffset(offset)
+    return [offset, offset]
 
 def removeDynamic(offset, part):
     """ Removes a dynamic marking from a part at a given offset. """
@@ -360,8 +364,8 @@ def removeDynamic(offset, part):
     for elem in elems:
         if hasattr(elem, 'volumeScalar'):
             part.remove(elem)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def addLyric(offset, part, lyric):
     """ Add lyrics to a given note in the score. """
@@ -369,8 +373,8 @@ def addLyric(offset, part, lyric):
     for note in notes:
         if note.offset == offset:
             note.addLyric(lyric)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def playback(part): 
     """ Playback the current project from the beginning 

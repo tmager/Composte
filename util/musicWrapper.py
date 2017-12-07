@@ -89,10 +89,10 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
             raise GenericError
 
     try:
-        alterations = function(*arguments)
+        updateOffsets = function(*arguments)
     except music21.exceptions21.Music21Exception:
         raise GenericError
 
     # End error handling
-    return ("ok", "")
+    return ("ok", updateOffsets)
 
