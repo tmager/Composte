@@ -26,7 +26,6 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
         """ Determines which function to call and
             casts all arguments to the correct types. """
         try:
-            print(partIndex)
             if partIndex is not None and partIndex != "None":
                 musicObject = project.parts[int(partIndex)]
             else:
@@ -35,7 +34,6 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                 return (musicFuns.changeKeySignature, [float(args[0]),
                         musicObject, int(args[2])])
             elif fname == 'insertNote':
-                print(args[0])
                 return (musicFuns.insertNote, [float(args[0]),
                         musicObject, args[2], float(args[3])])
             elif fname == 'removeNote':

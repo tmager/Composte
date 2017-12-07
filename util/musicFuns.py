@@ -125,29 +125,8 @@ def insertMetronomeMark(offset, parts, bpm):
             # Marking already exists at that location, so update it
             if marking[0] == offset:
                 markFound = True
-                # This special case is rediculous. 
-                # 
-                # Because music21 gives back a default value for the 
-                # metronome mark at 0.0, a simple call to replace 
-                # will not update the stream. This is because the 
-                # default metronome marking is not *actually* 
-                # in the stream.
-                # This bug was tricky to track down, because it 
-                # was the very definition of "failing silently".
-                # The workaround is to add an extra "real" field to 
-                # user specified mark objects and check for them when 
-                # inserting a mark at offset 0.0
-                if offset == 0.0 and hasattr(marking[2], "real"): 
-                    mark.real = True
-                    part.replace(marking[2], mark) 
-                    break
-                elif offset == 0.0: 
-                    mark.real = True
-                    part.insert(offset, mark)
-                    break
-                else: 
-                    part.replace(marking[2], mark)
-                    break
+                part.replace(marking[2], mark)
+                break
         if markFound: 
             continue
         part.insert(offset, mark)
@@ -159,7 +138,7 @@ def removeMetronomeMark(offset, parts):
     for part in parts:
         markings = part.metronomeMarkBoundaries()
         for marking in markings:
-            if marking[0] == offset:
+            if marking[0] == offset and offset != 0.0:
                 part.remove(marking[2])
     return [offset, offset]
 
@@ -314,7 +293,8 @@ def removeClef(offset, part):
     for elem in elems:
         # Only clef objects have an octaveChange field
         if hasattr(elem, 'octaveChange'):
-            part.remove(elem)
+            if offset != 0.0:
+                part.remove(elem)
             return [offset, offset]
     return [offset, offset]
 
@@ -341,7 +321,8 @@ def removeInstrument(offset, part):
     elems = part.getElementsByOffset(offset)
     for elem in elems:
         if hasattr(elem, 'instrumentName'):
-            part.remove(elem)
+            if offset != 0.0: 
+                part.remove(elem)
             return [offset, offset]
     return [offset, offset]
 
