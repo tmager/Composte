@@ -18,9 +18,18 @@ class Editor(QtWidgets.QMainWindow):
     __defaultTimeSignature = UITimeSignature.UITimeSignature(4,4)
     __defaultKeySignature = UIKeySignature.C()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, client, *args, **kwargs):
         super(Editor, self).__init__(*args, **kwargs)
+        self.__client = client
         self.__makeUI()
+        self.__resetAll()
+
+    def update(self, startOffset, endOffset):
+        self.__ui_scoreViewport.update(self.__client.project(),
+                                       startOffset, endOffset)
+
+    def __resetAll(self):
+        self.__ui_scoreViewport.update(project, None, None)
 
     def __makeUI(self):
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)

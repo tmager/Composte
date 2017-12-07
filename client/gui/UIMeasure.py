@@ -60,6 +60,15 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
         barline.setPen(self.__barlinePen)
         self.__baseObjs.append(barline)
 
+    def clear(self):
+        for item in self.__noteObjs.values():
+            self.__scene.removeItem(item)
+        self.__noteObjs.clear()
+        for item in self.__baseObjs:
+            self.__scene.removeItem(item)
+        self.__baseObjs.clear()
+        self.__initGraphics()
+
     def __redraw(self):
         """
         Redraw all graphics objects, moving them to update as necessary, e.g.
@@ -68,12 +77,7 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
         ## TODO: This is a terrible way of doing this, we could reuse the old
         ##   objects rather than destroying them and creating new ones.
         notes = list(self.__noteObjs.keys())
-        for item in self.__noteObjs.values():
-            self.__scene.removeItem(item)
-        self.__noteObjs.clear()
-        for item in self.__baseObjs:
-            self.__scene.removeItem(item)
-        self.__baseObjs.clear()
+        self.clear()
 
         self.__initGraphics()
         for note in notes:
