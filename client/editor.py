@@ -1,5 +1,7 @@
 import music21
 
+import ComposteClient
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
@@ -18,17 +20,34 @@ class Editor(QtWidgets.QMainWindow):
     __defaultTimeSignature = UITimeSignature.UITimeSignature(4,4)
     __defaultKeySignature = UIKeySignature.C()
 
-    def __init__(self, client, *args, **kwargs):
+    def __init__(self, client: ComposteClient.ComposteClient,
+                 *args, **kwargs):
+        """
+        Start a new editor, working on the projected loaded by client.
+
+        :param client: a Composte client, which manages updates to the project.
+        """
         super(Editor, self).__init__(*args, **kwargs)
         self.__client = client
         self.__makeUI()
         self.__resetAll()
 
     def update(self, startOffset, endOffset):
+        """
+        Update a section of the score on the UI from the copy held by the
+        client.
+
+        :param startOffset: First quarter-note offset to be updated.
+        :param startOffset: Quarter-note offset after the last one to be
+            updated.
+        """
         self.__ui_scoreViewport.update(self.__client.project(),
                                        startOffset, endOffset)
 
     def __resetAll(self):
+        """
+        Reload the entire project from the Composte client.
+        """
         try:
             self.__ui_scoreViewport.update(self.__client.project(), None, None)
         except RuntimeError as e:
@@ -117,11 +136,24 @@ class Editor(QtWidgets.QMainWindow):
             self.__ui_debugConsole_input.setFocus()
 
     def __debugConsoleHelp(self, fn = None):
+        """
+        Print a help message to the debug console.
+
+        :param fn: If None, print help for all commands.  If it is a command,
+            print just the help for that command.
+        """
         if fn is None:
-            msg = 'help/?       --  Display this help message'
+            msg = ('help/?       --  Display this help message\n'
+                   'CMD1 ; CMD2  --  Execute CMD1 followed by CMD2')
             self.__debugConsoleWrite(msg)
         if fn == 'clear' or fn is None:
             msg = 'clear        --  Clear the debug console history'
+            self.__debugConsoleWrite(msg)
+        if fn == 'chat' or fn is None:
+            msg = ('chat/c MESSAGE\n'
+                   '    Send MESSAGE (which may contain spaces, but not '
+                   '    semicolons) to all users\n working on the current '
+                   '    project')
             self.__debugConsoleWrite(msg)
         if fn == 'insert' or fn is None:
             msg = ('insert/i PART_INDEX PITCH NOTE_TYPE OFFSET\n'
@@ -138,6 +170,9 @@ class Editor(QtWidgets.QMainWindow):
             self.__ui_scoreViewport.addPart(clef)
 
     def __handlePlay(self, part = 0):
+        """
+        Tell the Composte client to play back the given part.
+        """
         ## TODO: Implement me!
         raise NotImplementedError
 
@@ -163,7 +198,16 @@ class Editor(QtWidgets.QMainWindow):
         ## testing.
         self.printChatMessage(msg)
 
+    def __handleTTSon(self):
+        self.__client.ttsOn()
+
+    def __handleTTSoff(self):
+        self.__client.ttsOff()
+
     def __processDebugInput(self):
+        """
+        Handle a line of input from the debug console.
+        """
         text = self.__ui_debugConsole_input.text()
         self.__ui_debugConsole_input.clear()
         if not text:
@@ -173,6 +217,11 @@ class Editor(QtWidgets.QMainWindow):
             self.__processDebugCommand(cmdstr)
 
     def __processDebugCommand(self, cmdstr):
+        """
+        Handle a single command from the debug console.
+
+        :param cmdstr: The command to be executed, as an unparsed string.
+        """
         args = cmdstr.split(' ')
         cmd = args[0].lower()
         args.pop(0)
@@ -181,6 +230,10 @@ class Editor(QtWidgets.QMainWindow):
             self.__ui_debugConsole_log.clear()
         elif cmd in ['chat', 'c']:
             self.__handleChatMessage(' '.join(args))
+        elif cmd in ['ttson']:
+            self.__ui_handleTTSon()
+        elif cmd in ['ttsoff']:
+            self.__ui_handleTTSoff()
         elif cmd in ['play', 'p']:
             if len(args) == 0:
                 self.__handlePlay()
