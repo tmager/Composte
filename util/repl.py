@@ -237,6 +237,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
     Start an interactive REPL backed by callbacks
     { command-name: function-to-invoke }
     REPL commands have the form COMMAND [ARGUMENTS], splitting on whitespace
+    %% begins a linewise comment
     """
 
     env = REPL_env()

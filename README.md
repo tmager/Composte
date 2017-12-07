@@ -21,13 +21,16 @@ not require compilation. However, the use of a virtual environment such as
 
 General setup:
 
+Composte has a number of python dependencies, listed in `requirements.txt`.
+
     pip install -r requirements.txt
 
 If you will be relying on systemwide packages, refer to `requirements.txt` for
 a list of python packages that are required.
 
-In general, you shouldn't be starting Composte servers manually. It is
-recommended that you run it as a service.
+In general, you shouldn't be starting Composte servers manually outside of
+testing or demos. It is recommended that you run it as a service using a
+supervisor of your choice.
 
 By default, Composte servers listen on port 5000 and send outgoing traffic on
 ports 5000 and 5001. If you are running from behind a firewall, make sure that
@@ -35,15 +38,17 @@ these ports or the ones you choose to use are not filtered.
 
 To start a Composte server:
 
-    ComposteServer.py
+    ./ComposteServer.py
 
 The server accepts arguments to control which ports it uses. The broadcast
 port only sees outgoing traffic, while the interactive port sees both incoming
 and outgoing traffic.
 
-To start a Composte client:
+To start a Composte client [2]:
 
-    client_main.py
+    ./client_main.py
+
+[2]: Probably.
 
 __Docker__
 
@@ -65,6 +70,8 @@ A one-time, standalone invocation of the container might look like this:
     -v $(pwd)/logs:/=\ /usr/src/logs -v $(pwd)/data:/=\ /usr/src/data \
     composte-server
 
+Clients are run as usual in this case.
+
 ## Source Code Tourist's Guide
 
 For your viewing pleasure or displaeasure, we provide an elided `tree` of the
@@ -75,13 +82,14 @@ repository.
     Composte
     ├── auth
     │   └── auth.py
-    ├── client_main.py
-    ├── Composteclient.py
+    ├── client
+    │   └── < GUI Suffering >
+    ├── ComposteClient.py
     ├── ComposteServer.py
     ├── data
     │   ├── composte.db
     │   └── users
-    │       └── <User data>
+    │       └── < User data >
     ├── database
     │   └── driver.py
     ├── doc
@@ -91,10 +99,17 @@ repository.
     │   │   └── index.md
     │   ├── images
     │   │   └── Bad_Diagrams
-    │   │       └── <"Diagrams">
+    │   │       └── < "Diagrams" >
     │   ├── index.md
     │   └── protocol
     │       └── index.md
+    ├── Dockerfile
+    ├── html
+    │   ├── index.html
+    │   └── styles
+    │       └── composte.css
+    ├── logs
+    │   └── < Logs >
     ├── network
     │   ├── base
     │   │   ├── exceptions.py
@@ -102,13 +117,11 @@ repository.
     │   │   └── loggable.py
     │   ├── client.py
     │   ├── conf
+    │   │   ├── logging.conf
     │   │   └── logging.py
     │   ├── dns.py
     │   ├── fake
     │   │   └── security.py
-    │   ├── logs
-    │   │   └── <logs>
-    │   ├── protocol.py
     │   └── server.py
     ├── protocol
     │   ├── base
@@ -117,9 +130,6 @@ repository.
     │   └── server.py
     ├── README.md
     ├── requirements.txt
-    ├── sandbox
-    │   ├── echo_client.py
-    │   └── echo_server.py
     └── util
         ├── bookkeeping.py
         ├── classExceptions.py
@@ -127,6 +137,7 @@ repository.
         ├── misc.py
         ├── musicFuns.py
         ├── musicWrapper.py
+        ├── repl.py
         └── timer.py
 
 ## Source Descriptions
@@ -136,7 +147,7 @@ __Top Level__
 `ComposteServer.py` implements a complete Composte server on top of the
 network server.
 
-`ComposteClient.py` implements a compete Composte client on top of the network
+`ComposteClient.py` implements most of a Composte client on top of the network
 client.
 
 __auth__
@@ -184,7 +195,7 @@ __doc__
 
 This directory contains documentation of the project and deliverables for
 COMP 50CP. Much of the documentation is out of date, and a fair amount may
-also be wunreachable from internal links.
+also be unreachable from internal links.
 
 __protocol__
 
@@ -205,8 +216,8 @@ to make the server work. Notably, the music backend is implemented here
 
 `bookkeeping.py` implements two static object pools.
 
-`classExceptions.py` provides exceptions used in the class hierarchy used by
-the GUI.
+`classExceptions.py` provides some exceptions used in the class hierarchy used
+by the GUI.
 
 `composteProject.py` provides the internal, in-memory representation of a
 project. This also provides serialization and deserialization facilities.
@@ -220,4 +231,10 @@ the message handler contracts that `ComposteServer` expects.
 
 `timer.py` provides a method to run a function at a configurably approximate
 interval.
+
+`repl.py` provides the REPL shell/scripting interface that Composte has
+decomposed into. The REPL is likely to have access to all methods that the GUI
+exposes to the user, and indeed may have finer-grained access to music
+manipulation methods. The REPL is feature-impoverished, but capable of just
+enough to be semi-useful.
 

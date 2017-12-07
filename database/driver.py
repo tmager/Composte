@@ -11,6 +11,7 @@ from threading import Lock
 # ._.
 def get_connection(dbname):
     """
+    Open a databse connection
     Make sure that foreign key constraints are enabled for every connection
     """
     conn = sqlite3.connect(dbname)
