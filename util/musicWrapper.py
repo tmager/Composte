@@ -21,6 +21,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
     # for ease of use
     project = fetchProject(projectID)
     args = json.loads(args)
+    if fname == "chat": return ("ok", "") # Why not make a chat server too?
 
     def unpackFun(fname, args):
         """ Determines which function to call and
@@ -72,9 +73,6 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
             elif fname == 'addLyric':
                 return (musicFuns.addLyric, [float(args[0]),
                         musicObject, args[2]])
-            # Why not also make a chat server?
-            elif fname == 'chat': 
-                return (lambda : ("ok", ""), [])
             else:
                 return (None, None)
         except ValueError as e:
@@ -91,8 +89,6 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
 
     try:
         updateOffsets = function(*arguments)
-        if updateOffsets == ("ok", ""): 
-            return ("ok", "")
     except music21.exceptions21.Music21Exception:
         raise GenericError
 

@@ -407,6 +407,7 @@ if __name__ == "__main__":
             "add-dynamic": c.addDynamic,
             "remove-dynamic": c.removeDynamic,
             "add-lyric": c.addLyric,
+            "chat": c.chat,
             # Client exclusive updates
             # "playback": c.playback,
             }
