@@ -43,7 +43,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                         musicObject, args[2]])
             elif fname == 'insertMetronomeMark':
                 return (musicFuns.insertMetronomeMark, [float(args[0]),
-                        musicObject, int(args[1]), float(args[2])])
+                        musicObject, int(args[1])])
             elif fname == 'removeMetronomeMark':
                 return (musicFuns.removeMetronomeMark, [float(args[0]),
                         musicObject])
@@ -89,10 +89,10 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
             raise GenericError
 
     try:
-        alterations = function(*arguments)
+        updateOffsets = function(*arguments)
     except music21.exceptions21.Music21Exception:
         raise GenericError
 
     # End error handling
-    return ("ok", "")
+    return ("ok", updateOffsets)
 

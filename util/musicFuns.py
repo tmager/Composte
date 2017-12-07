@@ -1,5 +1,10 @@
 import music21
 
+# TODO FOR FUTURE SELVES BEYOND COMP50: 
+# Refactor projects and streams globally to obey a
+# Score > Part > Measure hierarchy
+# END TODO
+
 # The server always needs to know WHERE to make
 # an update, and needs to send that information
 # to all connected clients. Thus, the offset from
@@ -32,16 +37,19 @@ def changeKeySignature(offset, part, newSigSharps):
             part.replace(oldKeySigs[i], newKeySig)
             if i + 1 == len(oldKeySigs):
                 renameNotes(offset, part, newKeySig)
+                return [offset, part.highestTime]
             else:
                 renameNotes(offset, part, newKeySig, oldKeySigs[i + 1].offset)
-            return part
+                return [offset, oldKeySigs[i + 1].offset]
     part.insert(offset, newKeySig)
     for oldKeySig in oldKeySigs:
+        # oldKeySigs is sorted, so this finds the first oldKeySig
+        # That's after the one that was just inserted
         if offset < oldKeySig.offset:
             renameNotes(offset, part, newKeySig, oldKeySig.offset)
-            return part
+            return [offset, oldKeySig.offset]
     renameNotes(offset, part, newKeySig)
-    return part
+    return [offset, part.highestTime]
 
 def renameNotes(startOffset, part, keySig, endOffset=None):
     """ Rename all notes affected by a key signature change
@@ -101,23 +109,49 @@ def changeTimeSignature(offset, part, newSigStr):
     part.insert(offset, newTimeSig)
     return part.getElementsByOffset(offset)
 
-def insertMetronomeMark(offset, parts, bpm, pulseDuration):
+def insertMetronomeMark(offset, parts, bpm):
     """ Insert a metronome marking in a list of
-        parts at a given offset. The constructor needs pulses per 
+        parts at a given offset. The constructor needs 
+        staff text as a string (empty for our purposes), pulses per 
         minute as an integer, and the duration in quarterLengths 
-        of a single pulse as a float. When duration 
+        of a single pulse as a float. Since duration 
         is 1.0, the second argument is exactly equivalent to 
         BPM (beats per minute). """
-    mark = music21.tempo.MetronomeMark("", bpm, pulseDuration)
+    mark = music21.tempo.MetronomeMark("", bpm, 1.0)
     for part in parts:
         markings = part.metronomeMarkBoundaries()
+        markFound = False
         for marking in markings:
             # Marking already exists at that location, so update it
             if marking[0] == offset:
-                part.replace(marking[2], mark) 
-                break
+                markFound = True
+                # This special case is rediculous. 
+                # 
+                # Because music21 gives back a default value for the 
+                # metronome mark at 0.0, a simple call to replace 
+                # will not update the stream. This is because the 
+                # default metronome marking is not *actually* 
+                # in the stream.
+                # This bug was tricky to track down, because it 
+                # was the very definition of "failing silently".
+                # The workaround is to add an extra "real" field to 
+                # user specified mark objects and check for them when 
+                # inserting a mark at offset 0.0
+                if offset == 0.0 and hasattr(marking[2], "real"): 
+                    mark.real = True
+                    part.replace(marking[2], mark) 
+                    break
+                elif offset == 0.0: 
+                    mark.real = True
+                    part.insert(offset, mark)
+                    break
+                else: 
+                    part.replace(marking[2], mark)
+                    break
+        if markFound: 
+            continue
         part.insert(offset, mark)
-    return parts
+    return [offset, offset]
 
 def removeMetronomeMark(offset, parts):
     """ Remove a metronome marking from each part in
@@ -127,7 +161,7 @@ def removeMetronomeMark(offset, parts):
         for marking in markings:
             if marking[0] == offset:
                 part.remove(marking[2])
-    return parts
+    return [offset, offset]
 
 def createNote(pitchName, durationInQLs):
     """ Creates a Note from the name of a pitch (as a string)
@@ -135,29 +169,51 @@ def createNote(pitchName, durationInQLs):
     note = music21.note.Note(pitchName)
     note.duration = music21.duration.Duration(durationInQLs)
     note.pitch.spellingIsInferred = False
+    # Needed in order to sever ties between notes
+    note.tiePartners = [None, None]
     return note
 
 def insertNote(offset, part, pitchStr, duration):
     """ Add a note at a given offset to a part. """
     newNote = createNote(pitchStr, duration)
+    bounds = (offset, offset + duration) 
     notes = part.notes
+    maxLims = [None, None]
     for note in notes: 
-        if note.pitch.nameWithOctave == pitchStr: 
-            return part.getElementsByOffset(offset) 
+        limits = (note.offset, 
+                  note.duration.quarterLength + note.offset)          
+        if bounds[0] < limits[1] and limits[0] < bounds[1]:
+            removeNote(note.offset, part, note.pitch.nameWithOctave)
+            if maxLims[0] is None and maxLims[1] is None: 
+                maxLims = [limits[0], limits[1]]
+            else: 
+                maxLims = [min(maxLims[0], limits[0]),
+                           max(maxLims[1], limits[1])]
+    if maxLims[0] is None and maxLims[1] is None: 
+        maxLims = [bounds[0], bounds[1]]
+    else: 
+        maxLims = [min(maxLims[0], bounds[0]),
+                   max(maxLims[1], bounds[1])]
     part.insert(offset, newNote)
-    return part.getElementsByOffset(offset)
+    return maxLims
 
 def removeNote(offset, part, removedNoteName):
     """ Remove a note at a given offset into a part. """
     notes = part.notes
+    maxLims = [offset, offset]
     for note in notes:
         noteName = note.pitch.nameWithOctave
         if note.offset == offset and noteName == removedNoteName:
+            if note.tiePartners[0] is not None: 
+                maxLims[0] = note.tiePartners[0]
+                updateTieStatus(note.tiePartners[0], part, noteName)
+            if note.tiePartners[1] is not None: 
+                maxLims[1] = note.tiePartners[1]
+                updateTieStatus(offset, part, noteName)
             part.remove(note)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return maxLims
+    return maxLims
 
-# NOT IN MINIMUM DELIVERABLE
 def updateTieStatus(offset, part, noteName):
     """ Updates the tie status of a note with the name noteName
         at a given offset into a given part. The offset given to
@@ -175,10 +231,9 @@ def updateTieStatus(offset, part, noteName):
                     makeTieUpdate([note, cantidate])
                 else:
                     pass
-            return part # Saves some time by exiting the outer loop early
-    return part
+            return [offset, note.offset + qL]
+    return [offset, offset]
 
-# NOT IN MINIMUM DELIVERABLE
 def makeTieUpdate(notes):
     """ If the pair of notes passed to this function is untied,
         this function ties them together. If ther pair of notes
@@ -186,28 +241,44 @@ def makeTieUpdate(notes):
     [firstNote, secondNote] = notes
     # Add Ties
     if firstNote.tie is None and secondNote.tie is None:
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie = music21.tie.Tie("start")
         secondNote.tie = music21.tie.Tie("stop")
     elif firstNote.tie.type == "stop" and secondNote.tie is None:
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie.type = "continue"
         secondNote.tie = music21.tie.Tie("stop")
     elif firstNote.tie is None and secondNote.tie.type == "start":
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie = music21.tie.Tie("start")
         secondNote.tie.type = "continue"
     elif firstNote.tie.type == "stop" and secondNote.tie.type == "start":
+        firstNote.tiePartners[1] = secondNote.offset
+        secondNote.tiePartners[0] = firstNote.offset
         firstNote.tie.type = "continue"
         secondNote.tie.type = "continue"
     # Remove Ties
     elif firstNote.tie.type == "start" and secondNote.tie.type == "stop":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie = None
         secondNote.tie = None
     elif firstNote.tie.type == "start" and secondNote.tie.type == "continue":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie = None
         secondNote.tie.type = "start"
     elif firstNote.tie.type == "continue" and secondNote.tie.type == "continue":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie.type = "stop"
         secondNote.tie.type = "start"
     elif firstNote.tie.type == "continue" and secondNote.tie.type == "stop":
+        firstNote.tiePartners[1] = None
+        secondNote.tiePartners[0] = None
         firstNote.tie.type = "stop"
         secondNote.tie = None
     # For completeness and defense against race conditions
@@ -218,7 +289,7 @@ def transpose(part, semitones):
     """ Transposes the whole part up or down
         by an integer number of semitones. """
     part = part.transpose(semitones)
-    return part
+    return [0.0, part.highestTime]
 
 def insertClef(offset, part, clefStr):
     """ Inserts a new clef at a given offset in a given part.
@@ -231,26 +302,26 @@ def insertClef(offset, part, clefStr):
     elems = part.getElementsByOffset(offset)
     # Only clef objects have an octaveChange field
     for elem in elems:
-        if elem.octaveChange is not None:
+        if hasattr(elem, 'octaveChange'):
             part.replace(elem, newClef)
-            return part.getElementsByOffset(offset)
+            return [offset, offset]
     part.insert(offset, newClef)
-    return part.getElementsByOffset(offset)
+    return [offset, offset]
 
 def removeClef(offset, part):
     """ Remove a clef from a given offset in a given part. """
     elems = part.getElementsByOffset(offset)
     for elem in elems:
         # Only clef objects have an octaveChange field
-        if elem.octaveChange is not None:
+        if hasattr(elem, 'octaveChange'):
             part.remove(elem)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def insertMeasures(insertionOffset, part, insertedQLs):
     """ Insert measures in a part by moving the offsets of
         portions of the score by a given number of QLs. """
-    return part.shiftElements(insertedQLs, insertionOffset)
+    return [insertionOffset, part.highestTime]
 
 def addInstrument(offset, part, instrumentStr):
     """ Given an instrument name, assigns that instrument
@@ -259,20 +330,20 @@ def addInstrument(offset, part, instrumentStr):
     instrument = music21.instrument.fromString(instrumentStr)
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.instrumentName is not None:
+        if hasattr(elem, 'instrumentName'):
             part.replace(elem, instrument)
-            return part.getElementsByOffset(offset)
+            return [offset, offset]
     part.insert(offset, instrument)
-    return part.getElementsByOffset(offset)
+    return [offset, offset]
 
 def removeInstrument(offset, part):
     """ Remove an instrument beginning at offset from a given part. """
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.instrumentName is not None:
+        if hasattr(elem, 'instrumentName'):
             part.remove(elem)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def addDynamic(offset, part, dynamicStr):
     """ Adds a dynamic marking to a part at a given offset.
@@ -281,20 +352,20 @@ def addDynamic(offset, part, dynamicStr):
     dynamic = music21.dynamics.Dynamic(dynamicStr)
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.volumeScalar is not None:
+        if hasattr(elem, 'volumeScalar'):
             part.replace(elem, dynamic)
-            return part.getElementsByOffset(offset)
+            return [offset, offset]
     part.insert(offset, dynamic)
-    return part.getElementsByOffset(offset)
+    return [offset, offset]
 
 def removeDynamic(offset, part):
     """ Removes a dynamic marking from a part at a given offset. """
     elems = part.getElementsByOffset(offset)
     for elem in elems:
-        if elem.volumeScalar is not None:
+        if hasattr(elem, 'volumeScalar'):
             part.remove(elem)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
 
 def addLyric(offset, part, lyric):
     """ Add lyrics to a given note in the score. """
@@ -302,5 +373,20 @@ def addLyric(offset, part, lyric):
     for note in notes:
         if note.offset == offset:
             note.addLyric(lyric)
-            return part.getElementsByOffset(offset)
-    return part.getElementsByOffset(offset)
+            return [offset, offset]
+    return [offset, offset]
+
+def playback(part): 
+    """ Playback the current project from the beginning 
+        of a part. """
+    music21.midi.realtime.StreamPlayer(part).play()    
+
+def boundedOffset(part, bounds): 
+    """ Returns a bounded offset list for GUI uses. 
+        An offset map is an (element, offset, endTime) triple.
+        element is the music21 object to insert.
+        offset is the insertion offset of the music21 object. 
+        endTime is the termination offset of the music21 object. """
+    offs = part.offsetMap()
+    return [x for x in offs 
+            if bounds[0] <= offs.offset and offs.endTime < bounds[1]]

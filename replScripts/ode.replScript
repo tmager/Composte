@@ -1,0 +1,76 @@
+set pid 59ad366d-d1d0-439e-bbb2-2cfbad7f265c 
+change-key-signature $pid 0.0 0 1
+add-instrument $pid 0.0 0 violin
+insert-clef $pid 0.0 0 treble
+insert-metronome-mark $pid 0.0 100
+add-dynamic $pid 0.0 0 pp
+insert-note $pid 0.0 0 B4 1.0
+insert-note $pid 1.0 0 B4 1.0
+insert-note $pid 2.0 0 C5 1.0
+insert-note $pid 3.0 0 D5 1.0
+insert-note $pid 4.0 0 D5 1.0
+insert-note $pid 5.0 0 C5 1.0
+insert-note $pid 6.0 0 B4 1.0
+insert-note $pid 7.0 0 A4 1.0
+insert-note $pid 8.0 0 G4 1.0
+insert-note $pid 9.0 0 G4 1.0
+insert-note $pid 10.0 0 A4 1.0
+insert-note $pid 11.0 0 B4 1.0
+insert-note $pid 12.0 0 B4 1.5
+insert-note $pid 13.5 0 A4 0.5
+insert-note $pid 14.0 0 A4 2.0
+insert-metronome-mark $pid 16.0 150
+add-dynamic $pid 16.0 0 mp
+insert-note $pid 16.0 0 B4 1.0
+insert-note $pid 17.0 0 B4 1.0
+insert-note $pid 18.0 0 C5 1.0
+insert-note $pid 19.0 0 D5 1.0
+insert-note $pid 20.0 0 D5 1.0
+insert-note $pid 21.0 0 C5 1.0
+insert-note $pid 22.0 0 B4 1.0
+insert-note $pid 23.0 0 A4 1.0
+insert-note $pid 24.0 0 G4 1.0
+insert-note $pid 25.0 0 G4 1.0
+insert-note $pid 26.0 0 A4 1.0
+insert-note $pid 27.0 0 B4 1.0
+insert-note $pid 28.0 0 A4 1.5
+insert-note $pid 29.5 0 G4 0.5
+insert-note $pid 30.0 0 G4 2.0
+insert-metronome-mark $pid 32.0 200
+add-dynamic $pid 32.0 0 f
+insert-note $pid 32.0 0 A4 1.0
+insert-note $pid 33.0 0 A4 1.0
+insert-note $pid 34.0 0 B4 1.0
+insert-note $pid 35.0 0 G4 1.0
+insert-note $pid 36.0 0 A4 1.0
+insert-note $pid 37.0 0 B4 0.5
+insert-note $pid 37.5 0 C5 0.5
+insert-note $pid 38.0 0 B4 1.0
+insert-note $pid 39.0 0 G4 1.0
+insert-note $pid 40.0 0 A4 1.0
+insert-note $pid 41.0 0 B4 0.5
+insert-note $pid 41.5 0 C5 0.5
+insert-note $pid 42.0 0 B4 1.0
+insert-note $pid 43.0 0 A4 1.0
+insert-note $pid 44.0 0 G4 1.0
+insert-note $pid 45.0 0 A4 1.0
+insert-note $pid 46.0 0 D4 2.0
+insert-metronome-mark $pid 48.0 250
+add-dynamic $pid 48.0 0 fff
+insert-note $pid 48.0 0 B4 1.0
+insert-note $pid 49.0 0 B4 1.0
+insert-note $pid 50.0 0 C5 1.0
+insert-note $pid 51.0 0 D5 1.0
+insert-note $pid 52.0 0 D5 1.0
+insert-note $pid 53.0 0 C5 1.0
+insert-note $pid 54.0 0 B4 1.0
+insert-note $pid 55.0 0 A4 1.0
+insert-note $pid 56.0 0 G4 1.0
+insert-note $pid 57.0 0 G4 1.0
+insert-note $pid 58.0 0 A4 1.0
+insert-note $pid 59.0 0 B4 1.0
+insert-note $pid 60.0 0 A4 1.5
+insert-note $pid 61.5 0 G4 0.5
+insert-note $pid 62.0 0 G4 2.0
+
+
