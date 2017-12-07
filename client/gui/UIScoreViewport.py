@@ -74,7 +74,6 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
                                                    (st_offset, en_offset)):
                 offs = om_item.offset
                 obj  = om_item.element
-                print(offs, obj)
 
                 idx, meaoffs = self.__measureIndexFromOffset(offs)
                 mea = self.__measures[part][idx]
