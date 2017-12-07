@@ -421,7 +421,6 @@ class ComposteClient:
 
         Playback the project set by get-project.
         """
-        print(self.__project.parts[int(partIndex)].offsetMap())
         util.musicFuns.playback(self.__project.parts[int(partIndex)])
 
     def stop(self):
