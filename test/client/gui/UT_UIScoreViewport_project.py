@@ -27,7 +27,7 @@ if __name__ == '__main__':
     pr.append(music21.key.KeySignature(0))
     pr.append(music21.meter.TimeSignature('4/4'))
     pr.insert(music21.note.Note('D5', type='half', dots=1))
-    pr.append(music21.note.Note('E5', type='quarter'))
+    pr.append(music21.note.Note('E5', type='half'))
     pr.append(music21.note.Note('C5', type='16th', dots=1))
     parts.append(pr)
     pr = music21.stream.Stream()
