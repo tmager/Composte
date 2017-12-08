@@ -85,7 +85,6 @@ class ComposteClient(QtCore.QObject):
         self.__client.resume_background()
 
     def closeEditor(self):
-        print('closing editor')
         self.__editor = None
 
     def __updateGui(self, startOffset, endOffset):
@@ -465,7 +464,9 @@ class ComposteClient(QtCore.QObject):
 
         Playback the project set by get-project.
         """
+        self.pause_updates()
         util.musicFuns.playback(self.__project.parts[int(partIndex)])
+        self.resume_update()
 
     def stop(self):
         """
