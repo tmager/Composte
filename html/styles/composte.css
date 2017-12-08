@@ -28,6 +28,17 @@ h2 {
     font-size: 26pt;
 }
 
+h1:hover,h2:hover {
+    /* Chrome, Safari, Opera */
+    -webkit-animation: rainbow 2s infinite;
+
+    /* Internet Explorer */
+    -ms-animation: rainbow 2s infinite;
+
+    /* Standar Syntax */
+    animation: rainbow 2s infinite;
+}
+
 .title {
     border-bottom: 0;
     margin-bottom: 0.2em;
@@ -150,5 +161,42 @@ li {
     top: 0px;
     background-color: #E8E8E8;
     height: 6.5em;
+}
+
+.rainbow {
+    /* Chrome, Safari, Opera */
+    -webkit-animation: rainbow 2s infinite;
+
+    /* Internet Explorer */
+    -ms-animation: rainbow 2s infinite;
+
+    /* Standar Syntax */
+    animation: rainbow 2s infinite;
+}
+
+/* Chrome, Safari, Opera */
+@-webkit-keyframes rainbow{
+    20%{color: red;}
+    40%{color: yellow;}
+    60%{color: green;}
+    80%{color: blue;}
+    100%{color: orange;}
+}
+/* Internet Explorer */
+@-ms-keyframes rainbow{
+    20%{color: red;}
+    40%{color: yellow;}
+    60%{color: green;}
+    80%{color: blue;}
+    100%{color: orange;}
+}
+
+/* Standar Syntax */
+@keyframes rainbow{
+    20%{color: red;}
+    40%{color: yellow;}
+    60%{color: green;}
+    80%{color: blue;}
+    100%{color: orange;}
 }
 

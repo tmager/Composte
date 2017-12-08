@@ -16,3 +16,6 @@ bin/
 include/
 .Python
 pip-selfcheck.json
+
+.repl_vars
+

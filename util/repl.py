@@ -10,6 +10,7 @@ import re
 import os, sys
 import inspect
 import time
+import json
 
 DEBUG = True
 
@@ -28,6 +29,63 @@ def _sleep(seconds):
     Sleep for some number of seconds
     """
     time.sleep(int(seconds))
+
+def _slice(start, stop, string):
+    """
+    slice start-index end-index string
+
+    Extract a substring from a string
+    """
+    start = None if start == ":" else int(start)
+    end = None if stop == ":" else int(stop)
+
+    if start is None and end is None:
+        return string
+    elif start is None and end is not None:
+        return string[:end]
+    elif end is None and start is not None:
+        return string[start:]
+    else:
+        return string[start:end]
+
+hard_store = ".repl_vars"
+def _export(name, value):
+    """
+    export name value
+
+    Export durable variable name with given value. Persists across repl
+    invocations
+    """
+    try:
+        with open(hard_store, "r") as f:
+            things = f.read()
+    except FileNotFoundError:
+        things = "{}"
+
+    things = json.loads(things)
+    things[name] = value
+    things = json.dumps(things)
+
+    with open(hard_store, "w") as f:
+        f.write(things)
+
+def _import(name):
+    """
+    import name
+
+    Import durable variable from previous repl sessions
+    """
+    try:
+        with open(hard_store, "r") as f:
+            things = f.read()
+    except FileNotFoundError:
+        return ""
+
+    things = json.loads(things)
+
+    value = things.get(name, "")
+
+    return value
 
 def echo(*args):
     """
@@ -224,6 +282,13 @@ def do_sub_repl_if_needed(callbacks,
     started_subcommand = False
     for arg in args:
 
+        if len(arg) == 0:
+            if started_subcommand:
+                sub_command_args.append(arg)
+            elif not started_subcommand:
+                new_args.append(arg)
+            continue
+
         # Start a subrepl substitution
         if arg[0] == "`":
             sub_command = arg[1:]
@@ -290,6 +355,9 @@ def the_worst_repl_you_will_ever_see(callbacks,
         "unset": env.unset,
         "get": env.get,
         "sleep": _sleep,
+        "slice": _slice,
+        "export": _export,
+        "import": _import,
     }
 
     res = None
@@ -309,7 +377,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
             except KeyboardInterrupt as e:
                 break
             except EOFError as e:
-                break 
+                break
         else:
             read = " ".join(to_eval)
             to_eval = None
