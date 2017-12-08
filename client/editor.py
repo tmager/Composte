@@ -43,9 +43,8 @@ class Editor(QtWidgets.QMainWindow):
         :param startOffset: Quarter-note offset after the last one to be
             updated.
         """
-        print('updating')
         self.__ui_scoreViewport.update(self.__client.project(),
-                                       None,None)
+                                       None, None)
                                        #startOffset, endOffset)
 
     def __resetAll(self):
@@ -124,9 +123,7 @@ class Editor(QtWidgets.QMainWindow):
         self.setMenuBar(self.__ui_menubar)
 
     def closeEvent(self, ev):
-        print('closeEvent()')
         self.__client.closeEditor()
-        ev.accept()
 
     def __makeToolbar(self):
         pass
