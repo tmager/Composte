@@ -297,11 +297,9 @@ def the_worst_repl_you_will_ever_see(callbacks,
                 if read == "":
                     continue
             except KeyboardInterrupt as e:
-                print(e)
                 break
             except EOFError as e:
-                print(e)
-                break
+                break 
         else:
             read = " ".join(to_eval)
             to_eval = None
@@ -351,7 +349,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
         exec_ = target
 
         try:
-             res = exec_(*args)
+            res = exec_(*args)
         except TypeError as e:
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)

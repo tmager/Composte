@@ -444,8 +444,10 @@ class ComposteClient(QtCore.QObject):
         Launch the editor GUI.
         """
         if self.__project is not None:
-            self.__editor = editor.Editor(self)
-            self.__editor.showMaximized()
+            if self.__editor is None: 
+                self.__editor = editor.Editor(self)
+                self.__editor.showMaximized()
+            
         else:
             return 'Load a project before launching the editor.'
 
@@ -455,7 +457,6 @@ class ComposteClient(QtCore.QObject):
 
         Playback the project set by get-project.
         """
-        print(self.__project.parts[int(partIndex)].offsetMap())
         util.musicFuns.playback(self.__project.parts[int(partIndex)])
 
     def stop(self):

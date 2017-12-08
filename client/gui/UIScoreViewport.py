@@ -126,9 +126,9 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         while mea_offset <= offset:
             if mea_index >= len(self.__measures[0]):
                 if extend:
-                    self.addLine()
-                else:
                     return (None, None)
+                else:
+                    self.addLine()
             mea = self.__measures[0][mea_index]
             mea_offset += mea.length()
             mea_index += 1
