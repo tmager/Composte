@@ -29,6 +29,7 @@ DEBUG = False
 class ComposteClient(QtCore.QObject):
 
     _updateGUI = QtCore.pyqtSignal(float, float, name='_updateGUI')
+    _chatToGUI = QtCore.pyqtSignal(str, name='_chatToGUI')
 
     def __init__(self, interactive_remote, broadcast_remote,
                  logger, encryption_scheme, *args, **kwargs):
@@ -115,6 +116,7 @@ class ComposteClient(QtCore.QObject):
                                     " says " +
                                     rpc["args"][2][1])
             print(printedStr)
+            self._chatToGUI.emit(printedStr)
             if self.__tts and (self.__ttsCommand is not None):
                 subprocess.call(str(self.__ttsCommand) + spokenStr,
                                 stdout=subprocess.DEVNULL,

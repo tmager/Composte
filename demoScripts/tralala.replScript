@@ -80,5 +80,6 @@ insert-note $pid 1.5 0 E5 0.5
 insert-note $pid 2.0 0 F5 0.5
 insert-note $pid 2.5 0 F5 0.5
 insert-note $pid 3.0 0 G5 0.5
-insert-note $pid 3.5 
-
+insert-note $pid 3.5 0 E5 0.75
+insert-note $pid 4.25 0 D5 0.25
+insert-note $pid 4.5 0 C5 2.0 
