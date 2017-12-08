@@ -218,14 +218,13 @@ class ComposteServer:
         """
         if client_version != self.version:
             status = "fail"
-            reason = "Mismatched versions. " +\
-                    "This server uses version {}".format(self.version)
-            response = (status, [ reason, self.version ])
+            response = (status, self.version)
         else:
             status = "ok"
             reason = ""
+            response = (status, reason)
 
-        return (status, reason)
+        return response
 
     # Utility
 

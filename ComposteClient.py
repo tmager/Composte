@@ -77,6 +77,12 @@ class ComposteClient(QtCore.QObject):
     def project(self):
         return self.__project
 
+    def pause_updates(self):
+        self.__client.pause_background()
+
+    def resume_update(self):
+        self.__client.resume_background()
+
     def closeEditor(self):
         print('closing editor')
         self.__editor = None
@@ -146,7 +152,7 @@ class ComposteClient(QtCore.QObject):
         reply = server.deserialize(reply)
         if reply[0] == "fail":
             status, reason = reply
-            version = reason[1]
+            version = reason[0]
             raise GenericError(version)
 
     def register(self, uname, pword, email):
@@ -444,10 +450,10 @@ class ComposteClient(QtCore.QObject):
         Launch the editor GUI.
         """
         if self.__project is not None:
-            if self.__editor is None: 
+            if self.__editor is None:
                 self.__editor = editor.Editor(self)
                 self.__editor.showMaximized()
-            
+
         else:
             return 'Load a project before launching the editor.'
 
@@ -488,9 +494,14 @@ if __name__ == "__main__":
     iport = args.interactive_port
     bport = args.broadcast_port
 
-    c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
-            "tcp://{}:{}".format(endpoint_addr, bport),
-            StdErr, Encryption())
+    try:
+        c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
+                "tcp://{}:{}".format(endpoint_addr, bport),
+                StdErr, Encryption())
+    except GenericError as e:
+        print("Version mismatch: Remote server uses version {}"
+                .format(str(e)))
+        sys.exit(1)
 
     app = QtWidgets.QApplication(sys.argv)
 
