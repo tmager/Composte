@@ -85,11 +85,11 @@ class Editor(QtWidgets.QMainWindow):
         self.__ui_debugConsole_layoutWidget \
                             .setLayout(self.__ui_debugConsole_layout)
         self.__ui_debugConsole_log = \
-                            QtWidgets.QTextEdit(self.__ui_debugConsole_layoutWidget)
+                        QtWidgets.QTextEdit(self.__ui_debugConsole_layoutWidget)
         self.__ui_debugConsole_log.setReadOnly(True)
         self.__ui_debugConsole_log.setFont(self.__ui_debugConsole_font)
         self.__ui_debugConsole_input = \
-                            QtWidgets.QLineEdit(self.__ui_debugConsole_layoutWidget)
+                        QtWidgets.QLineEdit(self.__ui_debugConsole_layoutWidget)
         self.__ui_debugConsole_input.setFont(self.__ui_debugConsole_font)
         self.__ui_debugConsole_input.returnPressed \
                             .connect(self.__processDebugInput)
@@ -268,7 +268,8 @@ class Editor(QtWidgets.QMainWindow):
                 try:
                     part = int(args[0])
                 except ValueError:
-                    msg = 'Unable to generate part index from \'' + args[1] + '\''
+                    msg = ('Unable to generate part index from \'' + args[1]
+                            + '\'')
                     self.__debugConsoleWrite(msg)
                     return
                 self.__handlePlay(part)

@@ -475,7 +475,8 @@ class ComposteServer:
 
         # Only broadcast successful updates
         if f == "update" and status == "ok":
-            self.__server.broadcast(client.serialize(rpc["fName"], *rpc["args"]))
+            self.__server.broadcast(client.serialize(rpc["fName"],
+                *rpc["args"]))
 
         return (status, other)
 

@@ -37,6 +37,8 @@ This submission can do/supports the following:
 
 ### Design/Architecture
 
+<img src="finalClassDiagram.jpg"></img>
+
 Composte builds a simple RPC to separate servers from clients. This RPC is
 built on top of several modules, described below.
 
@@ -117,7 +119,6 @@ hopefully change in future releases.
 
 Tom Magerlein:
 * GUI
-* Diff handling
 * Debug console
 
 Robert Goodfellow
@@ -135,6 +136,7 @@ of date and no longer correct.
 
 ### Bug/Spontaneous Feature Tracker
 
+<!--
 * Python references are _fun_ (sarcasm)
     * Single updates to projects were causing serverside failures involving
       what appeared to be a double-insertion in a single function call.
@@ -163,6 +165,7 @@ of date and no longer correct.
       actually present to be replaced. For this reason, replacing the
       metronome mark at the beginning of a part is in fact an insertion
       operation.
+-->
 
 * Backend ties don't work in playback
     * Ties, though not represented on the GUI, can still exist in the internal
@@ -170,6 +173,7 @@ of date and no longer correct.
       playback of music.
     * We have determined that this is a bug underneath the `music21` package
       that we use to do playback. We have submitted a ticket.
+    * See [this issue](https://github.com/cuthbertLab/music21/issues/266)
 
 ### Code breakdown
 
