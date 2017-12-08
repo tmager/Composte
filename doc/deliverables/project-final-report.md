@@ -25,21 +25,15 @@ This submission can do/supports the following:
 * Multiple concurrent users working on projects
 * Display notes
 * Edit notes
-* MIDI playback [1]
+* MIDI playback
 * Set time signature
 * Set/Change key signature
 * Accidentals
 * Automatic Treble Clef
 * Set Tempo
 * Triplets
-
-[1]: Not yet
-
-Other facets of Composte, not necessarily user-facing features
-
-* Protocol over ØMQ
-* Per server serverside user registry (Username -> Password)
-    * Usernames must be unique per server
+* Impoverished scripting language
+* More impoverished scripting language
 
 ### Design/Architecture
 
@@ -124,6 +118,7 @@ hopefully change in future releases.
 Tom Magerlein:
 * GUI
 * Diff handling
+* Debug console
 
 Robert Goodfellow
 * Internal representation of music
@@ -135,12 +130,12 @@ Wesley Wei
 * Generic REPL
 
 Unfortunately, we did not dedicate sufficient time to documentation to produce
-documentation of acceptable quality. Much of the documentation we have is
-likely to be out of date and no longer correct.
+documentation of acceptable quality. Much of the documentation we have is out
+of date and no longer correct.
 
 ### Bug/Spontaneous Feature Tracker
 
-* Python references are _fun_
+* Python references are _fun_ (sarcasm)
     * Single updates to projects were causing serverside failures involving
       what appeared to be a double-insertion in a single function call.
     * Because all "nonprimitive" objects in Python are mutable, extracting
@@ -174,7 +169,7 @@ likely to be out of date and no longer correct.
       representation. Unfortunately they are not respected when performing
       playback of music.
     * We have determined that this is a bug underneath the `music21` package
-      that we use to do playback.
+      that we use to do playback. We have submitted a ticket.
 
 ### Code breakdown
 

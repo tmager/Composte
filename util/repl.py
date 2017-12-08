@@ -36,6 +36,7 @@ def _slice(start, stop, string):
 
     Extract a substring from a string
     """
+    string = str(string)
     start = None if start == ":" else int(start)
     end = None if stop == ":" else int(stop)
 
@@ -453,6 +454,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
 
         if res is not None and not once: print(str(res))
+        if res is not None: res = str(res)
 
     return res
 

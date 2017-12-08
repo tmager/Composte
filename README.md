@@ -55,11 +55,9 @@ The server accepts arguments to control which ports it uses. The broadcast
 port only sees outgoing traffic, while the interactive port sees both incoming
 and outgoing traffic.
 
-To start a Composte client [2]:
+To start a Composte client:
 
     ./ComposteClient.py
-
-[2]: Probably.
 
 __Docker__
 
