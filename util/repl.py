@@ -9,6 +9,8 @@
 import re
 import os, sys
 import inspect
+import time
+import json
 
 DEBUG = True
 
@@ -20,12 +22,80 @@ def I_dont_know_what_you_want_me_to_do(*args):
     """
     print("Unknown command")
 
+def _sleep(seconds):
+    """
+    sleep seconds
+
+    Sleep for some number of seconds
+    """
+    time.sleep(int(seconds))
+
+def _slice(start, stop, string):
+    """
+    slice start-index end-index string
+
+    Extract a substring from a string
+    """
+    start = None if start == ":" else int(start)
+    end = None if stop == ":" else int(stop)
+
+    if start is None and end is None:
+        return string
+    elif start is None and end is not None:
+        return string[:end]
+    elif end is None and start is not None:
+        return string[start:]
+    else:
+        return string[start:end]
+
+hard_store = ".repl_vars"
+def _export(name, value):
+    """
+    export name value
+
+    Export durable variable name with given value. Persists across repl
+    invocations
+    """
+    try:
+        with open(hard_store, "r") as f:
+            things = f.read()
+    except FileNotFoundError:
+        things = "{}"
+
+    things = json.loads(things)
+    things[name] = value
+    things = json.dumps(things)
+
+    with open(hard_store, "w") as f:
+        f.write(things)
+
+    return value
+
+def _import(name):
+    """
+    import name
+
+    Import durable variable from previous repl sessions
+    """
+    try:
+        with open(hard_store, "r") as f:
+            things = f.read()
+    except FileNotFoundError:
+        return ""
+
+    things = json.loads(things)
+
+    value = things.get(name, "")
+
+    return value
+
 def echo(*args):
     """
     echo [args...]
 
     Prints its arguments
     """
+    args = [str(arg) for arg in args]
     if DEBUG: str_ = ", ".join(list(args))
     else: str_ = " ".join(args)
 
@@ -46,7 +116,7 @@ class REPL_env:
 
         Set a variable called `name` to have value `value`
         """
-        self.__bindings[name] = value
+        self.__bindings[name] = str(value)
         return value
 
     def unset(self, name):
@@ -182,6 +252,25 @@ def expand_vars(env, args):
 
     return new_args
 
+def split_args(args):
+    new_args = []
+
+    for arg in args:
+        parts = arg.split("`")
+        if len(parts) == 1:
+            new_args.append(arg)
+        elif len(parts) == 2:
+            if parts[0] == "":
+                new_args.append("`")
+                if parts[1] != "":
+                    new_args.append(parts[1])
+            elif parts[1] == "":
+                if parts[0] != "":
+                    new_args.append(parts[0])
+                new_args.append("`")
+
+    return new_args
+
 def quote(args):
     """
     Quote whitespace in arguments by escaping whitespace
@@ -215,43 +304,44 @@ def do_sub_repl_if_needed(callbacks,
     started_subcommand = False
     for arg in args:
 
-        # Start a subrepl substitution
-        if arg[0] == "`":
-            sub_command = arg[1:]
-            started_subcommand = True
-
-        # End a subrepl substitution
-        if arg[-1] == "`":
-
-            arg = arg[:-1]
-
-            started_subcommand = False
-
-            # When the substitution is more than one word, this is the last
-            # argument.
-            if arg[0] != "`":
+        if len(arg) == 0:
+            if started_subcommand:
                 sub_command_args.append(arg)
-            # Otherwise, this was also the first word, and so there are no
-            # arguments
-
-            # Quote arguments again
-            sub_command_args = quote(sub_command_args)
-
-            # Evaluate expression and get result
-            replacement = the_worst_repl_you_will_ever_see(callbacks,
-                    default_function, prompt, once = True,
-                    to_eval = [sub_command] + sub_command_args)
-            # Replace expression with result
-            new_args.append(replacement)
-
-            # Clear subcommand and args
-            sub_command = None
-            sub_command_args = []
+            elif not started_subcommand:
+                new_args.append(arg)
             continue
 
-        if started_subcommand and arg[0] != "`":
-            sub_command_args.append(arg)
-        elif not started_subcommand:
+        # Start or end a subrepl substitution
+        if arg == "`":
+            # New subcommand
+            if not started_subcommand:
+                started_subcommand = True
+                sub_command = None
+                sub_command_args = []
+            # Finish a subcommand, so execute it
+            else:
+                started_subcommand = False
+
+                # Quote arguments again
+                sub_command_args = quote(sub_command_args)
+
+                # Evaluate expression and get result
+                replacement = the_worst_repl_you_will_ever_see(callbacks,
+                        default_function, prompt, once = True,
+                        to_eval = [sub_command] + sub_command_args)
+                # Replace expression with result
+                new_args.append(replacement)
+
+            # Backticks are moved to their own separate args
+            continue
+
+        # Shunt arguments to the right places
+        if started_subcommand:
+            if sub_command is None:
+                sub_command = arg
+            else:
+                sub_command_args.append(arg)
+        else:
             new_args.append(arg)
 
     if started_subcommand:
@@ -280,6 +370,10 @@ def the_worst_repl_you_will_ever_see(callbacks,
         "set": env.set,
         "unset": env.unset,
         "get": env.get,
+        "sleep": _sleep,
+        "slice": _slice,
+        "export": _export,
+        "import": _import,
     }
 
     res = None
@@ -297,10 +391,8 @@ def the_worst_repl_you_will_ever_see(callbacks,
                 if read == "":
                     continue
             except KeyboardInterrupt as e:
-                print(e)
                 break
             except EOFError as e:
-                print(e)
                 break
         else:
             read = " ".join(to_eval)
@@ -318,6 +410,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
 
         args = merge_args(args)
+        args = split_args(args)
         args = expand_vars(env, args)
         try:
             args = do_sub_repl_if_needed(callbacks, default_function, prompt,
@@ -351,7 +444,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
         exec_ = target
 
         try:
-             res = exec_(*args)
+            res = exec_(*args)
         except TypeError as e:
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)

@@ -34,6 +34,8 @@ class UINote(QtWidgets.QGraphicsItem):
     __dotPen = QtGui.QPen(Qt.NoPen)
     __dotBrush = QtGui.QBrush(QtGui.QColor(0,0,0), Qt.SolidPattern)
 
+    _length = None
+
     def __init__(self, pitch, clef, keysig, *args, **kwargs):
         super(UINote, self).__init__(*args, **kwargs)
         self.__pitch = pitch
@@ -43,12 +45,12 @@ class UINote(QtWidgets.QGraphicsItem):
         self._yoffset = (8 * UISet.PITCH_LINE_SEP
                           - self.__clef.position(pitch) * UISet.PITCH_LINE_SEP)
 
-
-    @virtualmethod
-    def length(self):
+    @classmethod
+    def length(cls):
         """
         Return the length of the note, in quarter note increments.
         """
+        return cls._length
 
     def boundingRect(self):
         """
@@ -144,6 +146,8 @@ class UINote(QtWidgets.QGraphicsItem):
 
 class UINote_Whole(UINote):
 
+    _length = 4.0
+
     __linewidth = 3
     __pen = QtGui.QPen(QtGui.QColor(0,0,0), __linewidth,
                        Qt.SolidLine, Qt.FlatCap)
@@ -151,9 +155,6 @@ class UINote_Whole(UINote):
 
     def __init__(self, *args, **kwargs):
         super(UINote_Whole, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 4
 
     def paint(self, painter, option, widget):
         y = self._yoffset
@@ -169,6 +170,8 @@ class UINote_Whole(UINote):
 
 class UINote_Half(UINote):
 
+    _length = 2.0
+
     __linewidth = 2
     __pen = QtGui.QPen(QtGui.QColor(0,0,0), __linewidth,
                        Qt.SolidLine, Qt.FlatCap)
@@ -176,9 +179,6 @@ class UINote_Half(UINote):
 
     def __init__(self, *args, **kwargs):
         super(UINote_Half, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 2
 
     def paint(self, painter, option, widget):
         y = self._yoffset
@@ -197,11 +197,10 @@ class UINote_Half(UINote):
 
 class UINote_Half_Dotted(UINote_Half):
 
+    _length = 3.0
+
     def __init__(self, *args, **kwargs):
         super(UINote_Half_Dotted, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 1.5
 
     def paint(self, painter, option, widget):
         super(UINote_Half_Dotted, self).paint(painter, option, widget)
@@ -210,6 +209,8 @@ class UINote_Half_Dotted(UINote_Half):
 
 class UINote_Quarter(UINote):
 
+    _length = 1.0
+
     __linewidth = 2
     __pen = QtGui.QPen(QtGui.QColor(0,0,0), __linewidth,
                        Qt.SolidLine, Qt.FlatCap)
@@ -217,9 +218,6 @@ class UINote_Quarter(UINote):
 
     def __init__(self, *args, **kwargs):
         super(UINote_Quarter, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 1
 
     def paint(self, painter, option, widget):
         y = self._yoffset
@@ -239,11 +237,10 @@ class UINote_Quarter(UINote):
 
 class UINote_Quarter_Dotted(UINote_Quarter):
 
+    _length = 1.5
+
     def __init__(self, *args, **kwargs):
         super(UINote_Quarter_Dotted, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 1.5
 
     def paint(self, painter, option, widget):
         super(UINote_Quarter_Dotted, self).paint(painter, option, widget)
@@ -251,6 +248,8 @@ class UINote_Quarter_Dotted(UINote_Quarter):
 
 
 class UINote_Eighth(UINote):
+
+    _length = 0.5
 
     __linewidth = 2
     __pen = QtGui.QPen(QtGui.QColor(0,0,0), __linewidth,
@@ -260,9 +259,6 @@ class UINote_Eighth(UINote):
 
     def __init__(self, *args, **kwargs):
         super(UINote_Eighth, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 0.5
 
     def paint(self, painter, option, widget):
         y = self._yoffset
@@ -285,11 +281,10 @@ class UINote_Eighth(UINote):
 
 class UINote_Eighth_Dotted(UINote_Eighth):
 
+    _length = 0.75
+
     def __init__(self, *args, **kwargs):
         super(UINote_Eighth_Dotted, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 0.75
 
     def paint(self, painter, option, widget):
         super(UINote_Eighth_Dotted, self).paint(painter, option, widget)
@@ -297,6 +292,8 @@ class UINote_Eighth_Dotted(UINote_Eighth):
 
 
 class UINote_16th(UINote):
+
+    _length = 0.25
 
     __linewidth = 2
     __pen = QtGui.QPen(QtGui.QColor(0,0,0), __linewidth,
@@ -306,9 +303,6 @@ class UINote_16th(UINote):
 
     def __init__(self, *args, **kwargs):
         super(UINote_16th, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 0.25
 
     def paint(self, painter, option, widget):
         y = self._yoffset
@@ -336,11 +330,10 @@ class UINote_16th(UINote):
 
 class UINote_16th_Dotted(UINote_16th):
 
+    _length = 0.375
+
     def __init__(self, *args, **kwargs):
         super(UINote_16th_Dotted, self).__init__(*args, **kwargs)
-
-    def length(self):
-        return 0.375
 
     def paint(self, painter, option, widget):
         super(UINote_16th_Dotted, self).paint(painter, option, widget)

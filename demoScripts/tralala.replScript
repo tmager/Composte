@@ -1,6 +1,5 @@
-set pid <PID FROM LOGINANDCREATE>
-change-key-signature $pid 0.0 0 -1
-
+set pid `import pid`
+get-project $pid
 remove-instrument $pid 0.0 0 
 remove-metronome-mark $pid 0.0 
 remove-dynamic $pid 0.0 0 
@@ -72,9 +71,15 @@ remove-note $pid 59.0 0 B4
 remove-note $pid 60.0 0 A4 
 remove-note $pid 61.5 0 G4 
 remove-note $pid 62.0 0 G4 
+change-key-signature $pid 0.0 0 -1
 add-instrument $pid 0.0 0 flute
 insert-metronome-mark $pid 0.0 114
 add-dynamic $pid 0.0 0 mp
 insert-note $pid 1.0 0 D5 0.5
-#TODO MORE OF THIS
-
+insert-note $pid 1.5 0 E5 0.5
+insert-note $pid 2.0 0 F5 0.5
+insert-note $pid 2.5 0 F5 0.5
+insert-note $pid 3.0 0 G5 0.5
+insert-note $pid 3.5 0 E5 0.75
+insert-note $pid 4.25 0 D5 0.25
+insert-note $pid 4.5 0 C5 2.0 

@@ -31,6 +31,7 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
                 musicObject = project.parts[int(partIndex)]
             else:
                 musicObject = project.parts
+
             if fname == 'changeKeySignature':
                 return (musicFuns.changeKeySignature, [float(args[0]),
                         musicObject, int(args[2])])
@@ -86,6 +87,12 @@ def performMusicFun(projectID, fname, args, partIndex=None, offset=None,
     if offset is not None and offset != 'None':
         if float(offset) < 0.0:
             raise GenericError
+
+    # Last-minute note length validation hack
+    legalLengths = [4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5, 0.375, 0.25]    
+    if fname == "insertNote": 
+        if arguments[3] not in legalLengths: 
+            return ("fail", "INVALID NOTE LENGTH")
 
     try:
         updateOffsets = function(*arguments)

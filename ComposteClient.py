@@ -5,6 +5,8 @@ from network.fake.security import Encryption
 from network.base.loggable import DevNull, StdErr
 from network.base.exceptions import GenericError
 
+from client import editor
+
 from protocol import client, server
 from util import misc
 from threading import Thread, Lock
@@ -18,12 +20,19 @@ import traceback
 import uuid
 import subprocess
 import shlex
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.Qt import Q_ARG, Q_RETURN_ARG
 
 DEBUG = False
 
-class ComposteClient:
+class ComposteClient(QtCore.QObject):
+
+    _updateGUI = QtCore.pyqtSignal(float, float, name='_updateGUI')
+    _chatToGUI = QtCore.pyqtSignal(str, name='_chatToGUI')
+
     def __init__(self, interactive_remote, broadcast_remote,
-                 logger, encryption_scheme):
+                 logger, encryption_scheme, *args, **kwargs):
         """
         RPC host for connecting to Composte Servers. Connects to a server
         listening at interactive_remote and broadcasting on on
@@ -33,6 +42,7 @@ class ComposteClient:
         encryption_scheme.decrypt().
         Broadcasts are handled with broadcast_handler
         """
+        super(ComposteClient, self).__init__(*args, **kwargs)
 
         self.__client = NetworkClient(interactive_remote, broadcast_remote,
                 logger, encryption_scheme)
@@ -44,6 +54,7 @@ class ComposteClient:
         self.__version_handshake()
 
         self.__project = None
+        self.__editor = None
 
         self.__tts = False
 
@@ -66,6 +77,20 @@ class ComposteClient:
 
     def project(self):
         return self.__project
+
+    def pause_updates(self):
+        self.__client.pause_background()
+
+    def resume_update(self):
+        self.__client.resume_background()
+
+    def closeEditor(self):
+        print('closing editor')
+        self.__editor = None
+
+    def __updateGui(self, startOffset, endOffset):
+        if self.__editor is not None:
+            self._updateGUI.emit(startOffset, endOffset)
 
     def __handle(self, _, rpc):
         def fail(*args):
@@ -91,6 +116,7 @@ class ComposteClient:
                                     " says " +
                                     rpc["args"][2][1])
             print(printedStr)
+            self._chatToGUI.emit(printedStr)
             if self.__tts and (self.__ttsCommand is not None):
                 subprocess.call(str(self.__ttsCommand) + spokenStr,
                                 stdout=subprocess.DEVNULL,
@@ -101,6 +127,9 @@ class ComposteClient:
         do_rpc = rpc_funs.get(f, fail)
         try:
             (status, other) = do_rpc(*rpc['args'])
+            if status == 'ok':
+                startOffset, endOffset = other
+                self.__updateGui(startOffset, endOffset)
         except Exception as e:
             print(e)
 
@@ -125,7 +154,7 @@ class ComposteClient:
         reply = server.deserialize(reply)
         if reply[0] == "fail":
             status, reason = reply
-            version = reason[1]
+            version = reason[0]
             raise GenericError(version)
 
     def register(self, uname, pword, email):
@@ -415,6 +444,21 @@ class ComposteClient:
         return self.update(pid,
                            "addLyric", (offset, partIndex, lyric),
                            partIndex, offset)
+
+    def startEditor(self):
+        """
+        start-editor
+
+        Launch the editor GUI.
+        """
+        if self.__project is not None:
+            if self.__editor is None:
+                self.__editor = editor.Editor(self)
+                self.__editor.showMaximized()
+
+        else:
+            return 'Load a project before launching the editor.'
+
     def playback(self, partIndex):
         """
         playback partIndex
@@ -452,9 +496,16 @@ if __name__ == "__main__":
     iport = args.interactive_port
     bport = args.broadcast_port
 
-    c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
-            "tcp://{}:{}".format(endpoint_addr, bport),
-            StdErr, Encryption())
+    try:
+        c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
+                "tcp://{}:{}".format(endpoint_addr, bport),
+                StdErr, Encryption())
+    except GenericError as e:
+        print("Version mismatch: Remote server uses version {}"
+                .format(str(e)))
+        sys.exit(1)
+
+    app = QtWidgets.QApplication(sys.argv)
 
     repl_funs = {
             # Supporting/Utility routines
@@ -482,6 +533,7 @@ if __name__ == "__main__":
             "remove-dynamic": c.removeDynamic,
             "add-lyric": c.addLyric,
             # Client exclusive updates
+            "start-editor": c.startEditor,
             "playback": c.playback,
             "chat": c.chat,
             "toggle-tts": c.toggleTTS,
@@ -492,4 +544,3 @@ if __name__ == "__main__":
     the_worst_repl_you_will_ever_see(repl_funs)
     c.stop()
     sys.exit(0)
-

@@ -90,6 +90,7 @@ class Client(Loggable):
                 logger)
 
         self.__lock = Lock()
+        self.__background_lock = Lock()
 
     def send(self, message, preprocess = lambda x: x):
         """
@@ -115,6 +116,12 @@ class Client(Loggable):
                 raise e
             return msg
 
+    def pause_background(self):
+        self.__background_lock.acquire()
+
+    def resume_background(self):
+        self.__background_lock.release()
+
     def __listen_almost_forever(self, handler, preprocess = lambda x: x,
             poll_timeout = 500):
         """
@@ -127,27 +134,29 @@ class Client(Loggable):
             with self.__lock:
                 if self.__done: break
 
-            msg = self.__listener.recv(poll_timeout)
-            if msg == None:
-                continue
+            # Don't allow pausing halfway through a message
+            with self.__background_lock:
+                msg = self.__listener.recv(poll_timeout)
+                if msg == None:
+                    continue
 
-            try:
-                msg = self.__translator.decrypt(msg)
-            except DecryptError as e:
-                self.error("Failed to decrypt {}".format(msg))
-                continue
+                try:
+                    msg = self.__translator.decrypt(msg)
+                except DecryptError as e:
+                    self.error("Failed to decrypt {}".format(msg))
+                    continue
 
-            try:
-                msg = preprocess(msg)
-            except GenericError as e:
-                self.error("Failed to preprocess {}".format(msg))
-                continue
+                try:
+                    msg = preprocess(msg)
+                except GenericError as e:
+                    self.error("Failed to preprocess {}".format(msg))
+                    continue
 
-            try:
-                handler(self, msg)
-            except GenericError as e:
-                self.error("Failure when handling {}".format(msg))
-                continue
+                try:
+                    handler(self, msg)
+                except GenericError as e:
+                    self.error("Failure when handling {}".format(msg))
+                    continue
 
         self.__listener.stop()
 

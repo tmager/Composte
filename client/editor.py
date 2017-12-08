@@ -31,8 +31,10 @@ class Editor(QtWidgets.QMainWindow):
         self.__client = client
         self.__makeUI()
         self.__resetAll()
+        self.__client._updateGUI.connect(self.update)
+        self.__client._chatToGUI.connect(self.printChatMessage)
 
-    def update(self, startOffset, endOffset):
+    def update(self, startOffset: float, endOffset: float):
         """
         Update a section of the score on the UI from the copy held by the
         client.
@@ -41,8 +43,10 @@ class Editor(QtWidgets.QMainWindow):
         :param startOffset: Quarter-note offset after the last one to be
             updated.
         """
+        print('updating')
         self.__ui_scoreViewport.update(self.__client.project(),
-                                       startOffset, endOffset)
+                                       None,None)
+                                       #startOffset, endOffset)
 
     def __resetAll(self):
         """
@@ -107,7 +111,7 @@ class Editor(QtWidgets.QMainWindow):
 
         self.__ui_act_quit = self.__ui_filemenu.addAction('Quit')
         self.__ui_act_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
-        self.__ui_act_quit.triggered.connect(self.close)
+        self.__ui_act_quit.triggered.connect(self.closeEvent)
 
         self.__ui_act_edit = self.__ui_editmenu.addAction('Play')
         self.__ui_act_edit.setShortcut(QtGui.QKeySequence('Ctrl+space'))
@@ -119,6 +123,10 @@ class Editor(QtWidgets.QMainWindow):
 
         self.setMenuBar(self.__ui_menubar)
 
+    def closeEvent(self, ev):
+        print('closeEvent()')
+        self.__client.closeEditor()
+        ev.accept()
 
     def __makeToolbar(self):
         pass
@@ -172,42 +180,31 @@ class Editor(QtWidgets.QMainWindow):
 
 
     def __handleAddPart(self, clef):
-        ## TODO: This actually needs to do server interaction; this is just for
-        ## testing.
-        if self.__ui_scoreViewport.parts() == 0:
-            self.__ui_scoreViewport.addPart(clef, self.__defaultKeySignature,
-                                            self.__defaultTimeSignature)
-        else:
-            self.__ui_scoreViewport.addPart(clef)
+        """
+        Insert a new part. Not currently implemented.
+        """
+        raise NotImplementedError
 
     def __handlePlay(self, part = 0):
         """
         Tell the Composte client to play back the given part.
         """
-        ## TODO: Implement me!
-        raise NotImplementedError
+        self.__client.playback(part)
 
     def __handleAddLine(self):
         self.__ui_scoreViewport.addLine()
 
     def __handleInsertNote(self, part, pitch, ntype, offset):
-        ## TODO: This actually needs to do server interaction; this is just for
-        ## testing.
-        try:
-            self.__ui_scoreViewport.insertNote(part, pitch, ntype, offset)
-        except ValueError as e:
-            self.__debugConsoleWrite(str(e))
+        self.__client.insertNote(self.__client.project().projectID,
+                                 offset, part, str(pitch), ntype.length())
 
     def __handleDeleteNote(self, part, pitch, offset):
-        ## TODO: This actually needs to do server interaction; this is just for
-        ## testing.
-        if not self.__ui_scoreViewport.deleteNote(part, pitch, offset):
-            self.__debugConsoleWrite('No note ' + str((part, pitch, offset)))
+        self.__client.removeNote(self.__client.project().projectID,
+                                 offset, part, str(pitch))
 
-    def __handleChatMessage(self, msg):
-        ## TODO: This actually needs to do server interaction; this is just for
-        ## testing.
-        self.printChatMessage(msg)
+    def __handleChatMessage(self, name, msg):
+        self.__client.chat(self.__client.project().projectID,
+                           name, msg)
 
     def __handleTTSon(self):
         """
@@ -246,11 +243,14 @@ class Editor(QtWidgets.QMainWindow):
         if cmd in ['clear']:
             self.__ui_debugConsole_log.clear()
         elif cmd in ['chat', 'c']:
-            self.__handleChatMessage(' '.join(args))
+            if len(args) == 0:
+                self.__debugConsoleHelp('chat')
+            name = args[0]
+            self.__handleChatMessage(name, ' '.join(args[1:]))
         elif cmd in ['ttson']:
-            self.__ui_handleTTSon()
+            self.__handleTTSon()
         elif cmd in ['ttsoff']:
-            self.__ui_handleTTSoff()
+            self.__handleTTSoff()
         elif cmd in ['play', 'p']:
             if len(args) == 0:
                 self.__handlePlay()
@@ -264,8 +264,9 @@ class Editor(QtWidgets.QMainWindow):
                 self.__handlePlay(part)
             else:
                 self.__debugConsoleHelp('play')
-        elif cmd in ['addpart']:
-            self.__handleAddPart(self.__defaultClef)
+        ## NOT CURRENTLY SUPPORTED
+        # elif cmd in ['addpart']:
+        #     self.__handleAddPart(self.__defaultClef)
         elif cmd in ['addline']:
             self.__handleAddLine()
         elif cmd in ['insert','i']:

@@ -1,5 +1,8 @@
-get-project b34f0e8e-b319-4a1e-b337-3625fb5abf8c
-set pid b34f0e8e-b319-4a1e-b337-3625fb5abf8c 
+register rob password mail@mai.com
+set x `create-project rob proj {}`
+set pid `slice 9 -3 $x`
+export pid $pid
+get-project $pid
 change-key-signature $pid 0.0 0 1
 add-instrument $pid 0.0 0 violin
 insert-clef $pid 0.0 0 treble

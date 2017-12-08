@@ -54,14 +54,16 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         if startOffset is None:
             st_idx, st_offset = 0, 0
         else:
-            st_idx, st_offset = self.__measureIndexFromOffset(startOffset)
+            st_idx, st_offset = self.__measureIndexFromOffset(startOffset,
+                                                              extend = True)
         if endOffset is None:
             en_idx, en_offset1 = self.__endOfDisplay()
             en_offset2 = max(map(lambda strm : strm.highestTime,
                                     project.parts))
             en_offset = max(en_offset1, en_offset2)
         else:
-            en_idx, en_offset = self.__measureIndexFromOffset(endOffset)
+            en_idx, en_offset = self.__measureIndexFromOffset(endOffset,
+                                                              extend = True)
 
         for i in range(st_idx, en_idx):
             while st_idx > len(self.__measures[0]):
@@ -75,7 +77,8 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
                 offs = om_item.offset
                 obj  = om_item.element
 
-                idx, meaoffs = self.__measureIndexFromOffset(offs)
+                idx, meaoffs = self.__measureIndexFromOffset(offs,
+                                                             extend = True)
                 mea = self.__measures[part][idx]
 
                 if isinstance(obj, music21.clef.Clef):
