@@ -57,10 +57,15 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
             st_idx, st_offset = self.__measureIndexFromOffset(startOffset,
                                                               extend = True)
         if endOffset is None:
-            en_idx, en_offset1 = self.__endOfDisplay()
-            en_offset2 = max(map(lambda strm : strm.highestTime,
+            _, en_off1 = self.__endOfDisplay()
+            en_off2 = max(map(lambda strm : strm.highestTime,
                                     project.parts))
-            en_offset = max(en_offset1, en_offset2)
+            en_off = max(en_off1, en_off2) + 1
+            en_idx, en_offset = self.__measureIndexFromOffset(en_off,
+                                                              extend = True)
+            mea = self.__measures[0][en_idx]
+            en_offset += mea.length()
+            en_idx += 1
         else:
             en_idx, en_offset = self.__measureIndexFromOffset(endOffset,
                                                               extend = True)
