@@ -1,3 +1,7 @@
+"""
+Some general settings for the GUI.
+"""
+
 from PyQt5 import QtGui
 
 FG_COLOR = QtGui.QColor('black')

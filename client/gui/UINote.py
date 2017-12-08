@@ -1,3 +1,11 @@
+"""
+Graphics types for all of the various types of notes.
+
+In retrospect, the class structure in this is *awful*, but reimplementing it has
+not been a priority.
+"""
+
+
 import music21
 
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -8,6 +16,11 @@ import client.gui.UISettings as UISet
 
 
 def ntypeFromMusic21(note: music21.note.Note):
+    """
+    Given a music21Note, return the class of a UINote which would have the
+    appropriate duration.  Raise a runtime error if the note is not of a length
+    that is supported.
+    """
     ntypeMap = {
         ('whole',   0) : UINote_Whole,
         ('half',    0) : UINote_Half,
@@ -24,7 +37,12 @@ def ntypeFromMusic21(note: music21.note.Note):
     else:
         raise RuntimeError('Unsupported note duration ' + str(note.duration))
 
+
 class UINote(QtWidgets.QGraphicsItem):
+
+    """
+    A superclass for all graphics notes.
+    """
 
     __accidentalLineWidth = 1.5
     __accidentalPen = QtGui.QPen(QtGui.QColor(0,0,0),
@@ -34,7 +52,9 @@ class UINote(QtWidgets.QGraphicsItem):
     __dotPen = QtGui.QPen(Qt.NoPen)
     __dotBrush = QtGui.QBrush(QtGui.QColor(0,0,0), Qt.SolidPattern)
 
+    # Overridden by subclasses
     _length = None
+
 
     def __init__(self, pitch, clef, keysig, *args, **kwargs):
         super(UINote, self).__init__(*args, **kwargs)
@@ -64,6 +84,9 @@ class UINote(QtWidgets.QGraphicsItem):
 
 
     def _paintAccidental(self, painter, option, widget):
+        """
+        Draw in accidental marks, if appropriate.
+        """
         y = self._yoffset
         painter.setPen(self.__accidentalPen)
         painter.setBrush(self.__accidentalBrush)
@@ -135,6 +158,9 @@ class UINote(QtWidgets.QGraphicsItem):
                              y + 0.5 * UISet.PITCH_LINE_SEP)
 
     def _paintDot(self, painter, option, widget):
+        """
+        Paint a dot on the current note.
+        """
         y = self._yoffset
         painter.setBrush(self.__dotBrush)
         painter.setPen(self.__dotPen)

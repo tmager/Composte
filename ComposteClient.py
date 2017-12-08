@@ -79,15 +79,30 @@ class ComposteClient(QtCore.QObject):
         return self.__project
 
     def pause_updates(self):
+        """
+        Prevent incoming updates from being applied, queuing them up.  Blocks
+        until all updates currently being processed have completed.
+        """
         self.__client.pause_background()
 
     def resume_update(self):
+        """
+        Apply queued updates and resume applying updates as they come in.
+        """
         self.__client.resume_background()
 
     def closeEditor(self):
+        """
+        To be run when the editor exits, to do cleanup that will allow it to be
+        relaunched later.
+        """
         self.__editor = None
 
     def __updateGui(self, startOffset, endOffset):
+        """
+        Tell the GUI to update the section of the score between startOffset and
+        endOffset.
+        """
         if self.__editor is not None:
             self._updateGUI.emit(startOffset, endOffset)
 
@@ -499,10 +514,10 @@ if __name__ == "__main__":
     bport = args.broadcast_port
     fileName = args.file_name
 
-    try: 
-        with open(fileName, "r") as f: 
+    try:
+        with open(fileName, "r") as f:
             commands = f.readlines()
-    except IOError: 
+    except IOError:
         commands = []
 
     try:
