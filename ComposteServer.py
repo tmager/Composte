@@ -180,6 +180,9 @@ class ComposteServer:
         proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
         self.__pool.remove(pid)
 
+        if type(proj) == str:
+            return ("fail", "What even is that")
+
         return ("ok", json.dumps(proj.serialize()))
 
     def get_project(self, pid):
