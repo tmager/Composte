@@ -32,8 +32,8 @@ class Editor(QtWidgets.QMainWindow):
         self.__makeUI()
         self.__resetAll()
         self.__client._updateGUI.connect(self.update)
+        self.__client._chatToGUI.connect(self.printChatMessage)
 
-    # @pyqtSlot(float, float)
     def update(self, startOffset: float, endOffset: float):
         """
         Update a section of the score on the UI from the copy held by the
@@ -111,7 +111,7 @@ class Editor(QtWidgets.QMainWindow):
 
         self.__ui_act_quit = self.__ui_filemenu.addAction('Quit')
         self.__ui_act_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
-        self.__ui_act_quit.triggered.connect(self.close)
+        self.__ui_act_quit.triggered.connect(self.closeEvent)
 
         self.__ui_act_edit = self.__ui_editmenu.addAction('Play')
         self.__ui_act_edit.setShortcut(QtGui.QKeySequence('Ctrl+space'))
@@ -123,7 +123,8 @@ class Editor(QtWidgets.QMainWindow):
 
         self.setMenuBar(self.__ui_menubar)
 
-    def close(self, ev):
+    def closeEvent(self, ev):
+        print('closeEvent()')
         self.__client.closeEditor()
         ev.accept()
 
@@ -201,9 +202,9 @@ class Editor(QtWidgets.QMainWindow):
         self.__client.removeNote(self.__client.project().projectID,
                                  offset, part, str(pitch))
 
-    def __handleChatMessage(self, msg):
-        self.__client.removeNote(self.__client.project().projectID,
-                                 '', msg)
+    def __handleChatMessage(self, name, msg):
+        self.__client.chat(self.__client.project().projectID,
+                           name, msg)
 
     def __handleTTSon(self):
         """
@@ -242,11 +243,14 @@ class Editor(QtWidgets.QMainWindow):
         if cmd in ['clear']:
             self.__ui_debugConsole_log.clear()
         elif cmd in ['chat', 'c']:
-            self.__handleChatMessage(' '.join(args))
+            if len(args) == 0:
+                self.__debugConsoleHelp('chat')
+            name = args[0]
+            self.__handleChatMessage(name, ' '.join(args[1:]))
         elif cmd in ['ttson']:
-            self.__ui_handleTTSon()
+            self.__handleTTSon()
         elif cmd in ['ttsoff']:
-            self.__ui_handleTTSoff()
+            self.__handleTTSoff()
         elif cmd in ['play', 'p']:
             if len(args) == 0:
                 self.__handlePlay()
