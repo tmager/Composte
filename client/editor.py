@@ -71,7 +71,8 @@ class Editor(QtWidgets.QMainWindow):
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)
 
         self.__ui_scoreViewport = \
-                            UIScoreViewport(parent = self.__ui_mainSplitter)
+                            UIScoreViewport(parent = self.__ui_mainSplitter,
+                                    width = 1000)
 
         # For some reason this string can't be blank, but it can be anything
         # else that isn't a font.
