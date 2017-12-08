@@ -69,7 +69,10 @@ and outgoing traffic.
 
 To start a Composte client:
 
-    ./ComposteClient.py
+    ./ComposteClient.py [-r Remote-address]
+
+The most commonly used option to `ComposteClient` is `-r Remote-address`,
+the remote address where the server you want to connect to is listening.
 
 __Docker__
 

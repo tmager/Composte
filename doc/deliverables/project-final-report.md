@@ -81,12 +81,23 @@ The GUI
 
 The primary developer has declined to comment.
 
+&nbsp;
+
+The REPLs
+
+Because the goalposts were moved so many times over the course of the project,
+it became clear to us that we would not be able to get the GUI-driven
+interaction patterns that we wanted. Therefore, we fell back to text-driven
+interaction patterns. To this end we thought that it would be prudent to
+create a couple of REPLs from which to drive client interactions with servers.
+
 ### Outcome
 
 Somehow, it appears to work.
 
 Alternatively, we have two impoverished REPLs driving a GUI and interactions
-with a remote server.
+with a remote server. We have moved the goalposts enough so that this is
+indeed the minimum deliverable.
 
 &lt;/sarcasm&gt;
 
@@ -154,6 +165,11 @@ actual network endpoints to be surprisingly pleasant to use.
 
 ### Division of Labor
 
+It turns out that we're terrible at fair division of labor, but that we're
+marginally better at dividing the problem into subtasks. We focused on our own
+tasks and then came together to compose an application out of the parts we
+built.
+
 Tom Magerlein:
 * GUI
 * Debug console
@@ -211,6 +227,12 @@ of date and no longer correct.
     * We have determined that this is a bug underneath the `music21` package
       that we use to do playback. We have submitted a ticket.
     * See [this issue](https://github.com/cuthbertLab/music21/issues/266)
+    * The bug manifested itself when playback did not perform as expected. We
+      found it by observing that playback was inccorrect. We noticed that
+      playback was incorrect when we attempted to playback music containing a
+      tie. If we had tried to playback music containing ties earlier, we would
+      have found the bug earlier.
+
 
 ## Source Code Tourist's Guide
 
