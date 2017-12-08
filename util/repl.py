@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # This file provides what is quite possibly the world's worst REPL. Some
-# docstrings are shoehorned into being used as interactivev REPL help, so it
+# docstrings are shoehorned into being used as interactive REPL help, so it
 # is not possible to give them more useful docstrings. Mark, I apologize in
 # advance for the pain that attempting to understand the contents of this file
 # will cause you.
@@ -352,7 +352,8 @@ def do_sub_repl_if_needed(callbacks,
 
 def the_worst_repl_you_will_ever_see(callbacks,
         default_function = I_dont_know_what_you_want_me_to_do,
-        prompt = lambda : ">>> ", once = False, to_eval = None):
+        prompt = lambda : ">>> ", once = False, to_eval = None,
+        commands = None):
     """
     Start an interactive REPL backed by callbacks
     { command-name: function-to-invoke }
@@ -385,7 +386,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
             if laps > 0: break
             else: laps = laps + 1
 
-        if to_eval is None:
+        if to_eval is None and commands == []:
             try:
                 read = input(prompt()).lstrip()
                 read = read.split("%%", 1)[0]
@@ -395,6 +396,8 @@ def the_worst_repl_you_will_ever_see(callbacks,
                 break
             except EOFError as e:
                 break
+        elif to_eval is None: 
+            read = commands.pop(0)
         else:
             read = " ".join(to_eval)
             to_eval = None

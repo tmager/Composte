@@ -98,7 +98,9 @@ class Project:
                 "name": self.name,
                 "owner": self.owner,
                 }
-        return json.dumps(obj)
+        return """{{ "type": "Project", "id": {}, "name": {}, "owner": {} }}"""\
+                .format(str(self.id), self.name, self.owner)
+        # return json.dumps(obj)
 
 # Project storage path is always
 #   //<owner>/<id>.{meta,proj}

@@ -206,7 +206,8 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
                                     parent=None)
                     part.append(mea)
             else:
-                raise RuntimeError("Empty measure list in UIScoreViewport.addLine")
+                raise RuntimeError("Empty measure list in " +
+                        "UIScoreViewport.addLine")
 
         sg = UIStaffGroup(self.__scoreScene,
                           self.__measures,
@@ -239,7 +240,8 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         mea_index, mea_offset = self.__measureIndexFromOffset(offset)
         if mea_index is None:
             return False
-        return self.__measures[part][mea_index].deleteNote(pitch, offset - mea_offset)
+        return self.__measures[part][mea_index].deleteNote(pitch,
+                offset - mea_offset)
 
 
     def parts(self):

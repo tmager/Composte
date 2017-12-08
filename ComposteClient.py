@@ -490,12 +490,20 @@ if __name__ == "__main__":
             type = int)
     parser.add_argument("-r", "--remote-address", default = "composte.me",
             type = str)
+    parser.add_argument("-f", "--file-name", default = "", type = str)
 
     args = parser.parse_args()
 
     endpoint_addr = args.remote_address
     iport = args.interactive_port
     bport = args.broadcast_port
+    fileName = args.file_name
+
+    try: 
+        with open(fileName, "r") as f: 
+            commands = f.readlines()
+    except IOError: 
+        commands = []
 
     try:
         c = ComposteClient("tcp://{}:{}".format(endpoint_addr, iport),
@@ -507,6 +515,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon('assets/favicon.ico'))
 
     repl_funs = {
             # Supporting/Utility routines
@@ -542,6 +551,6 @@ if __name__ == "__main__":
             "tts-off": c.ttsOff,
             }
 
-    the_worst_repl_you_will_ever_see(repl_funs)
+    the_worst_repl_you_will_ever_see(repl_funs,commands=commands)
     c.stop()
     sys.exit(0)

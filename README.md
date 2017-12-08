@@ -1,11 +1,23 @@
 # Composte
 ## Get together to make bad music
 
+*To our beloved professor:* Before you print out every single line of python
+source code in this repository, please run the following command before
+committing to your decision.
+
+    find . -name '*.py' | xargs wc -l
+
+We apologize in advance. We also wish to offer our condolences to you, the
+course staff, and the trees who gave their lives so that this code may be
+briefly read.
+
+<hr/>
+
 For even worse documentation, see [docs](doc/index.md).
 
 ## Getting Composte
 
-In general, you can fetch the lastest stable version from here:
+In general, you can fetch the latest stable version from here:
 
     git clone https://github.com/tmager/Composte.git
 
@@ -57,7 +69,10 @@ and outgoing traffic.
 
 To start a Composte client:
 
-    ./ComposteClient.py
+    ./ComposteClient.py [-r Remote-address]
+
+The most commonly used option to `ComposteClient` is `-r Remote-address`,
+the remote address where the server you want to connect to is listening.
 
 __Docker__
 
@@ -83,7 +98,7 @@ Clients are run as usual in this case.
 
 ## Source Code Tourist's Guide
 
-For your viewing pleasure or displaeasure, we provide an elided `tree` of the
+For your viewing pleasure or displeasure, we provide an elided `tree` of the
 repository.
 
 [Skip](#source-descriptions)
@@ -101,6 +116,8 @@ repository.
     │       └── < User data >
     ├── database
     │   └── driver.py
+    ├── demoScripts
+    │   └── < Demonstration scripts >
     ├── doc
     │   ├── architecture
     │   │   └── index.md

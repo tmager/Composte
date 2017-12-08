@@ -1,0 +1,6 @@
+register rob password mail@mai.com
+set x `create-project rob proj {}`
+set pid `slice 9 -3 $x`
+export pid $pid
+get-project $pid
+start-editor

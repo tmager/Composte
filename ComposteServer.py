@@ -180,6 +180,9 @@ class ComposteServer:
         proj = self.__pool.put(pid, lambda: self.get_project(pid)[1])
         self.__pool.remove(pid)
 
+        if type(proj) == str:
+            return ("fail", "What even is that")
+
         return ("ok", json.dumps(proj.serialize()))
 
     def get_project(self, pid):
@@ -472,7 +475,8 @@ class ComposteServer:
 
         # Only broadcast successful updates
         if f == "update" and status == "ok":
-            self.__server.broadcast(client.serialize(rpc["fName"], *rpc["args"]))
+            self.__server.broadcast(client.serialize(rpc["fName"],
+                *rpc["args"]))
 
         return (status, other)
 
