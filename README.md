@@ -15,11 +15,22 @@ of these days we'll figure out how you can do that.
 
 ## Building and Running
 
+Composte is aimed at \*NIX systems. If you are running Windows and manage to
+get a server or client running, please tell us how you did it!
+
 The Composte client and server provided here are `python3` applications and do
 not require compilation. However, the use of a virtual environment such as
 `virtualenv` or `venv` is recommended.
 
 General setup:
+
+There are a number of non-python dependencies for clients that we recommend
+you satisfy before satisfying the python dependencies. If you only plan on
+running the Composte server, these packages are not required.
+
+    timidity
+    timidity-interfaces-extra
+    freepats
 
 Composte has a number of python dependencies, listed in `requirements.txt`.
 
@@ -27,11 +38,6 @@ Composte has a number of python dependencies, listed in `requirements.txt`.
 
 If you will be relying on systemwide packages, refer to `requirements.txt` for
 a list of python packages that are required.
-
-In some distributions, `timidity`, a `pygame` dependency, is not installed or
-configured correctly, and that can cause client playback to fail. We know of
-the existence of other problems that can prevent playback of music, but we
-don't know what they are.
 
 In general, you shouldn't be starting Composte servers manually outside of
 testing or demos. It is recommended that you run it as a service using a
@@ -51,7 +57,7 @@ and outgoing traffic.
 
 To start a Composte client [2]:
 
-    ./client_main.py
+    ./ComposteClient.py
 
 [2]: Probably.
 

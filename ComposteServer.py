@@ -26,6 +26,8 @@ import logging
 import traceback
 
 class ComposteServer:
+    __project_extension = ".heap"
+    __metadata_extension = ".meta"
 
     # I'm so sorry
     __register_lock = Lock()
@@ -241,10 +243,10 @@ class ComposteServer:
 
         base_path = os.path.join(self.__project_root, user)
         base_path = os.path.join(base_path, id_)
-        with open(base_path + ".meta", "w") as f:
+        with open(base_path + self.__metadata_extension, "w") as f:
             f.write(metadata)
 
-        with open(base_path + ".composte", "w") as f:
+        with open(base_path + self.__project_extension, "w") as f:
             f.write(parts)
 
     def read_project(self, pid):
@@ -256,13 +258,13 @@ class ComposteServer:
 
         owner = self.__projects.get(pid).owner
 
-        filename = pid + ".meta"
+        filename = pid + self.__metadata_extension
         relpath = os.path.join(owner, filename)
         fullpath = os.path.join(self.__project_root, relpath)
         with open(fullpath, "r") as f:
             metadata = f.read()
 
-        filename = pid + ".composte"
+        filename = pid + self.__project_extension
         relpath = os.path.join(owner, filename)
         fullpath = os.path.join(self.__project_root, relpath)
         with open(fullpath, "r") as f:
