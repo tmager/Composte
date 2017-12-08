@@ -1,5 +1,7 @@
 import music21
 
+import ComposteClient
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
@@ -18,9 +20,38 @@ class Editor(QtWidgets.QMainWindow):
     __defaultTimeSignature = UITimeSignature.UITimeSignature(4,4)
     __defaultKeySignature = UIKeySignature.C()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, client: ComposteClient.ComposteClient,
+                 *args, **kwargs):
+        """
+        Start a new editor, working on the projected loaded by client.
+
+        :param client: a Composte client, which manages updates to the project.
+        """
         super(Editor, self).__init__(*args, **kwargs)
+        self.__client = client
         self.__makeUI()
+        self.__resetAll()
+
+    def update(self, startOffset, endOffset):
+        """
+        Update a section of the score on the UI from the copy held by the
+        client.
+
+        :param startOffset: First quarter-note offset to be updated.
+        :param startOffset: Quarter-note offset after the last one to be
+            updated.
+        """
+        self.__ui_scoreViewport.update(self.__client.project(),
+                                       startOffset, endOffset)
+
+    def __resetAll(self):
+        """
+        Reload the entire project from the Composte client.
+        """
+        try:
+            self.__ui_scoreViewport.update(self.__client.project(), None, None)
+        except RuntimeError as e:
+            self.__debugConsoleWrite(e.msg)
 
     def __makeUI(self):
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)
@@ -65,6 +96,7 @@ class Editor(QtWidgets.QMainWindow):
 
     def __makeMenuBar(self):
         self.__ui_filemenu = QtWidgets.QMenu('File', parent = self)
+        self.__ui_editmenu = QtWidgets.QMenu('Edit', parent = self)
 
         self.__ui_act_debugConsole = \
                         self.__ui_filemenu.addAction('Debug Console Enabled')
@@ -77,8 +109,13 @@ class Editor(QtWidgets.QMainWindow):
         self.__ui_act_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self.__ui_act_quit.triggered.connect(self.close)
 
+        self.__ui_act_edit = self.__ui_editmenu.addAction('Play')
+        self.__ui_act_edit.setShortcut(QtGui.QKeySequence('Ctrl+space'))
+        self.__ui_act_edit.triggered.connect(self.__handlePlay)
+
         self.__ui_menubar = QtWidgets.QMenuBar(parent = self)
         self.__ui_menubar.addMenu(self.__ui_filemenu)
+        self.__ui_menubar.addMenu(self.__ui_editmenu)
 
         self.setMenuBar(self.__ui_menubar)
 
@@ -86,21 +123,46 @@ class Editor(QtWidgets.QMainWindow):
     def __makeToolbar(self):
         pass
 
+    def printChatMessage(self, msg):
+        """
+        Display a chat message to the debug console.
+        """
+        self.__debugConsoleWrite(msg)
+
     def __debugConsoleWrite(self, msg):
+        """
+        Display a message in the debug console.
+        """
         self.__ui_debugConsole_log.append(msg)
 
     def __toggleDebug(self):
+        """
+        Show/hide the debug console.
+        """
         self.__ui_debugConsole_layoutWidget \
                             .setVisible(self.__ui_act_debugConsole.isChecked())
         if self.__ui_act_debugConsole.isChecked():
             self.__ui_debugConsole_input.setFocus()
 
     def __debugConsoleHelp(self, fn = None):
+        """
+        Print a help message to the debug console.
+
+        :param fn: If None, print help for all commands.  If it is a command,
+            print just the help for that command.
+        """
         if fn is None:
-            msg = 'help/?       --  Display this help message'
+            msg = ('help/?       --  Display this help message\n'
+                   'CMD1 ; CMD2  --  Execute CMD1 followed by CMD2')
             self.__debugConsoleWrite(msg)
         if fn == 'clear' or fn is None:
             msg = 'clear        --  Clear the debug console history'
+            self.__debugConsoleWrite(msg)
+        if fn == 'chat' or fn is None:
+            msg = ('chat/c MESSAGE\n'
+                   '    Send MESSAGE (which may contain spaces, but not '
+                   '    semicolons) to all users\n working on the current '
+                   '    project')
             self.__debugConsoleWrite(msg)
         if fn == 'insert' or fn is None:
             msg = ('insert/i PART_INDEX PITCH NOTE_TYPE OFFSET\n'
@@ -110,11 +172,20 @@ class Editor(QtWidgets.QMainWindow):
 
 
     def __handleAddPart(self, clef):
+        ## TODO: This actually needs to do server interaction; this is just for
+        ## testing.
         if self.__ui_scoreViewport.parts() == 0:
             self.__ui_scoreViewport.addPart(clef, self.__defaultKeySignature,
                                             self.__defaultTimeSignature)
         else:
             self.__ui_scoreViewport.addPart(clef)
+
+    def __handlePlay(self, part = 0):
+        """
+        Tell the Composte client to play back the given part.
+        """
+        ## TODO: Implement me!
+        raise NotImplementedError
 
     def __handleAddLine(self):
         self.__ui_scoreViewport.addLine()
@@ -133,7 +204,27 @@ class Editor(QtWidgets.QMainWindow):
         if not self.__ui_scoreViewport.deleteNote(part, pitch, offset):
             self.__debugConsoleWrite('No note ' + str((part, pitch, offset)))
 
+    def __handleChatMessage(self, msg):
+        ## TODO: This actually needs to do server interaction; this is just for
+        ## testing.
+        self.printChatMessage(msg)
+
+    def __handleTTSon(self):
+        """
+        Tell the Composte client to enable text-to-speech, if available.
+        """
+        self.__client.ttsOn()
+
+    def __handleTTSoff(self):
+        """
+        Tell the Composte client to disable text-to-speech.
+        """
+        self.__client.ttsOff()
+
     def __processDebugInput(self):
+        """
+        Handle a line of input from the debug console.
+        """
         text = self.__ui_debugConsole_input.text()
         self.__ui_debugConsole_input.clear()
         if not text:
@@ -143,12 +234,36 @@ class Editor(QtWidgets.QMainWindow):
             self.__processDebugCommand(cmdstr)
 
     def __processDebugCommand(self, cmdstr):
+        """
+        Handle a single command from the debug console.
+
+        :param cmdstr: The command to be executed, as an unparsed string.
+        """
         args = cmdstr.split(' ')
         cmd = args[0].lower()
         args.pop(0)
 
         if cmd in ['clear']:
             self.__ui_debugConsole_log.clear()
+        elif cmd in ['chat', 'c']:
+            self.__handleChatMessage(' '.join(args))
+        elif cmd in ['ttson']:
+            self.__ui_handleTTSon()
+        elif cmd in ['ttsoff']:
+            self.__ui_handleTTSoff()
+        elif cmd in ['play', 'p']:
+            if len(args) == 0:
+                self.__handlePlay()
+            if len(args) == 1:
+                try:
+                    part = int(args[0])
+                except ValueError:
+                    msg = 'Unable to generate part index from \'' + args[1] + '\''
+                    self.__debugConsoleWrite(msg)
+                    return
+                self.__handlePlay(part)
+            else:
+                self.__debugConsoleHelp('play')
         elif cmd in ['addpart']:
             self.__handleAddPart(self.__defaultClef)
         elif cmd in ['addline']:

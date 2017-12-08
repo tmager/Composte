@@ -1,9 +1,17 @@
+import music21
+
+import util.musicFuns as musicFuns
+
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 
 import client.gui.UISettings as UISet
 from client.gui.UIMeasure import UIMeasure
 from client.gui.UIStaffGroup import UIStaffGroup
+import client.gui.UINote as UINote
+import client.gui.UIClef as UIClef
+import client.gui.UIKeySignature as UIKeySignature
+import client.gui.UITimeSignature as UITimeSignature
 
 class UIScoreViewport(QtWidgets.QGraphicsView):
 
@@ -28,6 +36,88 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         self.__scoreScene.setBackgroundBrush(QtGui.QBrush(UISet.BG_COLOR))
         self.setScene(self.__scoreScene)
 
+    def update(self, project, startOffset, endOffset):
+        """
+        Update the region of the score between startOffset and endOffset.  If
+        startOffset is None, start at the beginning.  If endOffset is None,
+        update through the end.  If both are None, update the entire score,
+        including updating the number of parts.
+        """
+        if startOffset is None and endOffset is None:
+            self.clear()
+            for part in project.parts:
+                cl = UIClef.fromMusic21(part.getClefs()[0])
+                ks = UIKeySignature.fromMusic21(part.getKeySignatures()[0])
+                ts = UITimeSignature.fromMusic21(part.getTimeSignatures()[0])
+                self.addPart(cl, keysig = ks, timesig = ts)
+
+        if startOffset is None:
+            st_idx, st_offset = 0, 0
+        else:
+            st_idx, st_offset = self.__measureIndexFromOffset(startOffset)
+        if endOffset is None:
+            en_idx, en_offset1 = self.__endOfDisplay()
+            en_offset2 = max(map(lambda strm : strm.highestTime,
+                                    project.parts))
+            en_offset = max(en_offset1, en_offset2)
+        else:
+            en_idx, en_offset = self.__measureIndexFromOffset(endOffset)
+
+        for i in range(st_idx, en_idx):
+            while st_idx > len(self.__measures[0]):
+                self.addLine()
+            for meas in self.__measures:
+                meas[i].clear()
+
+        for part in range(len(project.parts)):
+            for om_item in musicFuns.boundedOffset(project.parts[part],
+                                                   (st_offset, en_offset)):
+                offs = om_item.offset
+                obj  = om_item.element
+
+                idx, meaoffs = self.__measureIndexFromOffset(offs)
+                mea = self.__measures[part][idx]
+
+                if isinstance(obj, music21.clef.Clef):
+                    cl = UIClef.fromMusic21(obj)
+                    if idx == 0:
+                        mea.setClef(cl, newClef = True)
+                    else:
+                        lastCl = self.__measures[part][idx-1].clef()
+                        mea.setClef(cl, newClef = (cl == lastCl))
+                elif isinstance(obj, music21.key.KeySignature):
+                    ks = UIKeySignature.fromMusic21(obj)
+                    if idx == 0:
+                        mea.setKeysig(ks, newKeysig = True)
+                    else:
+                        lastKs = self.__measures[part][idx-1].keysig()
+                        mea.setKeysig(ks, newKeysig = (ks == lastKs))
+
+                elif isinstance(obj, music21.meter.TimeSignature):
+                    if idx == 0:
+                        mea.setTimesig(ts, newTimesig = True)
+                    else:
+                        lastTs = self.__measures[part][idx-1].timesig()
+                        mea.setTimesig(ts, newTimesig = (ts == lastTs))
+                elif isinstance(obj, music21.note.Note):
+                    ntype = UINote.ntypeFromMusic21(obj)
+                    self.insertNote(part, obj.pitch, ntype, offs)
+
+
+
+
+
+    def __endOfDisplay(self):
+        if len(self.__measures) == 0:
+            return (None, None)
+        mea_offset = 0
+        mea_index = 0
+        for mea in self.__measures[0]:
+            mea_offset += self.__measures[0][mea_index].length()
+            mea_index += 1
+        return mea_index, mea_offset
+
+
     def __measureIndexFromOffset(self, offset, extend = False):
         if len(self.__measures) == 0:
             return (None, None)
@@ -46,7 +136,13 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         mea_offset -= mea.length()
         mea_index -= 1
 
-        return (mea_index, mea_offset)
+        return mea_index, mea_offset
+
+    def clear(self):
+        for sg in self.__lines:
+            self.__scoreScene.removeItem(sg)
+        self.__lines.clear()
+        self.__measures.clear()
 
     def addPart(self, clef, keysig = None, timesig = None):
         if len(self.__measures) == 0 and (keysig is None or timesig is None):
@@ -84,7 +180,6 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
             sg.refresh()
             if last_sg is not None:
                 y = last_sg.boundingRect().height()
-                print(y, sg.boundingRect().height())
                 sg.setPos(sg.mapFromItem(last_sg, 0, y))
             else:
                 sg.setPos(0, 0)

@@ -50,3 +50,12 @@ def Bb(): return UIKeySignature('Bb', flats = ['B','E'])
 def Eb(): return UIKeySignature('Eb', flats = ['B','E','A'])
 def Ab(): return UIKeySignature('Ab', flats = ['B','E','A','D'])
 def Db(): return UIKeySignature('Db', flats = ['B','E','A','D','G'])
+
+
+def fromMusic21(ks: music21.key.KeySignature):
+    if ks.sharps == 0:
+        return C()
+    elif ks.sharps == 1:
+        return G()
+    else:
+        raise RuntimeError('Unsupported key signature ' + ks)

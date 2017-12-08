@@ -10,6 +10,7 @@ import PyQt5.QtCore as QtCore
 from client.gui.UIMeasure import UIMeasure
 import client.gui.UIClef as UIClef
 import client.gui.UITimeSignature as UITimeSignature
+import client.gui.UIKeySignature as UIKeySignature
 import client.gui.UINote as UINote
 
 WIDTH = 200
@@ -19,15 +20,18 @@ if __name__ == '__main__':
     scene = QGraphicsScene(parent = app)
     view = QGraphicsView(scene, parent = None)
 
-    mea = UIMeasure(scene, WIDTH, UIClef.treble(), None,
+    mea = UIMeasure(scene, WIDTH, UIClef.treble(),
+                    UIKeySignature.C(),
                     UITimeSignature.UITimeSignature(4,4),
                     parent = None)
 
-    mea2 = UIMeasure(scene, WIDTH, UIClef.treble(), None,
+    mea2 = UIMeasure(scene, WIDTH, UIClef.treble(),
+                     UIKeySignature.C(),
                      UITimeSignature.UITimeSignature(4,4),
                      parent = mea)
 
-    mea3 = UIMeasure(scene, WIDTH, UIClef.treble(), None,
+    mea3 = UIMeasure(scene, WIDTH, UIClef.treble(),
+                     UIKeySignature.C(),
                      UITimeSignature.UITimeSignature(4,4),
                      parent = mea2)
 
