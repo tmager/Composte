@@ -75,8 +75,6 @@ class ComposteClient(QtCore.QObject):
         # thread from ever being joined, and the application will never exit
         self.__client.start_background(self.__handle)
 
-        self.__gui_lock = Lock()
-
     def project(self):
         return self.__project
 
@@ -88,7 +86,6 @@ class ComposteClient(QtCore.QObject):
 
     def closeEditor(self):
         self.__editor = None
-        self.__gui_lock.release()
 
     def __updateGui(self, startOffset, endOffset):
         if self.__editor is not None:
@@ -455,7 +452,6 @@ class ComposteClient(QtCore.QObject):
         """
         if self.__project is not None:
             if self.__editor is None:
-                self.__gui_lock.acquire()
                 self.__editor = editor.Editor(self)
                 self.__editor.showMaximized()
 
@@ -476,8 +472,7 @@ class ComposteClient(QtCore.QObject):
         """
         Stop the client elegantly
         """
-        with self.__gui_lock:
-            self.__client.stop()
+        self.__client.stop()
 
 if __name__ == "__main__":
     import sys
