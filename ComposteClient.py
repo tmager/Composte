@@ -507,6 +507,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon('assets/favicon.ico'))
 
     repl_funs = {
             # Supporting/Utility routines
