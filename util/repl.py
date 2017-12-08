@@ -262,9 +262,11 @@ def split_args(args):
         elif len(parts) == 2:
             if parts[0] == "":
                 new_args.append("`")
-                new_args.append(parts[1])
+                if parts[1] != "":
+                    new_args.append(parts[1])
             elif parts[1] == "":
-                new_args.append(parts[0])
+                if parts[0] != "":
+                    new_args.append(parts[0])
                 new_args.append("`")
 
     return new_args
@@ -444,7 +446,6 @@ def the_worst_repl_you_will_ever_see(callbacks,
         try:
             res = exec_(*args)
         except TypeError as e:
-            raise e
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)
                 print("{} {}".format(command, msg))
