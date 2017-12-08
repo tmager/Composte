@@ -1,0 +1,4 @@
+set x `list-projects rob`
+set pid `slice 52 88 $x`
+get-project $pid
+start-editor
