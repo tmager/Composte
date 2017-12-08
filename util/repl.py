@@ -9,6 +9,7 @@
 import re
 import os, sys
 import inspect
+import time
 
 DEBUG = True
 
@@ -19,6 +20,14 @@ def I_dont_know_what_you_want_me_to_do(*args):
     Unknown command
     """
     print("Unknown command")
+
+def _sleep(seconds):
+    """
+    sleep seconds
+
+    Sleep for some number of seconds
+    """
+    time.sleep(int(seconds))
 
 def echo(*args):
     """
@@ -280,6 +289,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
         "set": env.set,
         "unset": env.unset,
         "get": env.get,
+        "sleep": _sleep,
     }
 
     res = None
