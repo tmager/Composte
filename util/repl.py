@@ -69,6 +69,8 @@ def _export(name, value):
     with open(hard_store, "w") as f:
         f.write(things)
 
+    return value
+
 def _import(name):
     """
     import name
@@ -93,6 +95,7 @@ def echo(*args):
 
     Prints its arguments
     """
+    args = [str(arg) for arg in args]
     if DEBUG: str_ = ", ".join(list(args))
     else: str_ = " ".join(args)
 
@@ -113,7 +116,7 @@ class REPL_env:
 
         Set a variable called `name` to have value `value`
         """
-        self.__bindings[name] = value
+        self.__bindings[name] = str(value)
         return value
 
     def unset(self, name):
@@ -249,6 +252,23 @@ def expand_vars(env, args):
 
     return new_args
 
+def split_args(args):
+    new_args = []
+
+    for arg in args:
+        parts = arg.split("`")
+        if len(parts) == 1:
+            new_args.append(arg)
+        elif len(parts) == 2:
+            if parts[0] == "":
+                new_args.append("`")
+                new_args.append(parts[1])
+            elif parts[1] == "":
+                new_args.append(parts[0])
+                new_args.append("`")
+
+    return new_args
+
 def quote(args):
     """
     Quote whitespace in arguments by escaping whitespace
@@ -289,43 +309,37 @@ def do_sub_repl_if_needed(callbacks,
                 new_args.append(arg)
             continue
 
-        # Start a subrepl substitution
-        if arg[0] == "`":
-            sub_command = arg[1:]
-            started_subcommand = True
+        # Start or end a subrepl substitution
+        if arg == "`":
+            # New subcommand
+            if not started_subcommand:
+                started_subcommand = True
+                sub_command = None
+                sub_command_args = []
+            # Finish a subcommand, so execute it
+            else:
+                started_subcommand = False
 
-        # End a subrepl substitution
-        if arg[-1] == "`":
+                # Quote arguments again
+                sub_command_args = quote(sub_command_args)
 
-            arg = arg[:-1]
+                # Evaluate expression and get result
+                replacement = the_worst_repl_you_will_ever_see(callbacks,
+                        default_function, prompt, once = True,
+                        to_eval = [sub_command] + sub_command_args)
+                # Replace expression with result
+                new_args.append(replacement)
 
-            started_subcommand = False
-
-            # When the substitution is more than one word, this is the last
-            # argument.
-            if arg[0] != "`":
-                sub_command_args.append(arg)
-            # Otherwise, this was also the first word, and so there are no
-            # arguments
-
-            # Quote arguments again
-            sub_command_args = quote(sub_command_args)
-
-            # Evaluate expression and get result
-            replacement = the_worst_repl_you_will_ever_see(callbacks,
-                    default_function, prompt, once = True,
-                    to_eval = [sub_command] + sub_command_args)
-            # Replace expression with result
-            new_args.append(replacement)
-
-            # Clear subcommand and args
-            sub_command = None
-            sub_command_args = []
+            # Backticks are moved to their own separate args
             continue
 
-        if started_subcommand and arg[0] != "`":
-            sub_command_args.append(arg)
-        elif not started_subcommand:
+        # Shunt arguments to the right places
+        if started_subcommand:
+            if sub_command is None:
+                sub_command = arg
+            else:
+                sub_command_args.append(arg)
+        else:
             new_args.append(arg)
 
     if started_subcommand:
@@ -394,6 +408,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
 
         args = merge_args(args)
+        args = split_args(args)
         args = expand_vars(env, args)
         try:
             args = do_sub_repl_if_needed(callbacks, default_function, prompt,
@@ -429,6 +444,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
         try:
             res = exec_(*args)
         except TypeError as e:
+            raise e
             if str(e).startswith(exec_.__name__):
                 fname, msg = str(e).split(" ", 1)
                 print("{} {}".format(command, msg))
