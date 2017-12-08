@@ -12,10 +12,20 @@ from client.gui.UIScoreViewport import UIScoreViewport
 class Editor(QtWidgets.QMainWindow):
 
     __noteTypeLookup = {
-            'whole'   : UINote.UINote_Whole,
-            'half'    : UINote.UINote_Half,
-            'quarter' : UINote.UINote_Quarter
-        }
+        'whole'   : UINote.UINote_Whole,
+        'half'    : UINote.UINote_Half,
+        'quarter' : UINote.UINote_Quarter,
+        'eighth' : UINote.UINote_Eighth,
+        '8th' : UINote.UINote_Eighth,
+        'sixteenth' : UINote.UINote_16th,
+        '16th' : UINote.UINote_16th,
+        'half.'    : UINote.UINote_Half_Dotted,
+        'quarter.' : UINote.UINote_Quarter_Dotted,
+        'eighth.' : UINote.UINote_Eighth_Dotted,
+        '8th.' : UINote.UINote_Eighth_Dotted,
+        'sixteenth.' : UINote.UINote_16th_Dotted,
+        '16th.' : UINote.UINote_16th_Dotted,
+    }
     __defaultClef = UIClef.treble()
     __defaultTimeSignature = UITimeSignature.UITimeSignature(4,4)
     __defaultKeySignature = UIKeySignature.C()
@@ -43,18 +53,19 @@ class Editor(QtWidgets.QMainWindow):
         :param startOffset: Quarter-note offset after the last one to be
             updated.
         """
-        self.__ui_scoreViewport.update(self.__client.project(),
-                                       None, None)
-                                       #startOffset, endOffset)
+        ## FIXME: Updating of specific sections not working quite yet. For now,
+        ## just update everything.
+        try:
+            self.__ui_scoreViewport.update(self.__client.project(),
+                                           None, None)
+        except ValueError as e:
+            self.__debugConsoleWrite(str(e))
 
     def __resetAll(self):
         """
         Reload the entire project from the Composte client.
         """
-        try:
-            self.__ui_scoreViewport.update(self.__client.project(), None, None)
-        except RuntimeError as e:
-            self.__debugConsoleWrite(e.msg)
+        self.update(None, None)
 
     def __makeUI(self):
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)
@@ -124,6 +135,8 @@ class Editor(QtWidgets.QMainWindow):
 
     def closeEvent(self, ev):
         self.__client.closeEditor()
+        self.__client = None
+        self.deleteLater()
 
     def __makeToolbar(self):
         pass

@@ -84,11 +84,12 @@ class UIMeasure(QtWidgets.QGraphicsItemGroup):
             self.addNote(*note)
 
     def insertNote(self, pitch: music21.pitch.Pitch, ntype, offset: float):
-        note = ntype(pitch, self.__clef, self.__keysig, parent = self)
+        note = ntype(pitch, self.__clef, self.__keysig)
         if offset + note.length() > self.length():
             raise ValueError("Note extends past end of measure")
         if (pitch, ntype, offset) in self.__noteObjs:
             raise ValueError("Note already exists")
+        note.setParentItem(self)
         self.__noteObjs[(pitch, ntype, offset)] = note
 
         notesWidth = (self.__width
