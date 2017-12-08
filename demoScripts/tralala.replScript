@@ -1,6 +1,5 @@
-%% THIS ASSUMES WE HAVE SERVER-SIDE PERSISTANCE
-get-project <PID FROM LOGINANDCREATE>
-set pid <PID FROM LOGINANDCREATE>
+set pid `import pid`
+get-project $pid
 remove-instrument $pid 0.0 0 
 remove-metronome-mark $pid 0.0 
 remove-dynamic $pid 0.0 0 

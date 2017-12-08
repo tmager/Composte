@@ -1,0 +1,4 @@
+%% ASSUMES PROJECT ALREADY EXISTS!
+set pid `import pid`
+get-project $pid
+start-editor
