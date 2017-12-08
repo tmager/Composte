@@ -1,10 +1,6 @@
-register rob password mail@mai.com
-set x `create-project rob proj {}`
-set pid `slice 9 -3 $x`
-export pid $pid
+set x `list-projects rob`
+set pid `slice 50 86 $x`
 get-project $pid
-sleep 15
-change-key-signature $pid 0.0 0 1
 add-instrument $pid 0.0 0 violin
 insert-clef $pid 0.0 0 treble
 insert-metronome-mark $pid 0.0 100
