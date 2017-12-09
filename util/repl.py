@@ -144,6 +144,56 @@ class REPL_env:
         except KeyError as e:
             return ""
 
+class repl_source:
+    __max_depth = 500
+
+    def __init__(self, prompt):
+        self.__fps = []
+        self.__prompt = prompt
+
+    def source(self, filename):
+        """
+        source script
+
+        Source a script. Read the script file and interpret each line as a
+        command to evaluate.
+        """
+        if len(self.__fps) > self.__max_depth:
+            return ("source: max depth ({}) exceeded: not sourcing {}"
+                    .format(self.__max_depth, filename))
+
+        try:
+            fp = open(filename, "r")
+        except FileNotFoundError as e:
+            print(str(e))
+            return None
+
+        self.__fps.append(fp)
+        return None
+
+    def read(self):
+        """
+        read
+
+        Get the next line of input from either the current sourced file or
+        from standard input
+        """
+        if not self.__fps:
+            s = input(self.__prompt()).lstrip()
+
+        else:
+            s = self.__fps[-1].readline().strip()
+
+            # This is how readline ends in a file
+            if s == "":
+                # End the file's miserablbe existence
+                fp = self.__fps.pop()
+                fp.close()
+
+                s = self.read()
+
+        return s
+
 def stop_repl_help(*args):
     """
     Stop-REPL
@@ -160,6 +210,14 @@ def last_help(*args):
     Show the result of the most recently run command
     """
     # Exists to provide help for a REPL builtin
+    pass
+
+def alias_help(*args):
+    """
+    alias oldname newname
+
+    Introduce newname as an alias for oldname
+    """
     pass
 
 def show_help(builtins, callbacks, fun = None, *args):
@@ -353,7 +411,7 @@ def do_sub_repl_if_needed(callbacks,
 def the_worst_repl_you_will_ever_see(callbacks,
         default_function = I_dont_know_what_you_want_me_to_do,
         prompt = lambda : ">>> ", once = False, to_eval = None,
-        commands = None):
+        setup = []):
     """
     Start an interactive REPL backed by callbacks
     { command-name: function-to-invoke }
@@ -362,6 +420,7 @@ def the_worst_repl_you_will_ever_see(callbacks,
     """
 
     env = REPL_env()
+    cin = repl_source(prompt)
 
     # Help is an even more builtin builtin D:
     builtins = {
@@ -376,6 +435,8 @@ def the_worst_repl_you_will_ever_see(callbacks,
         "slice": _slice,
         "export": _export,
         "import": _import,
+        "source": cin.source,
+        "alias": alias_help,
     }
 
     res = None
@@ -386,9 +447,9 @@ def the_worst_repl_you_will_ever_see(callbacks,
             if laps > 0: break
             else: laps = laps + 1
 
-        if to_eval is None and commands == []:
+        if to_eval is None and setup == []:
             try:
-                read = input(prompt()).lstrip()
+                read = cin.read()
                 read = read.split("%%", 1)[0]
                 if read == "":
                     continue
@@ -396,8 +457,8 @@ def the_worst_repl_you_will_ever_see(callbacks,
                 break
             except EOFError as e:
                 break
-        elif to_eval is None: 
-            read = commands.pop(0)
+        elif to_eval is None:
+            read = setup.pop(0)
         else:
             read = " ".join(to_eval)
             to_eval = None
@@ -429,6 +490,44 @@ def the_worst_repl_you_will_ever_see(callbacks,
             continue
         elif command == "last":
             print(str(res))
+            continue
+        elif command == "source":
+            cin.source(args[0])
+            continue
+        elif command == "alias":
+            # Forgive me
+            def alias(oldname, newname):
+                """
+                alias oldname newname
+
+                Introduce newname as an alias for oldname
+                """
+                if newname in callbacks:
+                    return "no-override"
+
+                if oldname in builtins:
+                    oldfun = builtins[oldname]
+                elif oldname in callbacks:
+                    oldfun = callbacks[oldname]
+                else:
+                    # oldname is not a known command
+                    return "bad-target"
+
+                callbacks[newname] = oldfun
+                return None
+
+            try:
+                ret = alias(*args)
+            except TypeError as e:
+                if str(e).startswith(alias.__name__):
+                    fname, msg = str(e).split(" ", 1)
+                    print("{} {}".format(command, msg))
+                else: print(str(e))
+                continue
+            if ret == "no-override":
+                print("alias: cannot override existing command")
+            elif ret == "bad-target":
+                print("alias: cannot alias to non-command")
             continue
 
         # Actually do something

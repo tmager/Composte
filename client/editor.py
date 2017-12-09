@@ -11,6 +11,11 @@ from client.gui.UIScoreViewport import UIScoreViewport
 
 class Editor(QtWidgets.QMainWindow):
 
+    """
+    The main GUI for editing Composte projects.
+    """
+
+    ## For looking up note types from commands in the debug console.
     __noteTypeLookup = {
         'whole'   : UINote.UINote_Whole,
         'half'    : UINote.UINote_Half,
@@ -49,12 +54,15 @@ class Editor(QtWidgets.QMainWindow):
         Update a section of the score on the UI from the copy held by the
         client.
 
-        :param startOffset: First quarter-note offset to be updated.
+        :note: Updating sections is not currently supported; all updates redraw
+        the entire score.
+
+        :param startOffset: First quarter-note offset to be updated.  If None,
+            update from start of project.
         :param startOffset: Quarter-note offset after the last one to be
-            updated.
+            updated.  If None, update through end of project.
         """
-        ## FIXME: Updating of specific sections not working quite yet. For now,
-        ## just update everything.
+        ## FIXME: Updating of specific sections not working quite yet.
         try:
             self.__ui_scoreViewport.update(self.__client.project(),
                                            None, None)
@@ -63,11 +71,15 @@ class Editor(QtWidgets.QMainWindow):
 
     def __resetAll(self):
         """
-        Reload the entire project from the Composte client.
+        Reload the entire project from the Composte client, and redraw
+        everything.
         """
         self.update(None, None)
 
     def __makeUI(self):
+        """
+        Construct the main UI.
+        """
         self.__ui_mainSplitter = QtWidgets.QSplitter(Qt.Vertical, self)
 
         self.__ui_scoreViewport = \
@@ -110,6 +122,9 @@ class Editor(QtWidgets.QMainWindow):
         self.__makeToolbar()
 
     def __makeMenuBar(self):
+        """
+        Construct the menu bar.
+        """
         self.__ui_filemenu = QtWidgets.QMenu('File', parent = self)
         self.__ui_editmenu = QtWidgets.QMenu('Edit', parent = self)
 
@@ -135,11 +150,22 @@ class Editor(QtWidgets.QMainWindow):
         self.setMenuBar(self.__ui_menubar)
 
     def closeEvent(self, ev):
+        """
+        Gracefully disconnect from the Composte client and exit.
+        """
+        # Tell the client we are disconnecting
         self.__client.closeEditor()
+        # Remove the reference loop between the client and the editor, to avoid
+        # garbage collection issues.
         self.__client = None
         self.deleteLater()
 
     def __makeToolbar(self):
+        """
+        Build the toolbar.
+
+        :note: Not implemented yet.
+        """
         pass
 
     def printChatMessage(self, msg):
@@ -177,6 +203,18 @@ class Editor(QtWidgets.QMainWindow):
         if fn == 'clear' or fn is None:
             msg = 'clear        --  Clear the debug console history'
             self.__debugConsoleWrite(msg)
+        if fn == 'ttson' or fn is None:
+            msg = ('ttson        --  Enable text-to-speech for chat messages, '
+                   'if available.')
+            self.__debugConsoleWrite(msg)
+        if fn == 'ttsoff' or fn is None:
+            msg = 'ttsoff       --  Disable text-to-speech for chat messages.'
+            self.__debugConsoleWrite(msg)
+        if fn == 'play' or fn is None:
+            msg = ('play/p [PART_INDEX]\n'
+                   '    Play back the part specified by the given index, '
+                   'or part 0 if none is specified.')
+            self.__debugConsoleWrite(msg)
         if fn == 'chat' or fn is None:
             msg = ('chat/c MESSAGE\n'
                    '    Send MESSAGE (which may contain spaces, but not '
@@ -187,6 +225,11 @@ class Editor(QtWidgets.QMainWindow):
             msg = ('insert/i PART_INDEX PITCH NOTE_TYPE OFFSET\n'
                    '    Insert a NOTE_TYPE into the indicated part, at \n'
                    '    quarter-note-offset OFFSET and with the given PITCH')
+            self.__debugConsoleWrite(msg)
+        if fn == 'delete' or fn is None:
+            msg = ('delete/d PART_INDEX PITCH OFFSET\n'
+                   '    Remove the note in the indicated part at\n'
+                   '    quarter-note-offset OFFSET and pitch PITCH')
             self.__debugConsoleWrite(msg)
 
 
@@ -203,17 +246,48 @@ class Editor(QtWidgets.QMainWindow):
         self.__client.playback(part)
 
     def __handleAddLine(self):
+        """
+        Add a line to the display.  Now largely unused, as the display will
+        expand automatically when notes are added.  Purely a local change, which
+        does not affect the actual score at all.
+        """
         self.__ui_scoreViewport.addLine()
 
-    def __handleInsertNote(self, part, pitch, ntype, offset):
-        self.__client.insertNote(self.__client.project().projectID,
-                                 offset, part, str(pitch), ntype.length())
+    def __handleInsertNote(self, partIdx: int,
+                           pitch: music21.pitch.Pitch, ntype, offset: float):
+        """
+        Tell the Composte client to insert a note into the current project.
 
-    def __handleDeleteNote(self, part, pitch, offset):
+        :param partIdx: Index of the part to be inserted into.
+        :param pitch: Pitch of the note to be inserted, as a Music21 Pitch.
+        :param ntype: Note type to be inserted; must be a class which is a
+            subclass of UINote, not a class instance.
+        :param offset: Offset (in quarterlengths) from the beginning of the
+            piece at which the note should be inserted.
+        """
+        self.__client.insertNote(self.__client.project().projectID,
+                                 offset, partIdx, str(pitch), ntype.length())
+
+    def __handleDeleteNote(self, partIdx: int,
+                           pitch: music21.pitch.Pitch, offset: float):
+        """
+        Tell the Composte client to remove a note from the current project.
+
+        :param partIdx: Index of the part to be removed from.
+        :param pitch: Pitch of the note to be removed, as a Music21 Pitch.
+        :param offset: Offset (in quarterlengths) from the beginning of the
+            piece of the note to be removed.
+        """
         self.__client.removeNote(self.__client.project().projectID,
-                                 offset, part, str(pitch))
+                                 offset, partIdx, str(pitch))
 
     def __handleChatMessage(self, name, msg):
+        """
+        Tell the Composte client to send out a chat message.
+
+        :param name: The username to be displayed with the message.
+        :param msg: The message to be broadcast.
+        """
         self.__client.chat(self.__client.project().projectID,
                            name, msg)
 
@@ -267,13 +341,13 @@ class Editor(QtWidgets.QMainWindow):
                 self.__handlePlay()
             if len(args) == 1:
                 try:
-                    part = int(args[0])
+                    partIdx = int(args[0])
                 except ValueError:
-                    msg = ('Unable to generate part index from \'' + args[1]
-                            + '\'')
+                    msg = ('Unable to generate part index from \''
+                           + args[1] + '\'')
                     self.__debugConsoleWrite(msg)
                     return
-                self.__handlePlay(part)
+                self.__handlePlay(partIdx)
             else:
                 self.__debugConsoleHelp('play')
         ## NOT CURRENTLY SUPPORTED
@@ -287,7 +361,7 @@ class Editor(QtWidgets.QMainWindow):
                 return
 
             try:
-                part = int(args[0])
+                partIdx = int(args[0])
             except ValueError:
                 msg = 'Unable to generate part index from \'' + args[1] + '\''
                 self.__debugConsoleWrite(msg)
@@ -313,14 +387,14 @@ class Editor(QtWidgets.QMainWindow):
                 self.__debugConsoleWrite(msg)
                 return
 
-            self.__handleInsertNote(part, pitch, ntype, offset)
+            self.__handleInsertNote(partIdx, pitch, ntype, offset)
         elif cmd in ['delete','d']:
             if len(args) != 3:
                 self.__debugConsoleHelp('delete')
                 return
 
             try:
-                part = int(args[0])
+                partIdx = int(args[0])
             except ValueError:
                 msg = 'Unable to generate part index from \'' + args[1] + '\''
                 self.__debugConsoleWrite(msg)
@@ -340,6 +414,6 @@ class Editor(QtWidgets.QMainWindow):
                 self.__debugConsoleWrite(msg)
                 return
 
-            self.__handleDeleteNote(part, pitch, offset)
+            self.__handleDeleteNote(partIdx, pitch, offset)
         else:
             self.__debugConsoleHelp()

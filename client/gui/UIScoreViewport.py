@@ -15,6 +15,10 @@ import client.gui.UITimeSignature as UITimeSignature
 
 class UIScoreViewport(QtWidgets.QGraphicsView):
 
+    """
+    Viewport for displaying the score for a project.
+    """
+
     def __init__(self, measuresPerLine = 4, mode = 'ptr', width = 600,
                  zoom_min = -4, zoom_max = 4,
                  *args, **kwargs):
@@ -42,6 +46,15 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
         startOffset is None, start at the beginning.  If endOffset is None,
         update through the end.  If both are None, update the entire score,
         including updating the number of parts.
+
+        :note: Updating sections is not currently supported; all updates redraw
+        the entire score.
+
+        :param project: ComposteProject to draw from.
+        :param startOffset: First quarter-note offset to be updated.  If None,
+            update from start of project.
+        :param startOffset: Quarter-note offset after the last one to be
+            updated.  If None, update through end of project.
         """
         if startOffset is None and endOffset is None:
             self.clear()
@@ -63,6 +76,8 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
             en_off = max(en_off1, en_off2) + 1
             en_idx, en_offset = self.__measureIndexFromOffset(en_off,
                                                               extend = True)
+            ## Pad out the end of the updated region to include the entire last
+            ## measure.
             mea = self.__measures[0][en_idx]
             en_offset += mea.length()
             en_idx += 1
@@ -70,12 +85,15 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
             en_idx, en_offset = self.__measureIndexFromOffset(endOffset,
                                                               extend = True)
 
+        # Erase the contents of the measures to be updated.
         for i in range(st_idx, en_idx):
             while st_idx > len(self.__measures[0]):
                 self.addLine()
             for meas in self.__measures:
                 meas[i].clear()
 
+        # Insert everything within the time interval being updated back into the
+        # appropriate measures.
         for part in range(len(project.parts)):
             for om_item in musicFuns.boundedOffset(project.parts[part],
                                                    (st_offset, en_offset)):
@@ -112,10 +130,13 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
                     self.insertNote(part, obj.pitch, ntype, offs)
 
 
-
-
-
     def __endOfDisplay(self):
+        """
+        Return the index and offset of the beginning of the first measure after
+        those that currently exist.
+
+        :returns: (index, offset) of the measure after the last one.
+        """
         if len(self.__measures) == 0:
             return (None, None)
         mea_offset = 0
@@ -127,6 +148,20 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
 
 
     def __measureIndexFromOffset(self, offset, extend = False):
+        """
+        Return the index and offset of the measure containing the given offset.
+        Optionally extend the existing measures to continue through this
+        measure.
+
+        :param offset: Offset whose measure index is being checked.
+        :param extend: When True, extend the measure list through the measure
+            which the given offset would be in.
+
+        :returns: (measure_index, measure_offset) of the beginning of the
+                  measure containing the given offset.  Returns (None, None)
+                  when there are no parts, or when there is no mesaure for the
+                  given offset and extend is False.
+        """
         if len(self.__measures) == 0:
             return (None, None)
         mea_offset = 0
@@ -195,6 +230,9 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
 
 
     def addLine(self):
+        """
+        Add a new score line.
+        """
         for part in self.__measures:
             if part:
                 lastMeasure = part[-1]
@@ -221,6 +259,17 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
 
 
     def insertNote(self, part, pitch, ntype, offset):
+        """
+        Insert a note into the score.  Raises RuntimeError when inserting into
+        an invalid part or at a negative offset.
+
+        :param part: Index of part to be inserted into.
+        :param pitch: The pitch of the note to be inserted, as a music21 Pitch.
+        :param ntype: The type of note to be inserted; this should be a subclass
+            of UINote.UINote.
+        :param offset: Quarter-note offset of the start of the note, from the
+            beginning of the piece.
+        """
         if part >= len(self.__measures):
             raise ValueError('Part index ' + str(part) + ' does not exist.')
         if offset < 0:
@@ -232,6 +281,19 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
                                                     offset - mea_offset)
 
     def deleteNote(self, part, pitch, offset):
+        """
+        Remove a note from the score.  Raises RuntimeError when removing from an
+        invalid part or at a negative offset.  Return whether the note was
+        successfully removed.
+
+        :param part: Index of part containing the note to be removed.
+        :param pitch: The pitch of the note to be removed, as a music21 Pitch.
+        :param offset: Quarter-note offset of the start of the note to be
+            removed, from the beginning of the piece.
+
+        :returns: True when a note is successfully removed; False if the note to
+                  be removed does not exist.
+        """
         if part >= len(self.__measures):
             raise RuntimeError('Inserting note into non-existent part')
         if offset < 0:
@@ -245,9 +307,16 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
 
 
     def parts(self):
+        """
+        Return the number of parts the UIScoreViewport is considering.
+        """
         return len(self.__measures)
 
     def measures(self):
+        """
+        Return the number of measures the UIScoreViewport holds, or 0 if no
+        parts exist.
+        """
         if self.parts() > 0:
             return len(self.__measures[0])
         else:
@@ -255,6 +324,9 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
 
 
     def keyPressEvent(self, ev):
+        """
+        Handle keyboard events.
+        """
         mods = QtWidgets.QApplication.keyboardModifiers()
         if mods == Qt.ControlModifier:
             # C-0 : Reset zoom
@@ -271,9 +343,3 @@ class UIScoreViewport(QtWidgets.QGraphicsView):
                 if self.__zoom != self.__zoom_max:
                     self.scale(1.25,1.25)
                     self.__zoom += 1
-
-    def handleClick(self, partIdx, time, note):
-        """
-        Process a click where
-        """
-        pass
