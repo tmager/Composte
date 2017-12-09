@@ -566,6 +566,6 @@ if __name__ == "__main__":
             "tts-off": c.ttsOff,
             }
 
-    the_worst_repl_you_will_ever_see(repl_funs,commands=commands)
+    the_worst_repl_you_will_ever_see(repl_funs, setup = commands)
     c.stop()
     sys.exit(0)
