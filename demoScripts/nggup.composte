@@ -1,0 +1,198 @@
+set x `list-projects rob`
+set pid `slice 50 86 $x`
+get-project $pid
+add-instrument $pid 0.0 0 flute
+insert-metronome-mark $pid 0.0 114
+remove-dynamic $pid 0.0 0 
+remove-metronome-mark $pid 16.0
+remove-dynamic $pid 16.0 0
+remove-metronome-mark $pid 32.0
+remove-dynamic $pid 32.0 0
+remove-metronome-mark $pid 48.0 
+remove-dynamic $pid 48.0 0 
+remove-note $pid 0.0 0 B4 
+remove-note $pid 1.0 0 B4 
+remove-note $pid 2.0 0 C5 
+remove-note $pid 3.0 0 D5 
+remove-note $pid 4.0 0 D5 
+remove-note $pid 5.0 0 C5 
+remove-note $pid 6.0 0 B4 
+remove-note $pid 7.0 0 A4 
+remove-note $pid 8.0 0 G4 
+remove-note $pid 9.0 0 G4 
+remove-note $pid 10.0 0 A4 
+remove-note $pid 11.0 0 B4 
+remove-note $pid 12.0 0 B4 
+remove-note $pid 13.5 0 A4 
+remove-note $pid 14.0 0 A4 
+remove-note $pid 16.0 0 B4 
+remove-note $pid 17.0 0 B4 
+remove-note $pid 18.0 0 C5 
+remove-note $pid 19.0 0 D5 
+remove-note $pid 20.0 0 D5 
+remove-note $pid 21.0 0 C5 
+remove-note $pid 22.0 0 B4 
+remove-note $pid 23.0 0 A4 
+remove-note $pid 24.0 0 G4 
+remove-note $pid 25.0 0 G4 
+remove-note $pid 26.0 0 A4 
+remove-note $pid 27.0 0 B4 
+remove-note $pid 28.0 0 A4 
+remove-note $pid 29.5 0 G4 
+remove-note $pid 30.0 0 G4 
+remove-note $pid 32.0 0 A4 
+remove-note $pid 33.0 0 A4 
+remove-note $pid 34.0 0 B4 
+remove-note $pid 35.0 0 G4 
+remove-note $pid 36.0 0 A4 
+remove-note $pid 37.0 0 B4 
+remove-note $pid 37.5 0 C5 
+remove-note $pid 38.0 0 B4 
+remove-note $pid 39.0 0 G4 
+remove-note $pid 40.0 0 A4 
+remove-note $pid 41.0 0 B4 
+remove-note $pid 41.5 0 C5 
+remove-note $pid 42.0 0 B4 
+remove-note $pid 43.0 0 A4
+remove-note $pid 44.0 0 G4 
+remove-note $pid 45.0 0 A4 
+remove-note $pid 46.0 0 D4 
+remove-note $pid 48.0 0 B4 
+remove-note $pid 49.0 0 B4 
+remove-note $pid 50.0 0 C5 
+remove-note $pid 51.0 0 D5 
+remove-note $pid 52.0 0 D5 
+remove-note $pid 53.0 0 C5 
+remove-note $pid 54.0 0 B4 
+remove-note $pid 55.0 0 A4 
+remove-note $pid 56.0 0 G4 
+remove-note $pid 57.0 0 G4 
+remove-note $pid 58.0 0 A4 
+remove-note $pid 59.0 0 B4 
+remove-note $pid 60.0 0 A4 
+remove-note $pid 61.5 0 G4 
+remove-note $pid 62.0 0 G4 
+add-dynamic $pid 0.0 0 mp
+insert-note $pid 1.0 0 D5 0.5
+insert-note $pid 1.5 0 E5 0.5
+insert-note $pid 2.0 0 F5 0.5
+insert-note $pid 2.5 0 F5 0.5
+insert-note $pid 3.0 0 G5 0.5
+insert-note $pid 3.5 0 E5 0.75
+insert-note $pid 4.25 0 D5 0.25
+insert-note $pid 4.5 0 C5 2.0 
+insert-note $pid 8.5 0 D5 0.5
+insert-note $pid 9.0 0 D5 0.5
+insert-note $pid 9.5 0 E5 0.5
+insert-note $pid 10.0 0 F5 0.5
+insert-note $pid 10.5 0 D5 1.0
+insert-note $pid 11.5 0 C5 0.5
+insert-note $pid 12.0 0 C6 0.5
+insert-note $pid 13.0 0 C6 0.5
+insert-note $pid 13.5 0 G5 1.5
+insert-note $pid 16.0 0 D5 0.5
+insert-note $pid 16.5 0 D5 0.5
+insert-note $pid 17.0 0 E5 0.5
+insert-note $pid 17.5 0 F5 0.5
+insert-note $pid 18.0 0 D5 0.5
+insert-note $pid 18.5 0 F5 0.5
+insert-note $pid 19.0 0 G5 0.5
+insert-note $pid 20.5 0 E5 0.5
+insert-note $pid 21.0 0 D5 0.5
+insert-note $pid 21.5 0 C5 1.5
+insert-note $pid 24.5 0 D5 0.5
+insert-note $pid 25.0 0 D5 0.5
+insert-note $pid 25.5 0 E5 0.5
+insert-note $pid 26.0 0 F5 0.5
+insert-note $pid 26.5 0 D5 0.5
+insert-note $pid 27.0 0 C5 1.0
+insert-note $pid 28.0 0 G5 0.5
+insert-note $pid 28.5 0 G5 0.5
+insert-note $pid 29.0 0 G5 0.5
+insert-note $pid 29.5 0 A5 0.5
+insert-note $pid 30.0 0 G5 1.0
+insert-note $pid 32.0 0 F5 2.0
+insert-note $pid 34.5 0 G5 0.5
+insert-note $pid 35.0 0 A5 0.5
+insert-note $pid 35.5 0 F5 0.5
+insert-note $pid 36.0 0 G5 0.5
+insert-note $pid 36.5 0 G5 0.5
+insert-note $pid 37.0 0 G5 0.5
+insert-note $pid 37.5 0 A5 0.5
+insert-note $pid 38.0 0 G5 1.0
+insert-note $pid 39.0 0 C5 1.0
+insert-note $pid 42.0 0 D5 0.5
+insert-note $pid 42.5 0 E5 0.5
+insert-note $pid 43.0 0 F5 0.5
+insert-note $pid 43.5 0 D5 0.5
+insert-note $pid 44.5 0 G5 0.5
+insert-note $pid 45.0 0 A5 0.5
+insert-note $pid 45.5 0 G5 1.5
+add-dynamic $pid 47.0 0 f
+insert-note $pid 47.0 0 C5 0.25
+insert-note $pid 47.25 0 D5 0.25
+insert-note $pid 47.5 0 F5 0.25
+insert-note $pid 47.75 0 D5 0.25
+insert-note $pid 48.0 0 A5 0.75
+insert-note $pid 48.75 0 A5 0.75
+insert-note $pid 49.5 0 G5 1.5
+insert-note $pid 51.0 0 C5 0.25
+insert-note $pid 51.25 0 D5 0.25
+insert-note $pid 51.5 0 F5 0.25
+insert-note $pid 51.75 0 D5 0.25
+insert-note $pid 52.0 0 G5 0.75
+insert-note $pid 52.75 0 G5 0.75
+insert-note $pid 53.5 0 F5 0.75
+insert-note $pid 54.25 0 E5 0.25
+insert-note $pid 54.5 0 D5 0.5
+insert-note $pid 55.0 0 C5 0.25
+insert-note $pid 55.25 0 D5 0.25
+insert-note $pid 55.5 0 F5 0.25
+insert-note $pid 55.75 0 D5 0.25
+insert-note $pid 56.0 0 F5 1.0
+insert-note $pid 57.0 0 G5 0.5
+insert-note $pid 57.5 0 E5 0.75
+insert-note $pid 58.25 0 D5 0.25
+insert-note $pid 58.5 0 C5 0.5
+insert-note $pid 59.0 0 C5 0.5
+insert-note $pid 59.5 0 C5 0.5
+insert-note $pid 60.0 0 G5 1.0
+insert-note $pid 61.0 0 F5 2.0
+insert-note $pid 63.0 0 C5 0.25
+insert-note $pid 63.25 0 D5 0.25
+insert-note $pid 63.5 0 F5 0.25
+insert-note $pid 63.75 0 D5 0.25
+insert-note $pid 64.0 0 A5 0.75
+insert-note $pid 64.75 0 A5 0.75
+insert-note $pid 65.5 0 G5 1.5
+insert-note $pid 67.0 0 C5 0.25
+insert-note $pid 67.25 0 D5 0.25
+insert-note $pid 67.5 0 F5 0.25
+insert-note $pid 67.75 0 D5 0.25
+insert-note $pid 68.0 0 C6 1.0
+insert-note $pid 69.0 0 E5 0.5
+insert-note $pid 69.5 0 F5 0.75
+insert-note $pid 70.25 0 E5 0.25
+insert-note $pid 70.5 0 D5 0.5
+insert-note $pid 71.0 0 C5 0.25
+insert-note $pid 71.25 0 D5 0.25
+insert-note $pid 71.5 0 F5 0.25
+insert-note $pid 71.75 0 D5 0.25
+insert-note $pid 72.0 0 F5 1.0
+insert-note $pid 73.0 0 G5 0.5
+insert-note $pid 73.5 0 E5 0.75
+insert-note $pid 74.25 0 D5 0.25
+insert-note $pid 74.5 0 C5 1.0
+insert-note $pid 75.5 0 C5 0.5
+insert-note $pid 76.0 0 G5 1.0
+insert-note $pid 77.0 0 F5 2.0
+add-instrument $pid 79.0 0 trumpet
+add-dynamic $pid 79.0 0 fff
+insert-note $pid 79.5 0 C5 0.5
+insert-note $pid 80.0 0 D5 0.5
+insert-note $pid 80.5 0 E5 0.5
+insert-note $pid 81.0 0 F5 0.5 
+insert-note $pid 81.5 0 G5 0.5
+insert-note $pid 82.0 0 E5 1.0
+insert-note $pid 83.0 0 C5 0.5
+insert-note $pid 83.5 0 D5 4.0

@@ -1,0 +1,202 @@
+body {
+    background-color: #E8E8E8;
+    color: #3D3D3D;
+    text-align: center;
+    font-size: 18pt;
+}
+
+p {
+    display: inline-block;
+    max-width: 50em;
+}
+
+hr {
+    height: 1px;
+    border: 0;
+    background-image: linear-gradient(to right,
+                        rgba(0, 0, 0, 0),
+                        rgba(0, 0, 0, 0.75),
+                        rgba(0, 0, 0, 0));
+    margin: 0;
+}
+
+h1 {
+    font-size: 32pt;
+}
+
+h2 {
+    font-size: 26pt;
+}
+
+h1:hover,h2:hover {
+    /* Chrome, Safari, Opera */
+    -webkit-animation: rainbow 2s infinite;
+
+    /* Internet Explorer */
+    -ms-animation: rainbow 2s infinite;
+
+    /* Standar Syntax */
+    animation: rainbow 2s infinite;
+}
+
+.title {
+    border-bottom: 0;
+    margin-bottom: 0.2em;
+}
+
+.subheading {
+    border-top:0;
+    border-bottom: 0;
+    margin-top: 0.2em;
+    margin-bottom: 0.4em;
+    font-size: 14pt;
+}
+
+.heading {
+
+}
+
+.heading:before {
+    content: "";
+    display: block;
+    height: 6.5em;
+    margin: -6.5em 0 0;
+}
+
+.heading:hover {
+
+}
+
+a {
+    color: #3D3D3D;
+}
+
+a:hover {
+    text-decoration: none;
+    color: blue;
+}
+
+li {
+    overflow: hidden;
+    padding: 0.1em;
+}
+
+.horizontal-nav {
+    font-size: 18pt;
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.horizontal-nav li {
+    text-align: center;
+    display: inline-block;
+    list-style: none;
+    list-style-type: none;
+}
+
+.horizontal-nav li:hover {
+    background-image: linear-gradient(to right,
+                            rgba(165, 165, 165, 0),
+                            rgba(165, 165, 165, 0.5),
+                            rgba(165, 165, 165, 0.5),
+                            rgba(165, 165, 165, 0.5),
+                            rgba(165, 165, 165, 0));
+}
+
+.horizontal-nav .space {
+    margin: 0;
+    border: 0;
+    display: inline-block;
+    width: 1.5em;
+}
+
+.team-member {
+    font-family: "Trebuchet MS", Courrier, sans-serif;
+    font-weight: bold;
+}
+
+.robert {
+
+}
+
+.tom {
+
+}
+
+.wesley {
+
+}
+
+.tail-spacer {
+    height: 4em;
+}
+
+.section {
+    padding-top: 2em;
+    padding-bottom: 2em;
+}
+
+/* .section:hover { */
+/*     background-image: linear-gradient(to bottom, */
+/*                             rgba(165, 165, 165, 0), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0.5), */
+/*                             rgba(165, 165, 165, 0)); */
+/* } */
+
+.delimiters {
+
+}
+
+#top-sticky {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 0px;
+    background-color: #E8E8E8;
+    height: 6.5em;
+}
+
+.rainbow {
+    /* Chrome, Safari, Opera */
+    -webkit-animation: rainbow 2s infinite;
+
+    /* Internet Explorer */
+    -ms-animation: rainbow 2s infinite;
+
+    /* Standar Syntax */
+    animation: rainbow 2s infinite;
+}
+
+/* Chrome, Safari, Opera */
+@-webkit-keyframes rainbow{
+    20%{color: red;}
+    40%{color: yellow;}
+    60%{color: green;}
+    80%{color: blue;}
+    100%{color: orange;}
+}
+/* Internet Explorer */
+@-ms-keyframes rainbow{
+    20%{color: red;}
+    40%{color: yellow;}
+    60%{color: green;}
+    80%{color: blue;}
+    100%{color: orange;}
+}
+
+/* Standar Syntax */
+@keyframes rainbow{
+    20%{color: red;}
+    40%{color: yellow;}
+    60%{color: green;}
+    80%{color: blue;}
+    100%{color: orange;}
+}
+

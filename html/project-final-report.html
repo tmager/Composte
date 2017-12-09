@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <link rel="stylesheet" type="text/css" href="styles/final-report.css" />
+        <meta charset="utf-8" />
+    </head>
+    <body>
+
+<h1 id="comp-50cp-final-project-report">COMP 50CP Final Project Report</h1>
+<h2 id="composte">Composte</h2>
+<p>Make bad music together</p>
+<h3 id="team">Team</h3>
+<p>Export-By-Email</p>
+<ul>
+    <li>Tom Magerlein</li>
+    <li>Robert Goodfellow</li>
+    <li>Wesley Wei</li>
+</ul>
+<h3 id="what-is-composte">What is Composte?</h3>
+<p>Composte is an application that allows collaborators to concurrently collaborate on music composition. Think of it as Google Docs for music, but bad.</p>
+<h3 id="this-submission">This submission</h3>
+<p>This submission can do/supports the following:</p>
+<ul>
+    <li>Multiple concurrent users working on projects</li>
+    <li>Display notes</li>
+    <li>Edit notes</li>
+    <li>Change MIDI instrument</li>
+    <li>MIDI instrument change</li>
+    <li>Accidentals</li>
+    <li>Automatic Treble Clef</li>
+    <li>Set Tempo</li>
+    <li>Project-local chat/text-to-speech</li>
+    <li>Impoverished scripting language</li>
+    <li>More impoverished scripting language</li>
+</ul>
+<h3 id="designarchitecture">Design/Architecture</h3>
+<img src="images/finalClassDiagram.jpg"></img>
+<p>Composte builds a simple RPC to separate servers from clients. This RPC is built on top of several modules, described below.</p>
+<p><strong>auth</strong></p>
+<p>Authentication of username/password pairs.</p>
+<p><strong>database</strong></p>
+<p>Encapsulation of database interactions.</p>
+<p><strong>protocol</strong></p>
+<p>Encapsulates serialization and deserialization of messages.</p>
+<p><strong>util</strong></p>
+<p>A collection of miscellaneous utilities, including music handling and a generic REPL.</p>
+<p><strong>network</strong></p>
+<p>Encapsulates communicating over a network.</p>
+<p>&nbsp;</p>
+<p>The music processing backend processes music.</p>
+<p><strong>util</strong></p>
+<p>The music processing backend is implemented entirely with music21, a music processing engine developed at MIT. A thin wrapper around the music manipulation functions was necessary in order to perform the RPC calls intelligently. Playback is indirectly handled by music21, which delegates to pygame, which attempts to delegate to a combination of timidity and freepats.</p>
+<p>&nbsp;</p>
+<p>The GUI</p>
+<p>The primary developer has declined to comment.</p>
+<p>&nbsp;</p>
+<p>The REPLs</p>
+<p>Because the goalposts were moved so many times over the course of the project, it became clear to us that we would not be able to get the GUI-driven interaction patterns that we wanted. Therefore, we fell back to text-driven interaction patterns. To this end we thought that it would be prudent to create a couple of REPLs from which to drive client interactions with servers.</p>
+<h3 id="outcome">Outcome</h3>
+<p>Somehow, it appears to work.</p>
+<p>Alternatively, we have two impoverished REPLs driving a GUI and interactions with a remote server. We have moved the goalposts enough so that this is indeed the minimum deliverable.</p>
+<p>&lt;/sarcasm&gt;</p>
+<h3 id="looking-back-at-our-design">Looking back at our design</h3>
+<p>Our design at its core has three somewhat disjoint tasks: Maintaining and mutating an internal representation of music, GUI-driven collection of changes to music (Actually REPL-driven), and remote procedure call (RPC).</p>
+<p>While we still believe that this model is fairly elegant and practical, we see many flaws in our implementations of the modules backing these tasks.</p>
+<p>The most prominent lesson we learned was that GUI development is difficult and time-consuming. While there are plenty of powerful, well-documented GUI toolkits out there for Python, we didn't find anything aimed at providing a sheet music editor. In this sense we failed to foresee how much of a pain developing the GUI would be, given that none of us have experience developing a GUI of this nature. It turns out that making an interactive graphical editor is hard.</p>
+<p>Therefore, we fell back to driving the client primarily with a terminal-based REPL. This reduced the amount of GUI work that was required for us to both test and use our application. While text driven interaction is the antithesis of a graphical music editor, we believe that it is still ultimately useful, as a scriptable interface is always a nice feature. To be clear, we believe a full blown GUI is important, but we also believe that we have neither the time nor the expertise to pull one off in the 7 hours before the demo.</p>
+<p>The internal representation of music, is sadly not cleanly separated from the GUI. In order to slightly reduce the amount and magnitude of headaches Tom had, is having, and will continue to have, the internal representation of music is somewhat tailored to the graphical features that we would like the GUI to have.</p>
+<p>When attempting to integrate the GUI with the music backend, several deficiencies in the design of the backed were discovered. Firstly, because rests have no direct representation (they are the absence of notes at some point in the score), the GUI has no point of reference to allow it draw rests. Furthermore, there is no backend concept of measures whatsoever; they are a fiction imposed by the GUI. This made Tom sad. This also created the need for an entire extra layer of abstraction within the GUI's structure. Lastly, the playback engine can only play one stream at a time, and because music21 streams are composable (as in function composition), if a score were modelled as a stream of streams rather than a list of streams, it would be possible to play back all parts at once and it would make more sense semantically.</p>
+<p>The way communication over the network is implemented under our RPC is somewhat unsatisfying. Because we chose to collect all incoming client messages into a single REQ/REP ØMQ socket, we do not have the notion of separate connections. This hurts us in two ways: only one message can be processed at a time on the server, and broadcasts go out to <em>all</em> connected clients, not just the ones subscribed to the project of interest. A better underlying network model would have the concept of separate connections, as that would allow both concurrent processing of unrelated messages and the restriction of broadcasts to the clients that it is intended for. A migration away from the REQ/REP network model is warranted, but discovered late enough to prove challenging to change without pushing us past the deadline.</p>
+<p>This means that currently, most concurrency issues in this application do not have to do with the server processing messages from clients. This will hopefully change in future releases.</p>
+<p>In the face of how glaringly <em>bad</em> the network model is, we have found the actual network endpoints to be surprisingly pleasant to use.</p>
+<h3 id="division-of-labor">Division of Labor</h3>
+<p>It turns out that we're terrible at fair division of labor, but that we're marginally better at dividing the problem into subtasks. We focused on our own tasks and then came together to compose an application out of the parts we built.</p>
+
+<p>Tom Magerlein:</p>
+<ul>
+    <li> GUI </li>
+    <li> Debug console </li>
+</ul>
+
+<p>Robert Goodfellow:</p>
+<ul>
+    <li> Internal representation of music </li>
+    <li> Diff Handling </li>
+</ul>
+
+<p>Wesley Wei:</p>
+<ul>
+    <li> RPC </li>
+    <li> Deployment/Official Server </li>
+    <li> Generic REPL </li>
+</ul>
+
+<p>Unfortunately, we did not dedicate sufficient time to documentation to produce documentation of acceptable quality. Much of the documentation we have is out of date and no longer correct.</p>
+
+<h3 id="bugspontaneous-feature-tracker">Bug/Spontaneous Feature Tracker</h3>
+<!--
+    * Python references are _fun_ (sarcasm)
+    * Single updates to projects were causing serverside failures involving
+    what appeared to be a double-insertion in a single function call.
+    * Because all "nonprimitive" objects in Python are mutable, extracting
+    parts of projects and mutating those to produce a diff has the side
+    effect of also applying the mutation to the project's contents.
+    Attempting to apply the generated diff to the project later then causes
+    a double update, because the desired operation _has already been
+    performed_ on the project.
+
+    * Message loss
+    * Clients and servers could communicate when run on the same host, but
+    failed to communicate whenever the server was run on a remote VPS.
+    * What we thought it was: Messages being dropped for some mysterious
+    reason.
+    * The actual problem: The VPS service provider blocked the ports we
+    originally intended to use: 6666 and 6667. This is likely due to port
+    6666 being commonly used by trojans, and irc using 6666 and 6667.
+    Running an irc service is against the provider's TOS. Ports 6660 to 6670
+    were blocked.
+    * Solved by defaulting to port 5000 and 5001 instead.
+
+    * Boundary conditions
+    * When replacing metronome marks, the music21 backend special cases the
+    metronome mark at the very beginning. It is a default value and is not
+    actually present to be replaced. For this reason, replacing the
+    metronome mark at the beginning of a part is in fact an insertion
+    operation.
+-->
+<ul>
+    <li>Backend ties don't work in playback
+        <ul>
+            <li>Ties, though not represented on the GUI, can still exist in the internal representation. Unfortunately they are not respected when performing playback of music.</li>
+            <li>We have determined that this is a bug underneath the <code>music21</code> package that we use to do playback. We have submitted a ticket.</li>
+            <li>See <a href="https://github.com/cuthbertLab/music21/issues/266">this issue</a></li>
+            <li>The bug manifested itself when playback did not perform as expected. We found it by observing that playback was inccorrect. We noticed that playback was incorrect when we attempted to playback music containing a tie. If we had tried to playback music containing ties earlier, we would have found the bug earlier.</li>
+        </ul></li>
+</ul>
+<h2 id="source-code-tourists-guide">Source Code Tourist's Guide</h2>
+<p>For your viewing pleasure or displeasure, we provide an elided <code>tree</code> of the repository.</p>
+<pre><code>Composte
+├── auth
+│   └── auth.py
+├── client
+│   └── &lt; GUI Suffering &gt;
+├── ComposteClient.py
+├── ComposteServer.py
+├── data
+│   ├── composte.db
+│   └── users
+│       └── &lt; User data &gt;
+├── database
+│   └── driver.py
+├── demoScripts
+│   └── &lt; Demonstration scripts &gt;
+├── doc
+│   ├── architecture
+│   │   └── index.md
+│   ├── deliverables
+│   │   └── index.md
+│   ├── images
+│   │   └── Bad_Diagrams
+│   │       └── &lt; &quot;Diagrams&quot; &gt;
+│   ├── index.md
+│   └── protocol
+│       └── index.md
+├── Dockerfile
+├── html
+│   ├── index.html
+│   └── styles
+│       └── composte.css
+├── logs
+│   └── &lt; Logs &gt;
+├── network
+│   ├── base
+│   │   ├── exceptions.py
+│   │   ├── handler.py
+│   │   └── loggable.py
+│   ├── client.py
+│   ├── conf
+│   │   ├── logging.conf
+│   │   └── logging.py
+│   ├── dns.py
+│   ├── fake
+│   │   └── security.py
+│   └── server.py
+├── protocol
+│   ├── base
+│   │   └── exceptions.py
+│   ├── client.py
+│   └── server.py
+├── README.md
+├── requirements.txt
+└── util
+    ├── bookkeeping.py
+    ├── classExceptions.py
+    ├── composteProject.py
+    ├── misc.py
+    ├── musicFuns.py
+    ├── musicWrapper.py
+    ├── repl.py
+    └── timer.py</code></pre>
+<h2 id="source-descriptions">Source Descriptions</h2>
+<p><strong>Top Level</strong></p>
+<p><code>ComposteServer.py</code> implements a complete Composte server on top of the network server.</p>
+<p><code>ComposteClient.py</code> implements most of a Composte client on top of the network client.</p>
+<p><strong>auth</strong></p>
+<p><code>auth.py</code> contains functions to create and verify password hashes.</p>
+<p><strong>database</strong></p>
+<p><code>driver.py</code> encapsulates access to the the database. It translates between database schemas and python objects.</p>
+<p><strong>network</strong></p>
+<p><code>client.py</code> provides a network client.</p>
+<p><code>server.py</code> provides a network server.</p>
+<p><code>dns.py</code> provides methods to get ip addresses from domain names.</p>
+<p><strong>network/base</strong></p>
+<p><code>exceptions.py</code> contains exceptions the network clients and servers expect users to raise in the event of trouble.</p>
+<p><code>handler.py</code> provides a base class for a stateful message handler. Users may choose to derive their message handlers from this.</p>
+<p><code>loggable.py</code> provides a base class to provide simpler logging.</p>
+<p><strong>network/fake</strong></p>
+<p><code>security.py</code> provides classes conforming to the <code>encryption_scheme</code> interface that the network servers and clients expect, but provide no encryption.</p>
+<p><strong>network/conf</strong></p>
+<p><code>logging.py</code> contains the default logging configuration that the network clients and servers use, as well as a method to read that configuration.</p>
+<p><strong>client</strong></p>
+<p>This module contains the GUI.</p>
+<p><strong>doc</strong></p>
+<p>This directory contains documentation of the project and deliverables for COMP 50CP. Much of the documentation is out of date, and a fair amount may also be unreachable from internal links.</p>
+<p><strong>protocol</strong></p>
+<p><code>client.py</code> contains methods for serializing and deserializing client messages.</p>
+<p><code>server.py</code> contains methods for serializing and deserializing server messages.</p>
+<p><strong>protocol/base</strong></p>
+<p><code>exceptions.py</code> contains exceptions that the <code>protocol</code> module may raise.</p>
+<p><strong>util</strong></p>
+<p>The <code>util</code> module implements a number of miscellaneous things that are needed to make the server work. Notably, the music backend is implemented here</p>
+<p><code>bookkeeping.py</code> implements two static object pools.</p>
+<p><code>classExceptions.py</code> provides some exceptions used in the class hierarchy used by the GUI.</p>
+<p><code>composteProject.py</code> provides the internal, in-memory representation of a project. This also provides serialization and deserialization facilities.</p>
+<p><code>misc.py</code> provides a function to get the version (commit) hash.</p>
+<p><code>musicFuns.py</code> provides the mutators for the internal representation of music.</p>
+<p><code>musicWrapper.py</code> provides a thin wrapper around <code>musicFuns.py</code>, conforming to the message handler contracts that <code>ComposteServer</code> expects.</p>
+<p><code>timer.py</code> provides a method to run a function at a configurably approximate interval.</p>
+<p><code>repl.py</code> provides the REPL shell/scripting interface that Composte has decomposed into. The REPL is likely to have access to all methods that the GUI exposes to the user, and indeed may have finer-grained access to music manipulation methods. The REPL is feature-impoverished, but capable of just enough to be semi-useful.</p>
+    </body>
+</html>

@@ -1,0 +1,716 @@
+Concurrency Project Final Report Sketch
+
+We are moving the goalposts.
+
+Minimum Deliverable:
+    * Not a web application
+    * Probably a Python application
+    * Supports multiple concurrent users
+    * Landing screen with all shared projects
+    * Note editing (Allow note update data races)
+    * MIDI Playback (Lock the clientside file on playback)
+    * Updatable Metadata - Lyricist, Composer, Title, Subtitle,
+        Everything is creative commons license
+    * Set time signature
+    * Set/Change key signature
+    * Accidentals
+    * Automatic Treble Clef
+    * Set Tempo
+    * Triplets
+    * Protocol over ØMQ
+    * Per server serverside user registry (Username -> Hash/Salt)
+
+Stretch goals:
+    * Change time signature
+    * Cosmetic Line Breaks
+    * Undo/Redo
+    * Repeats
+    * Export to playable filetypes (WAV/AIFF)
+    * Swing Beats
+    * Bass Clef
+    * Chords
+    * Chord symbols
+    * Fret Diagrams
+    * Multiple parts/soundfonts -> Fixed selection from the server
+    * Dynamics
+    * Ties/slurs
+    * Lyrics
+    * Score Text
+    * Accents
+    * Segno/Coda
+    * Actual Authentication
+
+
+
+Concurrency Project Design
+
+# Amended Development Plan
+
+Things to make happen, probably mostly in order:
+
+* Minimal GUI
+* Authentication
+* Fake encryption
+* {Music,diff} handling
+* Client updates to server
+* Server updates to client
+* Config files
+* Playback
+<!-- The following steps are optional but "encouraged" -->
+* Export
+* Bad encryption
+* Actual encryption
+* Server caching layer
+* Semi-automate deployment (pip, virtualenv, etc)
+* Deploy to remote server and release into the wild
+* Break remote deployment
+* Fix remote deployment
+* Conclude that the codebase is fundamentally broken
+* More GUI
+* Even more GUI
+
+# Refinements to design
+
+* The caching layer has been re-evaluated and deemed non-critical. We will no
+  longer be implementing a caching layer.
+* Encryption has been re-evaluated and deemed non-critical to the minimum
+  deliverable for this course. We will not be implementing encryption at
+  this time.
+* Server broadcasts have been subsumed into the network module
+
+See updated module diagram at:
+doc/images/Bad_Diagrams/Updated_Module_Hierarchy
+
+# Updated timeline
+
+https://xkcd.com/1658/
+
+https://en.wikipedia.org/wiki/Hofstadter%27s_law
+
+Realistically, we haven't planned far enough ahead to know what we're going to
+do first. However, we are likely to start with a client GUI making a
+connection to a remote server.
+
+A very un-insightful timeline:
+
+Before midnight 19 November 2017:
+
+* Implemented serialization and deserialization of messages
+* Implemented network endpoints for servers and clients
+* Implemented functions for manipulating internal representations of music
+* The GUI successfully exits
+
+Before 6 December 2017:
+
+* Finish amended development plan at least until the optional steps
+
+# Discussion of abstractions and language
+## What sort of jargon do we introduce?
+
+__Abstractions__
+
+Network
+Project Management
+Music
+Diffs
+
+__Language/Jargon__
+
+* `diff` has the usual meaning of "please make this change".
+* We claim that `stream` and `part` mean the same thing.
+* We claim that `packet` and `message` are synonymous.
+* `Project Listing` refers to a collection containing the name of a project
+  and a subset of its metadata.
+* `Project-Id` refers to a UUID assigned to a project.
+
+# Previous Material
+
+Concurrency Project Initial Design
+
+Supplementary images are located in our git repository, the link to which
+would look better if this were a markdown document, but this isn't one, so
+it's not.
+
+https://github.com/tmager/Composte/tree/skeletal_docs/doc/images/Bad_Diagrams
+
+Feel free to peruse the rest of the scatterbrained documentation if you so
+wish.
+
+1. Here is a problem that we want to address
+
+How do we get a GUI that can seamlessly respond to updates originating from
+both the user and from a remote server?
+
+2. Here are two or three ways we considered addressing it
+
+* Wrapping existing graphical music editors
+* Hacking  existing graphical music editors
+* Building our own impoverished graphical music editor
+
+3. Here is the one we chose (at least provisionally) and why
+
+We determined that wrapping existing graphical music editors that were built
+to operate in single-user mode would force us to choose between offering a
+tolerable user experience and making the application fulfill its intended
+purpose.
+
+We determined that hacking an existing graphical music editor to add the
+functionality that Composte requires would be too time intensive for the time
+constraints of this project.
+
+We will be building our own impoverished graphical music editor using PyQt5
+and our tears.
+
+# Data Structures/Algorithms
+
+Music scores are list-like in nature. Because music scores have a known length
+(time), diffs are little more than a serialization problem. If music21 does
+not provide satisfactory serialization, `dill` may, and failing that, we may
+fall back to a more limited text diff format. We hope to avoid using `git` for
+diffs.
+
+# Development Plan
+
+Things to make happen, probably mostly in order:
+
+* Minimal GUI
+* Authentication
+* Fake encryption
+* More GUI
+* {Music,diff} handling
+* Client updates to server
+* Server updates to client
+* Config files
+* Even more GUI
+* Playback/Export
+* Server caching layer
+* Bad encryption
+<!-- The following steps are optional but "encouraged" -->
+* Actual encryption
+* Semi-automate deployment (pip, virtualenv, etc)
+* Deploy to remote server and release into the wild
+* Break remote deployment
+* Fix remote deployment
+* Conclude that the codebase is fundamentally broken
+
+Things that have happened, in no particular order:
+
+* Terrible Puns
+* An echo server using ØMQ
+* Fake encryption v1
+* Realizing a love of dependency injection as a design pattern
+
+# Division of Labor
+
+We do not yet have plans to specialize. All team members know nearly, if not
+all, of the details of how the modules work and interact. To this end, it is
+likely that we will work concurrently on one behavior at a time.
+
+# Timeline
+
+https://xkcd.com/1658/
+
+https://en.wikipedia.org/wiki/Hofstadter%27s_law
+
+Realistically, we haven't planned far enough ahead to know what we're going to
+do first. However, we are likely to start with a client GUI making a
+connection to a remote server.
+
+A very un-insightful timeline:
+
+Before 6 December 2017:
+
+* Finish development plan at least until the optional steps
+
+# Previous Previous Material
+
+1. What is your team name? (Keep it relatively short, clean, and free of
+    embedded spaces. — we'll use this internally for grading.)
+
+Export-By-Email
+
+2.Who's in the group?
+
+Tom Magerlein
+Robert Goodfellow
+Wesley Wei
+
+3. What's the project?
+
+Concurrent music composition - Google Docs for Music
+
+4. What's the minimum/maximum deliverable?
+
+Minimum Deliverable:
+    * Not a web application
+    * Probably a Python application
+    * Supports multiple concurrent users
+    * Landing screen with all shared projects
+    * Note editing (Allow note update data races)
+    * MIDI Playback (Lock the clientside file on playback)
+    * Updatable Metadata - Lyricist, Composer, Title, Subtitle,
+        Everything is creative commons license
+    * Set/Change time signature
+    * Set/Change key signature
+    * Accidentals
+    * Automatic Treble Clef
+    * Set Tempo
+    * Triplets
+    * Protocol over ØMQ
+    * Per server serverside user registry (Username -> Hash/Salt)
+
+Stretch goals:
+    * Cosmetic Line Breaks
+    * Undo/Redo
+    * Repeats
+    * Export to playable filetypes (WAV/AIFF)
+    * Swing Beats
+    * Bass Clef
+    * Chords
+    * Chord symbols
+    * Fret Diagrams
+    * Multiple parts/soundfonts -> Fixed selection from the server
+    * Dynamics
+    * Ties/slurs
+    * Lyrics
+    * Score Text
+    * Accents
+    * Segno/Coda
+    * Actual Authentication
+
+5. What's your first step?
+
+Registration/Authentication with usernames and passwords
+
+6. What's the biggest problem you foresee or question you need to answer to get
+    started?
+
+UI -> How are we even going to do this?
+
+Protocol -> How do we get the client+server to do things, and what does the
+    protocol need to be able to describe?
+
+Data structures and storage format
+
+
+
+Concurrency Project Initial Design
+
+Supplementary images are located in our git repository, the link to which
+would look better if this were a markdown document, but this isn't one, so
+it's not.
+
+https://github.com/tmager/Composte/tree/skeletal_docs/doc/images/Bad_Diagrams
+
+Feel free to peruse the rest of the scatterbrained documentation if you so
+wish.
+
+1. Here is a problem that we want to address
+
+How do we get a GUI that can seamlessly respond to updates originating from
+both the user and from a remote server?
+
+2. Here are two or three ways we considered addressing it
+
+* Wrapping existing graphical music editors
+* Hacking  existing graphical music editors
+* Building our own impoverished graphical music editor
+
+3. Here is the one we chose (at least provisionally) and why
+
+We determined that wrapping existing graphical music editors that were built
+to operate in single-user mode would force us to choose between offering a
+tolerable user experience and making the application fulfill its intended
+purpose.
+
+We determined that hacking an existing graphical music editor to add the
+functionality that Composte requires would be too time intensive for the time
+constraints of this project.
+
+We will be building our own impoverished graphical music editor using PyQt5
+and our tears.
+
+# Data Structures/Algorithms
+
+Music scores are list-like in nature. Because music scores have a known length
+(time), diffs are little more than a serialization problem. If music21 does
+not provide satisfactory serialization, `dill` may, and failing that, we may
+fall back to a more limited text diff format. We hope to avoid using `git` for
+diffs.
+
+# Development Plan
+
+Things to make happen, probably mostly in order:
+
+* Minimal GUI
+* Authentication
+* Fake encryption
+* More GUI
+* {Music,diff} handling
+* Client updates to server
+* Server updates to client
+* Config files
+* Even more GUI
+* Playback/Export
+* Server caching layer
+* Bad encryption
+<!-- The following steps are optional but "encouraged" -->
+* Actual encryption
+* Semi-automate deployment (pip, virtualenv, etc)
+* Deploy to remote server and release into the wild
+* Break remote deployment
+* Fix remote deployment
+* Conclude that the codebase is fundamentally broken
+
+Things that have happened, in no particular order:
+
+* Terrible Puns
+* An echo server using ØMQ
+* Fake encryption v1
+* Realizing a love of dependency injection as a design pattern
+
+# Division of Labor
+
+We do not yet have plans to specialize. All team members know nearly, if not
+all, of the details of how the modules work and interact. To this end, it is
+likely that we will work concurrently on one behavior at a time.
+
+# Timeline
+
+https://xkcd.com/1658/
+
+https://en.wikipedia.org/wiki/Hofstadter%27s_law
+
+Realistically, we haven't planned far enough ahead to know what we're going to
+do first. However, we are likely to start with a client GUI making a
+connection to a remote server.
+
+A very un-insightful timeline:
+
+Before 6 December 2017:
+
+* Finish development plan at least until the optional steps
+
+# Previous Material
+
+1. What is your team name? (Keep it relatively short, clean, and free of
+    embedded spaces. — we'll use this internally for grading.)
+
+Export-By-Email
+
+2.Who's in the group?
+
+Tom Magerlein
+Robert Goodfellow
+Wesley Wei
+
+3. What's the project?
+
+Concurrent music composition - Google Docs for Music
+
+4. What's the minimum/maximum deliverable?
+
+Minimum Deliverable:
+    * Not a web application
+    * Probably a Python application
+    * Supports multiple concurrent users
+    * Landing screen with all shared projects
+    * Note editing (Allow note update data races)
+    * MIDI Playback (Lock the clientside file on playback)
+    * Updatable Metadata - Lyricist, Composer, Title, Subtitle,
+        Everything is creative commons license
+    * Set/Change time signature
+    * Set/Change key signature
+    * Accidentals
+    * Automatic Treble Clef
+    * Set Tempo
+    * Triplets
+    * Protocol over ØMQ
+    * Per server serverside user registry (Username -> Hash/Salt)
+
+Stretch goals:
+    * Cosmetic Line Breaks
+    * Undo/Redo
+    * Repeats
+    * Export to playable filetypes (WAV/AIFF)
+    * Swing Beats
+    * Bass Clef
+    * Chords
+    * Chord symbols
+    * Fret Diagrams
+    * Multiple parts/soundfonts -> Fixed selection from the server
+    * Dynamics
+    * Ties/slurs
+    * Lyrics
+    * Score Text
+    * Accents
+    * Segno/Coda
+    * Actual Authentication
+
+5. What's your first step?
+
+Registration/Authentication with usernames and passwords
+
+6. What's the biggest problem you foresee or question you need to answer to get
+    started?
+
+UI -> How are we even going to do this?
+
+Protocol -> How do we get the client+server to do things, and what does the
+    protocol need to be able to describe?
+
+Data structures and storage format
+
+
+Concurrency Project Design
+
+# Amended Development Plan
+
+Things to make happen, probably mostly in order:
+
+* Minimal GUI
+* Authentication
+* Fake encryption
+* {Music,diff} handling
+* Client updates to server
+* Server updates to client
+* Config files
+* Playback
+<!-- The following steps are optional but "encouraged" -->
+* Export
+* Bad encryption
+* Actual encryption
+* Server caching layer
+* Semi-automate deployment (pip, virtualenv, etc)
+* Deploy to remote server and release into the wild
+* Break remote deployment
+* Fix remote deployment
+* Conclude that the codebase is fundamentally broken
+* More GUI
+* Even more GUI
+
+# Refinements to design
+
+* The caching layer has been re-evaluated and deemed non-critical. We will no
+  longer be implementing a caching layer.
+* Encryption has been re-evaluated and deemed non-critical to the minimum
+  deliverable for this course. We will not be implementing encryption at
+  this time.
+* Server broadcasts have been subsumed into the network module
+
+See updated module diagram at:
+doc/images/Bad_Diagrams/Updated_Module_Hierarchy
+
+# Updated timeline
+
+https://xkcd.com/1658/
+
+https://en.wikipedia.org/wiki/Hofstadter%27s_law
+
+Realistically, we haven't planned far enough ahead to know what we're going to
+do first. However, we are likely to start with a client GUI making a
+connection to a remote server.
+
+A very un-insightful timeline:
+
+Before midnight 19 November 2017:
+
+* Implemented serialization and deserialization of messages
+* Implemented network endpoints for servers and clients
+* Implemented functions for manipulating internal representations of music
+* The GUI successfully exits
+
+Before 6 December 2017:
+
+* Finish amended development plan at least until the optional steps
+
+# Discussion of abstractions and language
+## What sort of jargon do we introduce?
+
+__Abstractions__
+
+Network
+Project Management
+Music
+Diffs
+
+__Language/Jargon__
+
+* `diff` has the usual meaning of "please make this change".
+* We claim that `stream` and `part` mean the same thing.
+* We claim that `packet` and `message` are synonymous.
+* `Project Listing` refers to a collection containing the name of a project
+  and a subset of its metadata.
+* `Project-Id` refers to a UUID assigned to a project.
+
+# Previous Material
+
+Concurrency Project Initial Design
+
+Supplementary images are located in our git repository, the link to which
+would look better if this were a markdown document, but this isn't one, so
+it's not.
+
+https://github.com/tmager/Composte/tree/skeletal_docs/doc/images/Bad_Diagrams
+
+Feel free to peruse the rest of the scatterbrained documentation if you so
+wish.
+
+1. Here is a problem that we want to address
+
+How do we get a GUI that can seamlessly respond to updates originating from
+both the user and from a remote server?
+
+2. Here are two or three ways we considered addressing it
+
+* Wrapping existing graphical music editors
+* Hacking  existing graphical music editors
+* Building our own impoverished graphical music editor
+
+3. Here is the one we chose (at least provisionally) and why
+
+We determined that wrapping existing graphical music editors that were built
+to operate in single-user mode would force us to choose between offering a
+tolerable user experience and making the application fulfill its intended
+purpose.
+
+We determined that hacking an existing graphical music editor to add the
+functionality that Composte requires would be too time intensive for the time
+constraints of this project.
+
+We will be building our own impoverished graphical music editor using PyQt5
+and our tears.
+
+# Data Structures/Algorithms
+
+Music scores are list-like in nature. Because music scores have a known length
+(time), diffs are little more than a serialization problem. If music21 does
+not provide satisfactory serialization, `dill` may, and failing that, we may
+fall back to a more limited text diff format. We hope to avoid using `git` for
+diffs.
+
+# Development Plan
+
+Things to make happen, probably mostly in order:
+
+* Minimal GUI
+* Authentication
+* Fake encryption
+* More GUI
+* {Music,diff} handling
+* Client updates to server
+* Server updates to client
+* Config files
+* Even more GUI
+* Playback/Export
+* Server caching layer
+* Bad encryption
+<!-- The following steps are optional but "encouraged" -->
+* Actual encryption
+* Semi-automate deployment (pip, virtualenv, etc)
+* Deploy to remote server and release into the wild
+* Break remote deployment
+* Fix remote deployment
+* Conclude that the codebase is fundamentally broken
+
+Things that have happened, in no particular order:
+
+* Terrible Puns
+* An echo server using ØMQ
+* Fake encryption v1
+* Realizing a love of dependency injection as a design pattern
+
+# Division of Labor
+
+We do not yet have plans to specialize. All team members know nearly, if not
+all, of the details of how the modules work and interact. To this end, it is
+likely that we will work concurrently on one behavior at a time.
+
+# Timeline
+
+https://xkcd.com/1658/
+
+https://en.wikipedia.org/wiki/Hofstadter%27s_law
+
+Realistically, we haven't planned far enough ahead to know what we're going to
+do first. However, we are likely to start with a client GUI making a
+connection to a remote server.
+
+A very un-insightful timeline:
+
+Before 6 December 2017:
+
+* Finish development plan at least until the optional steps
+
+# Previous Previous Material
+
+1. What is your team name? (Keep it relatively short, clean, and free of
+    embedded spaces. — we'll use this internally for grading.)
+
+Export-By-Email
+
+2.Who's in the group?
+
+Tom Magerlein
+Robert Goodfellow
+Wesley Wei
+
+3. What's the project?
+
+Concurrent music composition - Google Docs for Music
+
+4. What's the minimum/maximum deliverable?
+
+Minimum Deliverable:
+    * Not a web application
+    * Probably a Python application
+    * Supports multiple concurrent users
+    * Landing screen with all shared projects
+    * Note editing (Allow note update data races)
+    * MIDI Playback (Lock the clientside file on playback)
+    * Updatable Metadata - Lyricist, Composer, Title, Subtitle,
+        Everything is creative commons license
+    * Set/Change time signature
+    * Set/Change key signature
+    * Accidentals
+    * Automatic Treble Clef
+    * Set Tempo
+    * Triplets
+    * Protocol over ØMQ
+    * Per server serverside user registry (Username -> Hash/Salt)
+
+Stretch goals:
+    * Cosmetic Line Breaks
+    * Undo/Redo
+    * Repeats
+    * Export to playable filetypes (WAV/AIFF)
+    * Swing Beats
+    * Bass Clef
+    * Chords
+    * Chord symbols
+    * Fret Diagrams
+    * Multiple parts/soundfonts -> Fixed selection from the server
+    * Dynamics
+    * Ties/slurs
+    * Lyrics
+    * Score Text
+    * Accents
+    * Segno/Coda
+    * Actual Authentication
+
+5. What's your first step?
+
+Registration/Authentication with usernames and passwords
+
+6. What's the biggest problem you foresee or question you need to answer to get
+    started?
+
+UI -> How are we even going to do this?
+
+Protocol -> How do we get the client+server to do things, and what does the
+    protocol need to be able to describe?
+
+Data structures and storage format
+
+
+
