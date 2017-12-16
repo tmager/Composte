@@ -1,6 +1,6 @@
 import music21
 
-# TODO FOR FUTURE SELVES BEYOND COMP50: 
+# TODO
 # Refactor projects and streams globally to obey a
 # Score > Part > Measure hierarchy
 # END TODO
@@ -109,7 +109,7 @@ def changeTimeSignature(offset, part, newSigStr):
     part.insert(offset, newTimeSig)
     return part.getElementsByOffset(offset)
 
-def insertMetronomeMark(offset, parts, bpm):
+def insertMetronomeMark(offset, score, bpm):
     """ Insert a metronome marking in a list of
         parts at a given offset. The constructor needs 
         staff text as a string (empty for our purposes), pulses per 
@@ -118,7 +118,7 @@ def insertMetronomeMark(offset, parts, bpm):
         is 1.0, the second argument is exactly equivalent to 
         BPM (beats per minute). """
     mark = music21.tempo.MetronomeMark("", bpm, 1.0)
-    for part in parts:
+    for part in score:
         markings = part.metronomeMarkBoundaries()
         markFound = False
         for marking in markings:
@@ -357,10 +357,10 @@ def addLyric(offset, part, lyric):
             return [offset, offset]
     return [offset, offset]
 
-def playback(part): 
+def playback(score): 
     """ Playback the current project from the beginning 
         of a part. """
-    music21.midi.realtime.StreamPlayer(part).play()    
+    music21.midi.realtime.StreamPlayer(score).play()    
 
 def boundedOffset(part, bounds): 
     """ Returns a bounded offset list for GUI uses. 
