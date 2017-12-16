@@ -1,4 +1,5 @@
 import music21
+import copy
 
 # TODO
 # Refactor projects and streams globally to obey a
@@ -152,6 +153,18 @@ def createNote(pitchName, durationInQLs):
     note.tiePartners = [None, None]
     return note
 
+def createRest(durationInQLs): 
+    """ Creates a Rest of a given duration. Useful for the 
+        GUI, but unimportant for things like playback. """
+    rest = music21.note.Rest()
+    rest.duration = music21.duration.Duration(durationInQLs)
+    return rest
+
+def insertRest(offset, part, duration): 
+    """ Insert a rest of a given duration into a part
+        at a given offset. """
+    rest = createRest(duration)
+
 def insertNote(offset, part, pitchStr, duration):
     """ Add a note at a given offset to a part. """
     newNote = createNote(pitchStr, duration)
@@ -298,17 +311,14 @@ def removeClef(offset, part):
             return [offset, offset]
     return [offset, offset]
 
-def insertMeasures(insertionOffset, part, insertedQLs):
-    """ Insert measures in a part by moving the offsets of
-        portions of the score by a given number of QLs. """
-    return [insertionOffset, part.highestTime]
-
 def addInstrument(offset, part, instrumentStr):
     """ Given an instrument name, assigns that instrument
         to a part in the score. The number of instruments
         supported on the backend are much to numerous to name."""
+    measure = measureAtOffset(offset, part) 
+    measureOffset = offset - startOfNearestMeasure(offset, part)
+    elems = measure.getElementsByOffset(measureOffset)
     instrument = music21.instrument.fromString(instrumentStr)
-    elems = part.getElementsByOffset(offset)
     for elem in elems:
         if hasattr(elem, 'instrumentName'):
             part.replace(elem, instrument)
@@ -318,11 +328,12 @@ def addInstrument(offset, part, instrumentStr):
 
 def removeInstrument(offset, part):
     """ Remove an instrument beginning at offset from a given part. """
-    elems = part.getElementsByOffset(offset)
+    measure = measureAtOffset(offset, part) 
+    measureOffset = offset - startOfNearestMeasure(offset, part)
+    elems = measure.getElementsByOffset(measureOffset)
     for elem in elems:
         if hasattr(elem, 'instrumentName'):
-            if offset != 0.0: 
-                part.remove(elem)
+            measure.remove(elem)
             return [offset, offset]
     return [offset, offset]
 
@@ -371,3 +382,85 @@ def boundedOffset(part, bounds):
     offs = part.offsetMap()
     return [x for x in offs 
             if bounds[0] <= x.offset and x.endTime < bounds[1]]
+
+################## MEASURE HELPER FUNCTIONS ####################
+
+def insertMeasures(offset, part, numToInsert): 
+    """ Insert a number of measures at a given offset into a part. 
+        If offset is in the middle of a measure, insertion begins
+        at the end of the measure containing offset. """
+    barLength = barDurationAtOffset(offset, part)
+    offsetShift = barLength * numToInsert
+    after = startOfMeasureContainingOffset(offset, part) + barLength
+    part.shiftElements(offsetShift, startOffset=after)
+    for i in range(0, numToInsert): 
+        inserted = copy.deepcopy(measureAtOffset(offset, part))
+        fullBarRest = createRest(barLength) # Overwrite all notes
+        inserted.insert(0.0, fullBarRest)
+        part.insert(after, inserted) 
+        after += barLength
+
+def removeMeasures(startOffset, part, endOffset):
+    """ Remove measures spanning from the beginning of 
+        the measure containing start offset to the 
+        end of the measure containing the end offset. """
+    offs = part.offsetMap() 
+    for off in offs: 
+        if off[1] <= startOffset and off[2] < startOffset:
+            begin = off[1]
+        if off[1] < endOffset and off[2] <= endOffset: 
+            end = off[2]
+    for off in offs: 
+        if begin <= off[1] and off[1] < end:
+            part.remove(off[0])
+    shift = begin - end
+    part.shiftElements(shift, startOffset=end)
+    
+def appendMeasuresUpToOffset(offset, part): 
+    """ Append measures on the end of a part until offset
+        is contained within the span of the measures. """
+    endOfStream = part.offsetMap()[-1][2]
+    while endOfStream <= offset: 
+        appendMeasure(part)
+        endOfStream = part.offsetMap()[-1][2]
+
+def appendMeasure(part):
+    """ Append a single empty measure on the end of a part. """
+    endOfStream = part.offsetMap()[-1][2]
+    appended = copy.deepcopy(measureBeforeOffset(endOfStream, part))
+    barLength = inserted.barDuration
+    fullBarRest = createRest(barLength) # Overwrite all notes
+    appended.insert(0.0, fullBarRest)
+    part.append(appended)
+
+def measureBeforeOffset(offset, part): 
+    """ Find the measure before the measure containing 
+        the given offset inside a part. """
+    offs = part.offsetMap() 
+    for i in range(0, len(offs)): 
+        if offs[i][1] <= offset and offset[i][2] <= offset:
+            return i - 1
+    appendMeasuresUpToOffset(offset, part)
+    return part.offsetMap()[-1][0]
+
+def startOfMeasureContainingOffset(offset, part): 
+    """ Returns the offset in quarterLengths of the beginning of
+        the measure in the part containing the given offset. """
+    offs = part.offsetMap() 
+    for off in offs: 
+        if off[1] <= offset and offset <= off[2]:
+            return off[1]
+        
+def measureAtOffset(offset, part): 
+    """ Returns the measure object inside a given part that
+        contains the given offset. """
+    off = part.offsetMap() 
+    for off in offs: 
+        if off[1] <= offset and offset <= off[2]:
+            return off[0]
+
+def barDurationAtOffset(offset, part): 
+    """ Returns the bar duration at a given offset inside a part.
+        Useful for determining re-adjustments of time signatures
+        and ties over barlines. """
+    return measureAtOffset(offset, part).barDuration
