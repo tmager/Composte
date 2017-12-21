@@ -30,27 +30,23 @@ import copy
 def changeKeySignature(offset, part, newSigSharps):
     """ Changes the Key Signature at a given offset inside a part.
         Must provide the correct number of sharps in the key signature
-        as an integer. Negative numbers correspond to the number of flats. """
+        as an integer. Negative numbers correspond to the number of flats. 
+        If offset is in the middle of a measure, the key signature is 
+        inserted at the beginning of the measure containing the offset. """
     newKeySig = music21.key.KeySignature(newSigSharps)
-    oldKeySigs = part.getKeySignatures()
-    for i in range(len(oldKeySigs)):
-        if oldKeySigs[i].offset == offset:
-            part.replace(oldKeySigs[i], newKeySig)
-            if i + 1 == len(oldKeySigs):
-                renameNotes(offset, part, newKeySig)
-                return [offset, part.highestTime]
-            else:
-                renameNotes(offset, part, newKeySig, oldKeySigs[i + 1].offset)
-                return [offset, oldKeySigs[i + 1].offset]
-    part.insert(offset, newKeySig)
-    for oldKeySig in oldKeySigs:
-        # oldKeySigs is sorted, so this finds the first oldKeySig
-        # That's after the one that was just inserted
-        if offset < oldKeySig.offset:
-            renameNotes(offset, part, newKeySig, oldKeySig.offset)
-            return [offset, oldKeySig.offset]
-    renameNotes(offset, part, newKeySig)
-    return [offset, part.highestTime]
+    measure = measureAtOffset(offset, part) 
+    start = startOfMeasureContainingOffset(offset, part)
+    elems = measure.getElementsByOffset(0.0) 
+    for elem in elems: 
+        if hasattr(elem, 'sharps'): 
+            if elem.sharps == newSigSharps: 
+                return None
+            measure.replace(elem, newKeySig)
+            # rename the notes intelligently
+            return [start, start]
+    measure.insert(0.0, newKeySig)
+    # Rename notes
+    
 
 def renameNotes(startOffset, part, keySig, endOffset=None):
     """ Rename all notes affected by a key signature change
@@ -102,14 +98,187 @@ def changeTimeSignature(offset, part, newSigStr):
         newTimeSig must be a string representing the new time signature,
         such as '4/4' or '6/8'. """
     newTimeSig = music21.meter.TimeSignature(newSigStr)
-    oldTimeSigs = part.getTimeSignatures()
-    for oldTimeSig in oldTimeSigs:
-        if oldTimeSig.offset == offset:
-            part.replace(oldTimeSig, newTimeSig)
-            return part.getElementsByOffset(offset)
-    part.insert(offset, newTimeSig)
-    return part.getElementsByOffset(offset)
+    nextTimeSigOffset = findNextTimeSig(offset, part, newTimeSig) 
+    rebalanceMeasures(offset, part, newTimeSig, nextTimeSigOffset)
+    if nextTimeSigOffset is None: 
+        return [offset, part.offsetMap()[-1][2]]
+    else: 
+        return [offset, nextTimeSigOffset]
 
+def findNextTimeSig(offset, part, newTimeSig): 
+    """ Return the offset of the next time signature in a part 
+        after a given offset, if it exists. """
+    omap = part.offsetMap()
+    for m in omap:
+        if offset < m[1]:
+            if m[0].getTimeSignatures()[0] == newTimeSig: 
+                continue
+            else: 
+                return m[1]
+
+def rebalanceMeasures(offset, part, newTimeSig, endOffset):
+    """ Rebalance the measures to remain sane after a time 
+        signature change. """
+    # A bunch of preliminary computation is necessary here
+    startOffset = startOfMeasureContainingOffset(offset, part)
+    if endOffset == None:
+        endOffset = part.offsetMap()[-1][2]
+    oldBarDuration = barDurationAtOffset(offset, part) 
+    newBarDuration = newTimeSig.barDuration
+    oldQLsBetween = endOffset - startOffset
+    oldMeasuresBetween = int((endOffset - startOffset) / oldBarDuration)
+    newQLsBetween = newBarDuration * oldMeasuresBetween
+    diffBetween = newQLsBetween - oldQLsBetween 
+    # This next line reads really oddly, but it is correct
+    part.shiftElements(diffBetween, startOffset=endOffset)
+    newMeasuresBetween = int(newQLsBetween / newBarDuration)
+    # Actual rebalancing
+    oldMeasures = part.getElementsByOffset(startOffset, offsetEnd=endOffset)
+    s = music21.stream.Stream()
+    for i in range(0, oldMeasuresBetween): 
+        omap = oldMeasures[i].offsetMap()
+        for entry in omap: 
+            s.insert(entry[0], entry[1] + (i * oldBarDuration))
+        part.remove(oldMeasures[i])
+    # s has flattened measures
+    offs = s.offsetMap()
+    for i in range(0, newMeasuresBetween):
+        m = music21.stream.Measure()
+        part.insert(m, startOffset + (i * newBarDuration))
+    for i in range(0, newMeasuresBetween):
+        for elem in offs: 
+            if elem[1] < (i * newBarDuration): 
+                m = measureAtOffset(elem[1], part)
+                startOffset = startOfMeasureContainingOffset(offset, part)
+                if elem[1] == (i * oldBarDuration) and elem[0].duration == 0.0:
+                    m.insert(elem[0], 0.0)
+                else: 
+                    if elem[0].isRest: 
+                        insertPartitionedRest(startOffset + (i * newBarDuration), part, elem[0])
+                    else: 
+                        insertPartitionedNote(startOffset + (i * newBarDuration), part, elem[0])
+
+def partitionedNoteOrRest(offset, part, noteOrRest): 
+    """ Helper function for getting the note or rest 
+        partitioned properly at the barlines. """
+    # Extract some constants
+    sustainLength = noteOrRest.duration.quarterLength
+    # Ensure there are enough measures to insert into
+    appendMeasuresUpToOffset(offset + sustainLength, part)
+    firstMeasure = measureAtOffset(offset, part)
+    firstMeasureBarDuration = barDurationAtOffset(offset, part)
+    firstMeasureStart = startOfMeasureContainingOffset(offset, part)
+    notesOrRests = partitionAcrossBarlines(offset, part, sustainLength, 
+                                           firstMeasureBarDuration,
+                                           firstMeasureStart, noteOrRest)
+    return notesOrRests.reverse()
+
+def insertPartitionedNote(offset, part, note):
+    """ When inserting notes and rests, partition them into
+        pieces of the proper quarter note duration. """
+    notes = partitionedNoteOrRest(offset, part, note)
+    listOfNoteLists = fullyPartitionNote(offset, part, notes)
+    for noteList in listOfNoteLists: 
+        measure = measureAtOffset(offset, part)
+        measureStart = startOfMeasureContainingOffset(offset, part)
+        measureOffset = offset - measureStart
+        for note in noteList: 
+            measure.insert(measureOffset, note) 
+            measureOffset = measureOffset + note.duration.quarterLength
+        offset = measureStart + barDurationAtOffset(offset, part)
+    return [notes[0].offset, notes[-1].offset + notes[-1].duration.quarterLength]
+
+def insertPartitionedRest(offset, part, rest):
+    """ When inserting notes and rests, partition them into
+        pieces of the proper quarter note duration. """
+    rests = partitionedNoteOrRest(offset, part, rest)
+    rests = obliterateNotes(offset, part, rests)
+    for rest in rests: 
+        measure = measureAtOffset(offset, part)
+        measureStart = startOfMeasureContainingOffset(offset, part)
+        measureOffset = offset - measureStart
+        measure.insert(measureOffset, rest)
+        offset = measureStart + barDurationAtOffset(offset, part)
+    return [rests[0].offset, rests[-1].offset + rests[-1].duration.quarterLength]
+
+def fullyPartitionNote(offset, part, noteList):
+    """ Returns a list of lists, where each sublist is 
+        the portion of the tied note contained within
+        a single measure. """
+    notesToAdd = []
+    allNotes = []
+    measureStart = startOfMeasureContainingOffset(offset, part)
+    for note in noteList: 
+        noteName = note.nameWithOctave
+        measure = measureAtOffset(offset, part)
+        measureDuration = barDurationAtOffset(offset, part)
+        notesInMeasure = part.getElementsByClass(music21.note.Note)
+        noteBoundries = []
+        for nim in notesInMeasure: 
+            if nim.nameWithOctave == noteName: 
+                measure.remove(nim.offset + measureStart, nim)
+                continue
+            noteBoundries.append(nim.offset) 
+            noteBoundries.append(nim.offset + nim.duration.quarterLength)
+        noteBoundries = sorted(set(noteBoundries))
+        notes = []
+        for i in range(0, len(noteBoundries - 1)): 
+            n = createNote(noteName, noteBoundries[i + 1] - noteBoundries[i])
+            notes.append(n)
+            allNotes.append(n)
+        notesToAdd.append(notes)
+        measureStart = measureStart + measureDuration
+    for i in range(0, len(allNotes) - 1):
+        makeTieUpdate([allNotes[i], allNotes[i + 1])
+
+    return notesToAdd
+
+def obliterateNotes(offset, part, restList):
+    """ Obliterate the notes that already exist where 
+        the partitioned rest is going to be inserted. """
+    measureStart = startOfMeasureContainingOffset(offset, part)
+    for rest in restList: 
+        measure = measureAtOffset(offset, part)
+        measureDuration = barDurationAtOffset(offset, part)
+        notesInMeasure = part.getElementsByClass(music21.note.Note)
+        restsInMeasure = part.getElementsByClass(music21.note.Rest)
+        for nim in notesInMeasure: 
+            measure.remove(nim.offset + measureStart, nim) 
+        for rim in restsInMeasure: 
+            measure.remove(rim.offset + measureStart, rim)
+        measureStart = measureStart + measureDuration
+    return restList
+
+def partitionAcrossBarlines(offset, part, sustainLength, 
+                            measureBarDuration, 
+                            measureStart, noteOrRest): 
+    """ Returns a list of (tied) notes identical to some
+        other non-tied note, adjusting at the barlines. 
+        If the note is a rest, the list of notes obviously
+        will not be tied together. The list is in reversed
+        order due to the necessary recursion. """
+    if sustainLength == 0.0: 
+        return []
+    noteDuration = measureBarDuration - (offset - measureStart)
+    newMeasureStart = noteDuration + offset
+    newBarDuration = barDurationAtOffset(newMeasureStart, part)
+    sustainLength = sustainLength - noteDuration
+    # Base Case!
+    if noteOrRest.isRest: 
+        r = music21.note.Rest()
+        r.duration = music21.duration.Duration(noteDuration)
+        rests = partitionAcrossBarlines(newMeasureStart, part,
+                                        sustainLength, newBarDuration, 
+                                        newMeasureStart, noteOrRest)
+        return rests.append(r)
+    else: 
+        n = music21.note.Note(noteOrRest.pitch.nameWithOctave)
+        n.duration = music21.duration.Duration(noteDuration)
+        notes = partitionAcrossBarlines(newMeasureStart, part,
+                                        sustainLength, newBarDuration, 
+                                        newMeasureStart, noteOrRest)
+        return notes
+        
 def insertMetronomeMark(offset, score, bpm):
     """ Insert a metronome marking in a list of
         parts at a given offset. The constructor needs 
@@ -164,30 +333,12 @@ def insertRest(offset, part, duration):
     """ Insert a rest of a given duration into a part
         at a given offset. """
     rest = createRest(duration)
+    return insertNotesAndRests(offset, part, rest)
 
 def insertNote(offset, part, pitchStr, duration):
     """ Add a note at a given offset to a part. """
     newNote = createNote(pitchStr, duration)
-    bounds = (offset, offset + duration) 
-    notes = part.notes
-    maxLims = [None, None]
-    for note in notes: 
-        limits = (note.offset, 
-                  note.duration.quarterLength + note.offset)          
-        if bounds[0] < limits[1] and limits[0] < bounds[1]:
-            removeNote(note.offset, part, note.pitch.nameWithOctave)
-            if maxLims[0] is None and maxLims[1] is None: 
-                maxLims = [limits[0], limits[1]]
-            else: 
-                maxLims = [min(maxLims[0], limits[0]),
-                           max(maxLims[1], limits[1])]
-    if maxLims[0] is None and maxLims[1] is None: 
-        maxLims = [bounds[0], bounds[1]]
-    else: 
-        maxLims = [min(maxLims[0], bounds[0]),
-                   max(maxLims[1], bounds[1])]
-    part.insert(offset, newNote)
-    return maxLims
+    return insertNotesAndRests(offset, part, newNote)
 
 def removeNote(offset, part, removedNoteName):
     """ Remove a note at a given offset into a part. """
@@ -384,7 +535,7 @@ def boundedOffset(part, bounds):
             if bounds[0] <= x.offset and x.endTime < bounds[1]]
 
 ################## MEASURE HELPER FUNCTIONS ####################
-
+# TODO: TEST THESE FUNCTIONS
 def insertMeasures(offset, part, numToInsert): 
     """ Insert a number of measures at a given offset into a part. 
         If offset is in the middle of a measure, insertion begins
