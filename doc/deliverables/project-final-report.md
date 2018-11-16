@@ -9,7 +9,7 @@ Make bad music together
 Export-By-Email
 
 * Tom Magerlein
-* Robert Goodfellow
+* Alexis Goodfellow
 * Wesley Wei
 
 ### What is Composte?
@@ -174,7 +174,7 @@ Tom Magerlein:
 * GUI
 * Debug console
 
-Robert Goodfellow
+Alexis Goodfellow
 * Internal representation of music
 * Diff handling
 
