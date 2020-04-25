@@ -16,6 +16,7 @@ bin/
 include/
 .Python
 pip-selfcheck.json
+.__mypy_cache__/
 
 .repl_vars
 
